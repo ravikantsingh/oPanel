@@ -1,31 +1,30 @@
 <?php
 // /opt/panel/www/classes/Database.php
 
+// ---> THIS IS THE MISSING LINK <---
+require_once __DIR__ . '/../config/database.php';
+
 class Database {
     private static $instance = null;
     private $pdo;
 
-    // Private constructor to prevent direct instantiation
     private function __construct() {
-        $config = require __DIR__ . '/../config/database.php';
-        
-        $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset={$config['charset']}";
-        
-        $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Fail hard on SQL errors
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Return arrays, not objects
-            PDO::ATTR_EMULATE_PREPARES   => false,                  // True prepared statements
-        ];
-
         try {
-            $this->pdo = new PDO($dsn, $config['user'], $config['pass'], $options);
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            
+            $options = [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES   => false,
+            ];
+            
+            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            
         } catch (PDOException $e) {
-            // In a production environment, log this to a file instead of echoing
             die("Database Connection Failed: " . $e->getMessage());
         }
     }
 
-    // Get the single instance of the database
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new Database();
@@ -33,7 +32,6 @@ class Database {
         return self::$instance;
     }
 
-    // Expose the PDO object for queries
     public function getConnection() {
         return $this->pdo;
     }

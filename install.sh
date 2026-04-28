@@ -4,7 +4,6 @@
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
-# ---> CHANGE THIS TO YOUR PUBLIC GITHUB REPO URL <---
 GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git"
 
 # Ensure script is run as root

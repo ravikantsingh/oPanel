@@ -148,7 +148,7 @@ mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -keyout /etc/ssl/private/mypanel-selfsigned.key \
     -out /etc/ssl/certs/mypanel-selfsigned.crt \
-    -subj "/C=US/ST=NY/L=City/O=ControlPanel/CN=$SERVER_IP" >/dev/null 2>&1
+    -subj "/C=IN/ST=UP/L=City/O=oPanel/CN=$SERVER_IP" >/dev/null 2>&1
 
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 systemctl restart nginx

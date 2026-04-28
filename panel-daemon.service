@@ -1,5 +1,5 @@
 [Unit]
-Description=Web Control Panel Task Daemon
+Description=oPanel Task Daemon
 After=network.target mysql.service
 
 [Service]

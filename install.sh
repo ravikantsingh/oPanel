@@ -43,7 +43,7 @@ apt-get purge -y vsftpd 2>/dev/null || true
 # ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
-echo -e "\e[34m[2/10] Downloading Control Panel core...\e[0m"
+echo -e "\e[34m[2/10] Downloading oPanel core...\e[0m"
 mkdir -p /opt/panel
 git clone "$GITHUB_REPO" /tmp/panel_temp
 cp -r /tmp/panel_temp/daemon /opt/panel/
@@ -158,6 +158,10 @@ systemctl restart nginx
 # 8. START PYTHON TASK DAEMON
 # ==========================================
 echo -e "\e[34m[8/10] Initializing Background Queue Worker...\e[0m"
+
+# ---> NEW: Sync the generated DB password with the Python worker <---
+sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
+
 cp /tmp/panel_temp/panel-daemon.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable panel-daemon

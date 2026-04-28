@@ -1,0 +1,17 @@
+[Unit]
+Description=Web Control Panel Task Daemon
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/panel/daemon
+ExecStart=/usr/bin/python3 /opt/panel/daemon/worker.py
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=panel-daemon
+
+[Install]
+WantedBy=multi-user.target

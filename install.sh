@@ -1,0 +1,200 @@
+#!/bin/bash
+# ==============================================================================
+# Master Control Panel Installer
+# Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
+# ==============================================================================
+
+# ---> CHANGE THIS TO YOUR PUBLIC GITHUB REPO URL <---
+GITHUB_REPO="https://github.com/YourUsername/YourRepoName.git"
+
+# Ensure script is run as root
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run this installer as root (sudo bash install.sh)"
+  exit 1
+fi
+
+echo -e "\e[32mStarting Control Panel Installation...\e[0m"
+export DEBIAN_FRONTEND=noninteractive
+
+# ==========================================
+# 1. INSTALL CORE DEPENDENCIES
+# ==========================================
+echo -e "\e[34m[1/10] Installing system dependencies...\e[0m"
+apt-get update && apt-get upgrade -y
+apt-get install -y software-properties-common curl wget git unzip jq quota quotatool
+
+# Add PHP Repository
+add-apt-repository ppa:ondrej/php -y
+apt-get update
+
+# Install Nginx, MariaDB, Python, and Multi-PHP versions
+apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
+    certbot python3-certbot-nginx \
+    bind9 bind9utils bind9-doc \
+    pure-ftpd pure-ftpd-common \
+    libnginx-mod-http-modsecurity modsecurity-crs \
+    php8.1-fpm php8.1-mysql \
+    php8.2-fpm php8.2-mysql \
+    php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl
+
+# Purge vsftpd just in case it was installed, to prevent Port 21 conflicts
+apt-get purge -y vsftpd 2>/dev/null || true
+
+# ==========================================
+# 2. CLONE PANEL FILES
+# ==========================================
+echo -e "\e[34m[2/10] Downloading Control Panel core...\e[0m"
+mkdir -p /opt/panel
+git clone "$GITHUB_REPO" /tmp/panel_temp
+cp -r /tmp/panel_temp/daemon /opt/panel/
+cp -r /tmp/panel_temp/scripts /opt/panel/
+cp -r /tmp/panel_temp/www /opt/panel/
+
+# ==========================================
+# 3. SET STRICT PERMISSIONS
+# ==========================================
+echo -e "\e[34m[3/10] Securing file permissions...\e[0m"
+mkdir -p /opt/panel/logs
+mkdir -p /opt/panel/backups/databases
+mkdir -p /opt/panel/backups/websites
+
+chown -R www-data:www-data /opt/panel/www
+chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs
+
+# Make all bash scripts and the Python daemon executable
+chmod +x /opt/panel/scripts/*.sh
+chmod +x /opt/panel/daemon/worker.py
+
+# Secure the Backup Vaults
+chgrp -R www-data /opt/panel/backups
+find /opt/panel/backups -type d -exec chmod 750 {} +
+find /opt/panel/backups -type f -exec chmod 640 {} +
+
+# ==========================================
+# 4. INITIALIZE DATABASE
+# ==========================================
+echo -e "\e[34m[4/10] Bootstrapping MariaDB Environment...\e[0m"
+systemctl start mariadb
+
+# Generate a highly secure random password for the panel's internal DB connection
+DB_PASS=$(openssl rand -hex 16)
+
+# Create the databases and users
+mysql -e "CREATE DATABASE IF NOT EXISTS panel_core;"
+mysql -e "CREATE USER IF NOT EXISTS 'panel_user'@'localhost' IDENTIFIED BY '$DB_PASS';"
+mysql -e "GRANT ALL PRIVILEGES ON panel_core.* TO 'panel_user'@'localhost';"
+
+# Create the background phpMyAdmin SSO user (Hardcoded to match config.inc.php)
+mysql -e "CREATE USER IF NOT EXISTS 'pma_sso'@'localhost' IDENTIFIED BY 'PmaMasterKey998877';"
+mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'pma_sso'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
+
+# Import the schema
+mysql panel_core < /tmp/panel_temp/schema.sql
+
+# Update the PHP config file with the new generated password
+cat <<EOF > /opt/panel/www/config/database.php
+<?php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'panel_core');
+define('DB_USER', 'panel_user');
+define('DB_PASS', '$DB_PASS');
+EOF
+
+# ==========================================
+# 5. CONFIGURE PHPMYADMIN
+# ==========================================
+echo -e "\e[34m[5/10] Installing phpMyAdmin...\e[0m"
+wget -q https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
+unzip -q /tmp/pma.zip -d /tmp/
+mv /tmp/phpMyAdmin-*-all-languages /opt/panel/www/pma
+rm /tmp/pma.zip
+
+# Generate Blowfish Secret for SSO Cookies
+BLOWFISH=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 32)
+cp /tmp/panel_temp/www/pma/config.inc.php /opt/panel/www/pma/config.inc.php
+sed -i "s/'x8y9z0A1b2C3d4E5f6G7h8I9j0K1l2M3'/'$BLOWFISH'/g" /opt/panel/www/pma/config.inc.php
+chown -R www-data:www-data /opt/panel/www/pma
+
+# ==========================================
+# 6. CONFIGURE MODSECURITY & PURE-FTPD & BIND9
+# ==========================================
+echo -e "\e[34m[6/10] Configuring WAF, FTP, and DNS...\e[0m"
+# WAF
+mkdir -p /etc/modsecurity
+wget -qO /etc/modsecurity/modsecurity.conf https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/modsecurity.conf-recommended
+wget -qO /etc/modsecurity/unicode.mapping https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/unicode.mapping
+sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+echo "Include /usr/share/modsecurity-crs/owasp-crs.load" >> /etc/modsecurity/modsecurity.conf
+find /usr/share/modsecurity-crs/ -type f -exec sed -i 's/IncludeOptional/Include/g' {} +
+apt-mark hold modsecurity-crs # Prevent OS from overwriting rules
+
+# FTP
+ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
+echo "yes" > /etc/pure-ftpd/conf/ChrootEveryone
+touch /etc/pure-ftpd/pureftpd.passwd
+pure-pw mkdb
+systemctl restart pure-ftpd
+
+# DNS
+mkdir -p /etc/bind/zones
+chown bind:bind /etc/bind/zones
+
+# ==========================================
+# 7. CONFIGURE NGINX & SSL
+# ==========================================
+echo -e "\e[34m[7/10] Provisioning Self-Signed SSL for Port 8080...\e[0m"
+SERVER_IP=$(curl -s ifconfig.me)
+mkdir -p /etc/ssl/private /etc/ssl/certs
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/mypanel-selfsigned.key \
+    -out /etc/ssl/certs/mypanel-selfsigned.crt \
+    -subj "/C=US/ST=NY/L=City/O=ControlPanel/CN=$SERVER_IP" >/dev/null 2>&1
+
+cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
+systemctl restart nginx
+
+# ==========================================
+# 8. START PYTHON TASK DAEMON
+# ==========================================
+echo -e "\e[34m[8/10] Initializing Background Queue Worker...\e[0m"
+cp /tmp/panel_temp/panel-daemon.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable panel-daemon
+systemctl start panel-daemon
+
+# WAF Cron Job
+(crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
+
+# ==========================================
+# 9. CONFIGURE UFW FIREWALL
+# ==========================================
+echo -e "\e[34m[9/10] Securing perimeter...\e[0m"
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 8080/tcp
+ufw allow 21/tcp
+ufw allow 20/tcp
+ufw allow 40000:50000/tcp
+ufw --force enable
+
+# Cleanup
+rm -rf /tmp/panel_temp
+
+# ==========================================
+# 10. COMPLETE
+# ==========================================
+echo -e "\e[32m=========================================================\e[0m"
+echo -e "\e[32m🎉 Control Panel Installation Complete! \e[0m"
+echo -e "\e[32m=========================================================\e[0m"
+echo -e "Your server is now locked down and running securely on Port 8080."
+echo -e ""
+echo -e "Login URL: \e[1mhttps://${SERVER_IP}:8080\e[0m"
+echo -e "Username:  \e[1madmin\e[0m"
+echo -e "Password:  \e[1madmin123\e[0m"
+echo -e ""
+echo -e "IMPORTANT: You will see a 'Not Private' warning because the"
+echo -e "initial certificate is self-signed. Click 'Advanced' to bypass it."
+echo -e "Once logged in, use 'System Settings' to secure the panel with a domain!"
+echo -e "\e[32m=========================================================\e[0m"

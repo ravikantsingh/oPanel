@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Master Control Panel Installer
+# oPanel Installer
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
@@ -186,7 +186,7 @@ rm -rf /tmp/panel_temp
 # 10. COMPLETE
 # ==========================================
 echo -e "\e[32m=========================================================\e[0m"
-echo -e "\e[32m🎉 Control Panel Installation Complete! \e[0m"
+echo -e "\e[32m🎉 oPanel Installation Complete! \e[0m"
 echo -e "\e[32m=========================================================\e[0m"
 echo -e "Your server is now locked down and running securely on Port 8080."
 echo -e ""

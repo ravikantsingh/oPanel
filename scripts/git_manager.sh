@@ -31,7 +31,6 @@ chown -R "$USERNAME:$USERNAME" "/home/$USERNAME/web/$DOMAIN"
 sudo -u "$USERNAME" bash -c "GIT_SSH_COMMAND='ssh -i /home/$USERNAME/.ssh/id_ed25519 -o IdentitiesOnly=yes -o StrictHostKeyChecking=no' git clone -b '$BRANCH' '$REPO_URL' '$TARGET_DIR'"
 
 if [ $? -eq 0 ]; then
-    # ---> NEW: THE JSON EXTRACTION TRICK <---
     # Format: Hash (Tab) Date (Tab) Message. JQ parses it flawlessly.
     COMMITS_JSON=$(sudo -u "$USERNAME" git -C "$TARGET_DIR" log -n 5 --pretty=format:'%h%x09%cd%x09%s' --date=format:'%Y-%m-%d %H:%M' | \
     jq -R -s -c '[split("\n") | .[] | select(length > 0) | split("\t") | {commit: .[0], date: .[1], message: .[2]}]')
@@ -39,8 +38,8 @@ if [ $? -eq 0 ]; then
     # Safely escape single quotes for the MySQL query
     SAFE_JSON="${COMMITS_JSON//\'/\\\'}"
     
-    # Update the database
-    mysql -e "UPDATE panel_core.domains SET latest_commits = '$SAFE_JSON' WHERE domain_name = '$DOMAIN';"
+    # ---> THE MISSING SOURCE OF TRUTH FIX <---
+    mysql -e "UPDATE panel_core.domains SET git_repo = '$REPO_URL', git_branch = '$BRANCH', latest_commits = '$SAFE_JSON' WHERE domain_name = '$DOMAIN';"
     # ----------------------------------------
 
     echo "Success: Git operation completed and commits logged for $DOMAIN!"

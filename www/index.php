@@ -1099,6 +1099,18 @@ Select a Domain and Username above, then wait for logs to load...
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
+                <h6 class="border-bottom pb-2 mb-3 text-danger"><i class="bi bi-fingerprint"></i> Administrator Security</h6>
+                <div class="form-check form-switch fs-5 mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" id="twoFactorToggle">
+                    <label class="form-check-label" for="twoFactorToggle">Require 2FA for Admin Login</label>
+                </div>
+                <div id="qrCodeContainer" class="d-none text-center p-3 border rounded bg-white mb-4 shadow-sm">
+                    <h6 class="text-success"><i class="bi bi-shield-lock-fill"></i> 2FA Enabled!</h6>
+                    <p class="text-muted small mb-2">Scan this QR Code with Google Authenticator immediately:</p>
+                    <img id="qrCodeImage" src="" alt="2FA QR Code" class="img-thumbnail mb-2" style="width: 150px; height: 150px;">
+                    <p class="small text-muted mb-1">Or enter this manual secret key:</p>
+                    <p class="fw-bold font-monospace fs-5 text-dark mb-0" id="totpSecretText"></p>
+                </div>
                 
                 <h6 class="border-bottom pb-2 mb-3 text-primary"><i class="bi bi-shield-lock"></i> Secure Panel Domain</h6>
                 <div class="alert alert-info small">

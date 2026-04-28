@@ -185,32 +185,4 @@ elif [ "$ACTION" == "update_waf_rules" ]; then
         mv "$WAF_CONF.bak" "$WAF_CONF"
         echo "Error: Invalid ModSecurity syntax provided. Changes rolled back safely."
         exit 1
-    fi   
-# ==========================================
-# ACTION: DELETE DOMAIN
-# ==========================================
-elif [ "$ACTION" == "delete" ]; then
-    
-    # Remove Nginx configs
-    rm -f "$VHOST_CONF"
-    rm -f "$NGINX_ENABLED/$DOMAIN.conf"
-
-    # Remove the web directory
-    rm -rf "/home/$USERNAME/web/$DOMAIN"
-
-    if nginx -t; then
-        systemctl reload nginx
-        # ---> NEW: UI CLEANUP TRACKING <---
-        mysql -e "DELETE FROM panel_core.domains WHERE domain_name = '$DOMAIN';"
-
-        echo "Success: Domain $DOMAIN deleted."
-        exit 0
-    else
-        echo "Error: Nginx failed to reload after deleting $DOMAIN."
-        exit 1
     fi
-
-else
-    echo "Error: Unknown sub_action '$ACTION'."
-    exit 1
-fi

@@ -5,7 +5,7 @@ oPanel is a modern, open-source control panel designed for absolute speed and se
 
 🚀 Core Features
 Server & Web Environment
-Port-Isolated Architecture: The control panel runs securely on Port 8080, leaving 80/443 entirely dedicated to your high-traffic websites.
+Port-Isolated Architecture: The control panel runs securely on Port 7443, leaving 80/443 entirely dedicated to your high-traffic websites.
 
 Multi-PHP Support: Instantly assign PHP 8.1, 8.2, or 8.3 to individual domains with custom resource limits.
 
@@ -55,7 +55,7 @@ The script will automatically install all core dependencies, bootstrap the Maria
 🔑 First Steps & Login
 Once the installation finishes, the terminal will output your login instructions.
 
-Navigate your browser to https://<YOUR_SERVER_IP>:8080
+Navigate your browser to https://<YOUR_SERVER_IP>:7443
 
 Note: You will initially see a "Connection is not private" warning. This is expected because the panel creates a self-signed certificate on boot to encrypt your first login. Click "Advanced" to proceed past the warning.
 

@@ -143,7 +143,7 @@ chown bind:bind /etc/bind/zones
 # ==========================================
 # 7. CONFIGURE NGINX & SSL
 # ==========================================
-echo -e "\e[34m[7/10] Provisioning Self-Signed SSL for Port 8080...\e[0m"
+echo -e "\e[34m[7/10] Provisioning Self-Signed SSL for Port 7443...\e[0m"
 SERVER_IP=$(curl -s ifconfig.me)
 mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
@@ -177,7 +177,7 @@ echo -e "\e[34m[9/10] Securing perimeter...\e[0m"
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw allow 8080/tcp
+ufw allow 7443/tcp
 ufw allow 21/tcp
 ufw allow 20/tcp
 ufw allow 40000:50000/tcp
@@ -192,9 +192,9 @@ rm -rf /tmp/panel_temp
 echo -e "\e[32m=========================================================\e[0m"
 echo -e "\e[32m🎉 oPanel Installation Complete! \e[0m"
 echo -e "\e[32m=========================================================\e[0m"
-echo -e "Your server is now locked down and running securely on Port 8080."
+echo -e "Your server is now locked down and running securely on Port 7443."
 echo -e ""
-echo -e "Login URL: \e[1mhttps://${SERVER_IP}:8080\e[0m"
+echo -e "Login URL: \e[1mhttps://${SERVER_IP}:7443\e[0m"
 echo -e "Username:  \e[1madmin\e[0m"
 echo -e "Password:  \e[1madmin123\e[0m"
 echo -e ""

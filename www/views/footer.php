@@ -522,7 +522,7 @@ $(document).ready(function() {
                         let gitDisplay = '<span class="text-muted small">None</span>';
                         if (d.git_repo !== 'Not Configured') {
                             let host = window.location.hostname;
-                            let webhookUrl = `https://${host}:8080/ajax/webhook.php?domain=${d.domain_name}&token=${d.webhook_token}`;
+                            let webhookUrl = `https://${host}:7443/ajax/webhook.php?domain=${d.domain_name}&token=${d.webhook_token}`;
                             let currentBranch = d.git_branch || 'main'; 
 
                             // === RENDER COMMIT HISTORY ===
@@ -1523,10 +1523,43 @@ $(document).ready(function() {
 
     // Load backups safely AFTER the CSRF token is attached
     fetchBackups();
-    
-});
-// ===========================
-// Open Rotate FM Password Modal
+    $('#twoFactorToggle').on('change', function() {
+        let isChecked = $(this).is(':checked');
+        let action = isChecked ? 'enable' : 'disable';
+        let toggleBtn = $(this);
+        
+        toggleBtn.prop('disabled', true); 
+
+        $.ajax({
+            url: '/ajax/toggle_2fa.php',
+            type: 'POST',
+            data: { action: action },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    if (response.state === 'enabled') {
+                        $('#qrCodeImage').attr('src', response.qr_url);
+                        $('#totpSecretText').text(response.secret);
+                        $('#qrCodeContainer').removeClass('d-none');
+                    } else {
+                        $('#qrCodeContainer').addClass('d-none');
+                        alert("2FA has been successfully disabled.");
+                    }
+                } else {
+                    alert("Error: " + response.error);
+                    toggleBtn.prop('checked', !isChecked); 
+                }
+                toggleBtn.prop('disabled', false); 
+            },
+            error: function() {
+                alert("Network Error.");
+                toggleBtn.prop('checked', !isChecked); 
+                toggleBtn.prop('disabled', false);
+            }
+        });
+    });
+
+    // Open Rotate FM Password Modal
     $(document).on('click', '.rotate-fm-pass', function() {
         $('#rotateFmDomainTitle').text($(this).data('domain'));
         $('#rotateFmDomain').val($(this).data('domain'));
@@ -1534,7 +1567,9 @@ $(document).ready(function() {
         $('#rotateFmPassInput').val(''); 
         $('#rotateFmPassModal').modal('show');
     });
-
+    
+});
+// ===========================
     // Auto-Generate FM Password
     $('#generateRotateFmPass').click(function(e) {
         e.preventDefault();
@@ -1623,7 +1658,7 @@ $(document).ready(function() {
                     
                     // Redirect the user to the new secure domain automatically
                     setTimeout(function() {
-                        window.location.href = "https://" + targetDomain + ":8080";
+                        window.location.href = "https://" + targetDomain + ":7443";
                     }, 5000);
 
                 } else {

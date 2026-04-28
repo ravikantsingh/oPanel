@@ -21,13 +21,30 @@ if [ -d "$WEB_ROOT" ]; then
     rm -rf "$WEB_ROOT"
 fi
 
-# 4. Remove the record from the Control Panel Database
+# 4. Clean up BIND9 DNS Zone
+ZONE_FILE="/etc/bind/zones/db.$DOMAIN"
+if [ -f "$ZONE_FILE" ]; then
+    rm -f "$ZONE_FILE"
+    sed -i "/zone \"$DOMAIN\"/d" /etc/bind/named.conf.local
+    systemctl reload bind9
+fi
+
+# 5. Clean up Pure-FTPd Virtual Users
+for FTP_USER in $(mysql -N -B -e "SELECT ftp_user FROM panel_core.ftp_accounts WHERE domain_name='$DOMAIN';"); do
+    pure-pw userdel "$FTP_USER"
+done
+pure-pw mkdb
+
+# 6. ---> SOURCE OF TRUTH CLEANUP <---
+# Purge all related records from the Control Panel Database
+mysql -e "DELETE FROM panel_core.dns_records WHERE domain_name='$DOMAIN';"
+mysql -e "DELETE FROM panel_core.ftp_accounts WHERE domain_name='$DOMAIN';"
 mysql -e "DELETE FROM panel_core.domains WHERE domain_name='$DOMAIN';"
 
-# 5. Safely Reload Nginx
+# 7. Safely Reload Nginx
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx
-    echo "Success: Domain $DOMAIN and all associated files have been permanently deleted."
+    echo "Success: Domain $DOMAIN and all associated files/accounts have been permanently deleted."
     exit 0
 else
     echo "Critical Warning: Domain deleted, but Nginx failed to reload. Please check server logs."

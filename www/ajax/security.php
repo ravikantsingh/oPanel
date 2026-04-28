@@ -26,4 +26,6 @@ if (empty($request_token) || !hash_equals($_SESSION['csrf_token'], $request_toke
     echo json_encode(['success' => false, 'error' => 'Security Error: CSRF Validation Failed.']);
     exit;
 }
+// ---> THE FIX: Unlock the session file instantly! <---
+session_write_close();
 ?>

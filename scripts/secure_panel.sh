@@ -17,10 +17,10 @@ fi
 
 # 2. Automatically Overwrite the Panel's Nginx Configuration
 cat <<EOF > /etc/nginx/sites-available/default
-# Master Control Panel Configuration (Port 8080 ONLY)
+# Master Control Panel Configuration (Port 7443 ONLY)
 server {
-    listen 8080 ssl http2;
-    listen [::]:8080 ssl http2;
+    listen 7443 ssl http2;
+    listen [::]:7443 ssl http2;
     
     server_name \$DOMAIN; 
 

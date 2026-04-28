@@ -13,7 +13,7 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo -e "\e[32mStarting Control Panel Installation...\e[0m"
+echo -e "\e[32mStarting oPanel Installation...\e[0m"
 export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================

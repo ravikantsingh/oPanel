@@ -182,6 +182,44 @@ ufw allow 20/tcp
 ufw allow 40000:50000/tcp
 ufw --force enable
 
+# ==========================================
+# 9.5 CONFIGURE CLI & SERVER BRANDING
+# ==========================================
+echo -e "\e[34m[10/10] Installing oPanel CLI and Branding...\e[0m"
+
+# 1. Install the global CLI tool
+cp /tmp/panel_temp/cli/opanel /usr/local/bin/opanel
+chmod +x /usr/local/bin/opanel
+
+# 2. Silence default Ubuntu/Plesk login messages
+chmod -x /etc/update-motd.d/* 2>/dev/null || true
+rm -f /etc/motd
+
+# 3. Create the custom oPanel Welcome Banner
+cat <<\EOF > /etc/update-motd.d/01-opanel
+#!/bin/bash
+echo -e "\e[34m"
+echo "            8888888b.                            888  "
+echo "            888   Y88b                           888  "
+echo "            888    888                           888  "
+echo "    .d88b.  888   d88P 8888b.  88888b.   .d88b.  888  "
+echo "   d88''88b 8888888P'     '88b 888 '88b d8P  Y8b 888  "
+echo "   888  888 888       .d888888 888  888 88888888 888  "
+echo "   Y88..88P 888       888  888 888  888 Y8b.     888  "
+echo "    'Y88P'  888       'Y888888 888  888  'Y8888  888  "
+echo -e "\e[0m"
+echo -e "\e[1m Welcome to oPanel(Open Panel)\e[0m"
+echo -e "\e[1m Open, Omni and Optimize hosting control panel.\e[0m"
+echo -e " ---------------------------------------"
+echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
+echo -e " \e[32mKernel:\e[0m $(uname -r)"
+echo -e " \e[32mAccess:\e[0m Type \e[1mopanel login\e[0m to access the web interface."
+echo ""
+EOF
+
+# 4. Make the banner executable
+chmod +x /etc/update-motd.d/01-opanel
+
 # Cleanup
 rm -rf /tmp/panel_temp
 

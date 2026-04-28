@@ -5,7 +5,7 @@
 # ==============================================================================
 
 # ---> CHANGE THIS TO YOUR PUBLIC GITHUB REPO URL <---
-GITHUB_REPO="https://github.com/YourUsername/YourRepoName.git"
+GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git"
 
 # Ensure script is run as root
 if [ "$EUID" -ne 0 ]; then

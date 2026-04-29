@@ -12,3 +12,32 @@
 
     # 3. Tell PM2 to start automatically if the server reboots
     pm2 startup systemd -u root --hp /root  
+
+# First, we need to grab your database password so the script can connect. You can find it quickly by running this in your terminal:
+    cat /opt/panel/www/config/database.php | grep DB_PASS
+
+
+# Now we just tell Linux to run this script at the top of every hour (e.g., 1:00, 2:00, 3:00).
+    sudo crontab -e
+
+    0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1
+
+# We need to manually create that missing directory and empty file so Nginx can successfully reboot.
+    # 1. Create the missing WAF directory
+    sudo mkdir -p /etc/nginx/waf/
+
+    # 2. Create the blank file that Nginx is crying about
+    sudo touch /etc/nginx/waf/cp.uniqueballia.in.conf
+
+    # 3. Test and restart Nginx
+    sudo nginx -t
+    sudo systemctl restart nginx
+
+# Delete the timezone line from the config
+    sudo sed -i '/default-time-zone/d' /etc/mysql/mariadb.conf.d/50-server.cnf
+
+# Restart the database
+    sudo systemctl restart mariadb
+
+# Now, we need to teach MariaDB all the named timezones in the world. Linux stores these in /usr/share/zoneinfo. We will pipe them directly into the MySQL system tables.
+    sudo mysql_tzinfo_to_sql /usr/share/zoneinfo | sudo mysql mysql

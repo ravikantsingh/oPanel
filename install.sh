@@ -66,13 +66,15 @@ echo -e "\e[34m[3/10] Securing file permissions...\e[0m"
 mkdir -p /opt/panel/logs
 mkdir -p /opt/panel/backups/databases
 mkdir -p /opt/panel/backups/websites
+mkdir -p /etc/nginx/waf
 
 chown -R www-data:www-data /opt/panel/www
 chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs
 
-# Make all bash scripts and the Python daemon executable
+# Make all bash scripts and the Python daemons executable
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/worker.py
+chmod +x /opt/panel/daemon/scheduler.py # <-- NEW: Backup Scheduler
 
 # Secure the Backup Vaults
 chgrp -R www-data /opt/panel/backups
@@ -168,16 +170,18 @@ systemctl restart nginx
 # ==========================================
 echo -e "\e[34m[8/10] Initializing Background Queue Worker...\e[0m"
 
-# ---> NEW: Sync the generated DB password with the Python worker <---
+# ---> NEW: Sync the generated DB password with the Python worker & scheduler <---
 sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
+sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
 
 cp /tmp/panel_temp/panel-daemon.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable panel-daemon
 systemctl start panel-daemon
 
-# WAF Cron Job
+# ---> NEW: WAF & Master Scheduler Cron Jobs <---
 (crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
+(crontab -l 2>/dev/null; echo "0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1") | crontab -
 
 # ==========================================
 # 9. CONFIGURE UFW FIREWALL

@@ -50,6 +50,7 @@ ALLOWED_ACTIONS = {
     'delete_backup': '/opt/panel/scripts/delete_backup_manager.sh',
     'secure_panel': '/opt/panel/scripts/secure_panel.sh',
     'delete_domain': '/opt/panel/scripts/delete_domain.sh',
+    'set_timezone': '/opt/panel/scripts/set_timezone.sh',
 }
 
 def get_db_connection():

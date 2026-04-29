@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
-('panel_name', 'My Custom Panel');
+('panel_name', 'oPanel');
 
 -- ==========================================
 -- 3. CLIENT USERS
@@ -159,3 +159,19 @@ CREATE TABLE IF NOT EXISTS `tasks_queue` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ==========================================
+-- 11. AUTOMATIC BACKUP
+-- ==========================================
+CREATE TABLE IF NOT EXISTS backup_schedules (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    target VARCHAR(255) NOT NULL,
+    backup_type ENUM('web', 'db') NOT NULL,
+    frequency ENUM('daily', 'weekly', 'monthly') NOT NULL,
+    run_hour INT DEFAULT 2, -- Default to 2 AM
+    retention_days INT DEFAULT 3, -- How many automated backups to keep
+    last_run DATETIME NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

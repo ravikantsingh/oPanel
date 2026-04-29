@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 require_once 'security.php';
 require_once '../classes/Database.php';
+require_once '../classes/TOTP.php'; // Inject the TOTP class
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
 
@@ -20,23 +21,15 @@ try {
     } 
     
     if ($action === 'enable') {
-        // Generate a mathematically secure 16-character Base32 Secret
-        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        $secret = '';
-        for ($i = 0; $i < 16; $i++) {
-            $secret .= $chars[random_int(0, 31)];
-        }
+        // 1. Generate the secret using our centralized class
+        $secret = TOTP::generateSecret();
 
-        // Save the new secret and enable 2FA
+        // 2. Save the new secret and enable 2FA
         $stmt = $db->prepare("UPDATE panel_core.panel_admins SET totp_secret = ?, is_2fa_enabled = 1 WHERE username = ?");
         $stmt->execute([$secret, $adminUser]);
 
-        // Generate the provisioning URL for Google Authenticator
-        $panelName = urlencode("oPanel");
-        $otpAuthUrl = "otpauth://totp/{$panelName}:{$adminUser}?secret={$secret}&issuer={$panelName}";
-        
-        // Use Google's Chart API to render the QR Code image securely and instantly
-        $qrUrl = "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=" . urlencode($otpAuthUrl);
+        // 3. Generate the working QR URL using our centralized class
+        $qrUrl = TOTP::getQRCodeUrl($adminUser, $secret, 'oPanel');
 
         echo json_encode([
             'success' => true, 
@@ -52,3 +45,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
+?>

@@ -265,11 +265,32 @@ include 'views/header.php';
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Backup Vault</h5>
             <div>
-                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#backupWebModal"><i class="bi bi-globe"></i> Backup Website</button>
-                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#backupDbModal"><i class="bi bi-database"></i> Backup Database</button>
+                <button class="btn btn-sm btn-outline-dark me-1" data-bs-toggle="modal" data-bs-target="#uploadBackupModal"><i class="bi bi-cloud-upload"></i> Upload</button>
+                <button class="btn btn-sm btn-dark me-2" data-bs-toggle="modal" data-bs-target="#scheduleBackupModal"><i class="bi bi-clock-history"></i> Auto-Schedule</button>
+                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#backupWebModal"><i class="bi bi-globe"></i> Backup Web</button>
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#backupDbModal"><i class="bi bi-database"></i> Backup DB</button>
             </div>
         </div>
-        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white"><h6 class="mb-0"><i class="bi bi-clock-history text-info"></i> Active Automation Schedules</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 text-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Target Name</th>
+                            <th>Type</th>
+                            <th>Frequency</th>
+                            <th>Run Time (24H)</th>
+                            <th>Retention Limit</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dynamicSchedulesTable">
+                        <tr><td colspan="6" class="text-center text-muted py-3">Loading schedules...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="card shadow-sm border-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0 text-sm align-middle">
@@ -1134,7 +1155,24 @@ Select a Domain and Username above, then wait for logs to load...
                         <i class="bi bi-lock-fill"></i> Secure Control Panel
                     </button>
                 </form>
-
+                <hr class="my-4 border-secondary border-opacity-25">
+                <h6 class="pb-2 mb-3 text-warning"><i class="bi bi-clock-history"></i> Global Server Time</h6>
+                <form id="serverTimezoneForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Master System Time Zone</label>
+                        <div class="input-group">
+                            <select class="form-select" name="timezone" id="serverTimezoneSelect">
+                                <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                                <option value="UTC">Universal Time (UTC)</option>
+                                <option value="America/New_York">America/New_York (EST)</option>
+                                <option value="Europe/London">Europe/London (GMT)</option>
+                                <option value="Australia/Sydney">Australia/Sydney (AEST)</option>
+                            </select>
+                            <button type="button" class="btn btn-dark" id="submitTimezoneBtn">Sync Server Time</button>
+                        </div>
+                        <div class="form-text" style="font-size: 0.75rem;">This permanently shifts the Linux Kernel, PHP, MariaDB, and automated cron schedules to the selected timezone.</div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1292,4 +1330,78 @@ Select a Domain and Username above, then wait for logs to load...
         </div>
     </div>
 </div>
+<!-- Backup Scheduler Modal -->
+    <div class="modal fade" id="scheduleBackupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white"><h5 class="modal-title"><i class="bi bi-clock-history text-info"></i> Automated Backup Schedule</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body bg-light">
+                    <form id="scheduleBackupForm">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Target Type</label>
+                            <select class="form-select" name="backup_type" id="schedType" required>
+                                <option value="web">Website Domain</option>
+                                <option value="db">MySQL Database</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Select Target</label>
+                            <!-- We will toggle between domain/db dropdowns based on type -->
+                            <select class="form-select domain-dropdown" name="target_web" id="schedTargetWeb"><option value="">Loading...</option></select>
+                            <select class="form-select db-dropdown d-none" name="target_db" id="schedTargetDb"><option value="">Loading...</option></select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Frequency</label>
+                                <select class="form-select" name="frequency" required>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly (Sundays)</option>
+                                    <option value="monthly">Monthly (1st)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Run Time (24H)</label>
+                                <input type="number" class="form-control" name="run_hour" value="2" min="0" max="23" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Retention Policy (Days to Keep)</label>
+                            <input type="number" class="form-control" name="retention_days" value="3" min="1" max="365" required>
+                            <div class="form-text" style="font-size: 0.75rem;">Older automated backups for this target will be securely deleted.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light"><button type="button" class="btn btn-dark w-100" id="submitScheduleBtn">Save Schedule</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload External Backup Modal -->
+    <div class="modal fade" id="uploadBackupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light"><h5 class="modal-title"><i class="bi bi-cloud-upload text-dark"></i> Upload Archive</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="uploadBackupForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Archive Type</label>
+                            <select class="form-select" name="type" required>
+                                <option value="Website">Website Archive (.tar.gz)</option>
+                                <option value="Database">Database Dump (.sql.gz)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Select File</label>
+                            <input class="form-control" type="file" name="backup_file" accept=".gz" required>
+                            <div class="form-text" style="font-size: 0.75rem;">Files will be securely stored in your server's vault for 1-click restoration.</div>
+                        </div>
+                        <div id="uploadProgress" class="progress mt-3 d-none" style="height: 10px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-dark w-100" id="submitUploadBtn">Upload to Vault</button></div>
+            </div>
+        </div>
+    </div>
 <?php include 'views/footer.php'; ?>

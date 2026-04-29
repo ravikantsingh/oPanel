@@ -1341,8 +1341,8 @@ $(document).ready(function() {
             setTimeout(() => { btn.html(originalIcon); }, 1500);
         });
     });
-});
-// Live Log Viewer Logic
+
+ // Live Log Viewer Logic
     let logInterval;
 
     // When the modal opens, fetch logs and start the 2-second timer
@@ -1398,7 +1398,6 @@ $(document).ready(function() {
         });
     }
     // === BACKUP SYSTEM LOGIC ===
-$(document).ready(function() {
 
     // 1. Fetch Vault Contents
     function fetchBackups() {
@@ -1441,6 +1440,69 @@ $(document).ready(function() {
             }
         });
     }
+    // === Fetch Active Schedules ===
+    function fetchSchedules() {
+        $.ajax({
+            url: '/ajax/get_schedules.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    let tbody = $('#dynamicSchedulesTable');
+                    tbody.empty();
+                    
+                    if(response.schedules.length === 0) {
+                        tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">No automated schedules configured.</td></tr>');
+                        return;
+                    }
+                    
+                    response.schedules.forEach(function(s) {
+                        let typeBadge = s.backup_type === 'web' ? '<span class="badge bg-primary">Website</span>' : '<span class="badge bg-warning text-dark">Database</span>';
+                        let runTime = s.run_hour + ':00';
+                        
+                        let row = `<tr>
+                            <td class="fw-bold">${s.target}</td>
+                            <td>${typeBadge}</td>
+                            <td class="text-capitalize">${s.frequency}</td>
+                            <td><span class="badge bg-secondary"><i class="bi bi-clock"></i> ${runTime}</span></td>
+                            <td>${s.retention_days} Days</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-danger delete-schedule" data-id="${s.id}" title="Delete Schedule"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                }
+            }
+        });
+    }
+
+    // === Delete a Schedule ===
+    $(document).on('click', '.delete-schedule', function() {
+        let scheduleId = $(this).data('id');
+        if(!confirm("Are you sure you want to stop automated backups for this target?")) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/delete_schedule.php',
+            type: 'POST',
+            data: { id: scheduleId },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    fetchSchedules(); // Refresh instantly
+                } else {
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
+                }
+            }
+        });
+    });
+
+    // Make sure to call this alongside fetchBackups() so it loads on page boot!
+    fetchSchedules();
     // === 1-Click Restore Logic ===
     $(document).on('click', '.restore-backup', function() {
         let fileName = $(this).data('file');
@@ -1569,9 +1631,93 @@ $(document).ready(function() {
         $('#rotateFmPassInput').val(''); 
         $('#rotateFmPassModal').modal('show');
     });
+    // Toggle Schedule Target Dropdown based on Type
+    $('#schedType').on('change', function() {
+        if($(this).val() === 'web') {
+            $('#schedTargetWeb').removeClass('d-none').prop('required', true);
+            $('#schedTargetDb').addClass('d-none').prop('required', false);
+        } else {
+            $('#schedTargetWeb').addClass('d-none').prop('required', false);
+            $('#schedTargetDb').removeClass('d-none').prop('required', true);
+        }
+    });
+
+    // Submit Schedule
+    $('#submitScheduleBtn').click(function() {
+        let btn = $(this);
+        let form = $('#scheduleBackupForm');
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+
+        $.ajax({
+            url: '/ajax/manage_schedule.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#scheduleBackupModal').modal('hide');
+                    alert("Backup schedule saved successfully! The engine will run it automatically.");
+                    fetchSchedules();
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).text('Save Schedule');
+            }
+        });
+    });
+
+    // Upload Backup File
+    $('#submitUploadBtn').click(function() {
+        let btn = $(this);
+        let form = $('#uploadBackupForm')[0];
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        
+        let formData = new FormData(form);
+        btn.prop('disabled', true).text('Uploading...');
+        $('#uploadProgress').removeClass('d-none');
+        $('.progress-bar').css('width', '0%');
+
+        $.ajax({
+            url: '/ajax/upload_backup.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = (evt.loaded / evt.total) * 100;
+                        $('.progress-bar').css('width', percentComplete + '%');
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                // Ensure response is parsed JSON if it comes back as string
+                let res = typeof response === 'string' ? JSON.parse(response) : response;
+                if(res.success) {
+                    $('#uploadBackupModal').modal('hide');
+                    form.reset();
+                    $('#uploadProgress').addClass('d-none');
+                    fetchBackups(); // Refresh the vault instantly
+                } else {
+                    alert("Error: " + res.error);
+                    $('#uploadProgress').addClass('d-none');
+                }
+                btn.prop('disabled', false).text('Upload to Vault');
+            },
+            error: function() {
+                alert("Upload failed. The file might exceed PHP's max_upload_size.");
+                $('#uploadProgress').addClass('d-none');
+                btn.prop('disabled', false).text('Upload to Vault');
+            }
+        });
+    });
     
-});
-// ===========================
+ // ===========================
     // Auto-Generate FM Password
     $('#generateRotateFmPass').click(function(e) {
         e.preventDefault();
@@ -1674,7 +1820,7 @@ $(document).ready(function() {
             }
         });
     });
-    $(document).ready(function() {
+
     // === 1-CLICK WORDPRESS LOGIC ===
     // 1. Open the Modal
     $(document).on('click', '.open-wp-modal', function() {
@@ -1801,7 +1947,7 @@ $(document).ready(function() {
             }
         });
     });
-// === Admin Profile Password Change ===
+ // === Admin Profile Password Change ===
     $('#submitAdminProfileBtn').click(function() {
         let btn = $(this);
         let form = $('#adminProfileForm');
@@ -1833,6 +1979,33 @@ $(document).ready(function() {
             }
         });
     });
+    // === Global Timezone Sync ===
+    $('#submitTimezoneBtn').click(function() {
+        let btn = $(this);
+        let tz = $('#serverTimezoneSelect').val();
+        
+        if(!confirm(`WARNING: You are about to shift the entire server's absolute time to ${tz}. Scheduled cron jobs and database timestamps will run based on this new time. Proceed?`)) return;
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Syncing...');
+
+        $.ajax({
+            url: '/ajax/set_timezone.php',
+            type: 'POST',
+            data: { timezone: tz },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert("Timezone sync queued! The server will migrate in a few seconds.");
+                    $('#systemSettingsModal').modal('hide');
+                    $('#overview-tab').tab('show'); // Switch to overview to watch the task
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).text('Sync Server Time');
+            }
+        });
+    });
+    
     
 });
 </script>

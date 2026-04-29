@@ -152,6 +152,9 @@ elif [ "$ACTION" == "update_waf" ]; then
         exit 1
     fi
 
+    # ---> FIX: Ensure the master WAF directory exists <---
+    mkdir -p /etc/nginx/waf/
+
     # Ensure the custom rules file exists so Nginx doesn't crash on Include
     touch "$WAF_CONF"
 
@@ -183,6 +186,9 @@ elif [ "$ACTION" == "update_waf_rules" ]; then
 
     CUSTOM_RULES=$(echo "$PAYLOAD" | jq -r '.custom_rules')
     WAF_CONF="/etc/nginx/waf/$DOMAIN.conf"
+    
+    # ---> FIX: Ensure the master WAF directory exists <---
+    mkdir -p /etc/nginx/waf/
     
     # Backup existing rules in case the new ones break Nginx
     cp "$WAF_CONF" "$WAF_CONF.bak" 2>/dev/null || touch "$WAF_CONF.bak"

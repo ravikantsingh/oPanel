@@ -16,7 +16,7 @@ echo -e "\e[32mStarting oPanel Installation...\e[0m"
 export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
-# 1. INSTALL CORE DEPENDENCIES
+# 1. INSTALL CORE DEPENDENCIES & NODE.JS
 # ==========================================
 echo -e "\e[34m[1/10] Installing system dependencies...\e[0m"
 apt-get update && apt-get upgrade -y
@@ -24,9 +24,13 @@ apt-get install -y software-properties-common curl wget git unzip jq quota quota
 
 # Add PHP Repository
 add-apt-repository ppa:ondrej/php -y
+
+# Add Node.js Repository (Version 20 LTS)
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+
 apt-get update
 
-# Install Nginx, MariaDB, Python, and Multi-PHP versions
+# Install Nginx, MariaDB, Python, Multi-PHP, and Node.js
 apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
     certbot python3-certbot-nginx \
     bind9 bind9utils bind9-doc \
@@ -34,7 +38,13 @@ apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
     libnginx-mod-http-modsecurity modsecurity-crs \
     php8.1-fpm php8.1-mysql \
     php8.2-fpm php8.2-mysql \
-    php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl
+    php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl \
+    nodejs
+
+# Install PM2 Globally and Configure Boot Startup
+echo -e "\e[34m[+] Installing PM2 Process Manager...\e[0m"
+npm install pm2@latest -g
+pm2 startup systemd -u root --hp /root
 
 # Purge vsftpd just in case it was installed, to prevent Port 21 conflicts
 apt-get purge -y vsftpd 2>/dev/null || true
@@ -182,6 +192,9 @@ ufw allow 20/tcp
 ufw allow 40000:50000/tcp
 ufw --force enable
 
+# Force the Source of Truth to sync on boot!
+/opt/panel/scripts/sync_firewall.sh
+
 # ==========================================
 # 9.5 CONFIGURE CLI & SERVER BRANDING
 # ==========================================
@@ -213,7 +226,7 @@ echo -e "\e[1m Open, Omni and Optimize hosting control panel.\e[0m"
 echo -e " ----------------------------------------------"
 echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
 echo -e " \e[32mKernel:\e[0m $(uname -r)"
-echo -e " \e[32mAccess:\e[0m Type \e[1mopanel login\e[0m to access the web interface."
+echo -e " \e[32mAccess:\e[0m Type \e[1msudo opanel login\e[0m to access the web interface."
 echo ""
 EOF
 

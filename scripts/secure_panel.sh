@@ -7,11 +7,11 @@ DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 EMAIL=$(echo "$PAYLOAD" | jq -r '.email // "admin@'$DOMAIN'"')
 
 # 1. Generate the Let's Encrypt Certificate
-echo "Securing Control Panel on $DOMAIN..."
-certbot certonly --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
+echo "Securing Control Panel on ${DOMAIN}..."
+certbot certonly --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${EMAIL}" --keep-until-expiring
 
 if [ $? -ne 0 ]; then
-    echo "Error: Certbot failed to verify $DOMAIN. Ensure DNS is pointing to this server."
+    echo "Error: Certbot failed to verify ${DOMAIN}. Ensure DNS is pointing to this server."
     exit 1
 fi
 
@@ -22,10 +22,10 @@ server {
     listen 7443 ssl http2;
     listen [::]:7443 ssl http2;
     
-    server_name \$DOMAIN; 
+    server_name ${DOMAIN}; 
 
-    ssl_certificate /etc/letsencrypt/live/\$DOMAIN/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/\$DOMAIN/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
@@ -38,7 +38,7 @@ server {
         try_files \$uri \$uri/ =404;
     }
 
-    location ~ \.php$ {
+    location ~ \.php\$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock; 
     }
@@ -48,7 +48,7 @@ EOF
 # 3. Test and Reload
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx
-    echo "Success: Control Panel is now secured and locked to $DOMAIN!"
+    echo "Success: Control Panel is now secured and locked to ${DOMAIN}!"
     exit 0
 else
     echo "Critical Error: Nginx configuration failed. Panel SSL not updated."

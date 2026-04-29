@@ -1,3 +1,14 @@
 # Run these two commands in your SSH terminal
     sudo usermod -a -G YOUR_USERNAME www-data
     sudo systemctl restart nginx
+
+# Run this block in your SSH terminal. It will install the latest LTS version of Node.js and PM2 (the industry-standard process manager that keeps Node apps running forever)
+    # 1. Install Node.js (Version 20 LTS)
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+
+    # 2. Install PM2 Globally
+    sudo npm install pm2@latest -g
+
+    # 3. Tell PM2 to start automatically if the server reboots
+    pm2 startup systemd -u root --hp /root  

@@ -579,6 +579,7 @@ $(document).ready(function() {
                                     <button class="btn btn-sm btn-link text-secondary p-0 ms-1 edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders fs-5"></i></button>
                                     ${fmButtons}
                                     <button class="btn btn-sm btn-link text-primary p-0 ms-1 open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="1-Click Install WordPress"><i class="bi bi-wordpress fs-5"></i></button>
+                                    <button class="btn btn-sm btn-link text-success p-0 ms-1 open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js Deployment"><i class="bi bi-hexagon-fill fs-5"></i></button>
                                     <button class="btn btn-sm btn-link text-info p-0 ms-1 manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="Manage FTP Accounts"><i class="bi bi-hdd-network-fill fs-5"></i></button>
                                     <button class="btn btn-sm btn-link text-danger p-0 ms-2 delete-domain" data-domain="${d.domain_name}" data-user="${d.username}" title="Permanently Delete Domain"><i class="bi bi-trash-fill fs-5"></i></button>
                                 </td>
@@ -1727,6 +1728,76 @@ $(document).ready(function() {
                     alert("Error: " + response.error);
                 }
                 btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-down"></i> Install WordPress');
+            }
+        });
+    });
+    // === NODE.JS DEPLOYMENT LOGIC ===
+    $(document).on('click', '.open-node-modal', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        
+        $('#nodeDomain').val(domain);
+        $('#nodeUser').val(user);
+        $('#nodeJsForm')[0].reset();
+        
+        $('#nodeJsModal').modal('show');
+    });
+
+    $('#submitNodeJsBtn').click(function() {
+        let btn = $(this);
+        let form = $('#nodeJsForm');
+        
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Deploying via PM2...');
+
+        $.ajax({
+            url: '/ajax/deploy_node.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#nodeJsModal').modal('hide');
+                    alert("Node.js Deployment Queued! Check Live Tasks to watch PM2 start the app.");
+                    $('#overview-tab').tab('show');
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-rocket-takeoff"></i> Launch App via PM2');
+            }
+        });
+    });
+    // 3. PM2 Action Buttons (Restart, Stop, NPM Install)
+    $('.node-action-btn').click(function() {
+        let btn = $(this);
+        let action = btn.data('action');
+        let domain = $('#nodeDomain').val();
+        let username = $('#nodeUser').val();
+        let app_root = $('input[name="app_root"]').val();
+        
+        let originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Queuing...');
+
+        $.ajax({
+            url: '/ajax/node_action.php',
+            type: 'POST',
+            data: {
+                domain: domain,
+                username: username,
+                app_root: app_root,
+                sub_action: action
+            },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#nodeJsModal').modal('hide');
+                    alert("Command Sent! Check Live Tasks for execution status.");
+                    $('#overview-tab').tab('show');
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });

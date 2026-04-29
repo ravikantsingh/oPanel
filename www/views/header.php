@@ -7,42 +7,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
-    <title>Server Control Panel</title>
+    <title>oPanel | Unified Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body { background-color: #f4f6f9; }
-        .sidebar { min-height: 100vh; background-color: #212529; color: white; padding-top: 20px;}
-        .sidebar a { color: #adb5bd; text-decoration: none; padding: 10px 20px; display: block; }
-        .sidebar a:hover, .sidebar a.active { color: #fff; background-color: #343a40; }
+        .sidebar { min-height: 100vh; background-color: #1e1e2f; padding-top: 20px;}
+        .sidebar a { color: #8b8b9e; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; transition: all 0.2s; }
+        .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
+        .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); border-left: 3px solid #0d6efd; }
         .main-content { padding: 30px; }
+        .nav-tabs .nav-link { color: #6c757d; }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="row">
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-            <h4 class="text-center mb-4"><i class="bi bi-server"></i> MyPanel</h4>
-            <ul class="nav flex-column">
+        <!-- Make Sidebar a flex-column to push the admin menu to the bottom -->
+        <nav class="col-md-3 col-lg-2 d-md-flex flex-column sidebar collapse">
+            <h4 class="text-center text-white mb-4"><i class="bi bi-hexagon-fill text-primary"></i> oPanel</h4>
+            <ul class="nav flex-column mb-auto">
                 <li class="nav-item">
-                    <a class="nav-link active" href="index.php"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    <a class="nav-link active" href="#" onclick="$('#overview-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-people"></i> Users</a>
+                    <a class="nav-link" href="#" onclick="$('#domains-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-globe me-2"></i> Web & Domains</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-globe"></i> Domains</a>
+                    <a class="nav-link" href="#" onclick="$('#users-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-people me-2"></i> Users & DBs</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/filemanager/" target="_blank"><i class="bi bi-folder2-open"></i> File Manager <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.75rem;"></i></a>
+                    <a class="nav-link" href="#" onclick="$('#security-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-shield-check me-2"></i> Security</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-database"></i> Databases</a>
+                    <a class="nav-link" href="#" onclick="$('#cron-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-clock-history me-2"></i> Cron Jobs</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/pma/" target="_blank"><i class="bi bi-table"></i> phpMyAdmin <i class="bi bi-box-arrow-up-right ms-1" style="font-size: 0.75rem;"></i></a>
+                    <a class="nav-link" href="#" onclick="$('#backups-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-archive me-2"></i> Backups</a>
                 </li>
             </ul>
+
+            <!-- Admin Profile Bottom Menu -->
+            <hr class="border-secondary mt-4 mb-3">
+            <div class="dropdown px-3 mb-4">
+                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                    <strong>Administrator</strong>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="adminMenu">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#adminProfileModal"><i class="bi bi-key me-2"></i> Change Password</a></li>
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li><a class="dropdown-item text-danger" href="/logout.php"><i class="bi bi-box-arrow-left me-2"></i> Sign out</a></li>
+                </ul>
+            </div>
         </nav>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 main-content">

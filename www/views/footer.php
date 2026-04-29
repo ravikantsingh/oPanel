@@ -1801,7 +1801,39 @@ $(document).ready(function() {
             }
         });
     });
+// === Admin Profile Password Change ===
+    $('#submitAdminProfileBtn').click(function() {
+        let btn = $(this);
+        let form = $('#adminProfileForm');
+        let alertBox = $('#adminProfileAlert');
+        
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        if ($('#newAdminPass').val() !== $('#confirmAdminPass').val()) {
+            alertBox.removeClass('d-none alert-success').addClass('alert-danger').text("New passwords do not match.");
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Updating...');
+        alertBox.addClass('d-none');
 
+        $.ajax({
+            url: '/ajax/change_admin_password.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alertBox.removeClass('d-none alert-danger').addClass('alert-success').text("Password updated! You will be logged out in 3 seconds.");
+                    form[0].reset();
+                    setTimeout(function() { window.location.href = '/logout.php'; }, 3000);
+                } else {
+                    alertBox.removeClass('d-none alert-success').addClass('alert-danger').text(response.error);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-save"></i> Update Password');
+            }
+        });
+    });
+    
 });
 </script>
 

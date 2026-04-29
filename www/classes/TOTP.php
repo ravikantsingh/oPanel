@@ -12,7 +12,7 @@ class TOTP {
         return $secret;
     }
 
-    public static function getQRCodeUrl($name, $secret, $issuer = 'ControlPanel') {
+    public static function getQRCodeUrl($name, $secret, $issuer = 'oPanel') {
         $url = "otpauth://totp/" . rawurlencode($issuer) . ":" . rawurlencode($name) . "?secret=" . $secret . "&issuer=" . rawurlencode($issuer);
         return "https://api.qrserver.com/v1/create-qr-code/?data=" . rawurlencode($url) . "&size=200x200&ecc=M";
     }

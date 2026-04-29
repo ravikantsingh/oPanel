@@ -36,6 +36,10 @@ if [ "$ACTION" == "create" ]; then
     useradd -m -s /bin/bash "$USERNAME"
     echo "$USERNAME:$PASSWORD" | chpasswd
 
+    # Grant Nginx access to the user's group 
+    usermod -a -G "$USERNAME" www-data
+    systemctl restart nginx
+
     # Build the panel's directory structure
     mkdir -p /home/$USERNAME/web
     mkdir -p /home/$USERNAME/.ssh

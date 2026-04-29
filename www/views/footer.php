@@ -578,6 +578,7 @@ $(document).ready(function() {
                                     <button class="btn btn-sm btn-link text-primary p-0 ms-2 show-connection-info" data-domain="${d.domain_name}" title="Connection Info"><i class="bi bi-info-circle-fill fs-5"></i></button>
                                     <button class="btn btn-sm btn-link text-secondary p-0 ms-1 edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders fs-5"></i></button>
                                     ${fmButtons}
+                                    <button class="btn btn-sm btn-link text-primary p-0 ms-1 open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="1-Click Install WordPress"><i class="bi bi-wordpress fs-5"></i></button>
                                     <button class="btn btn-sm btn-link text-info p-0 ms-1 manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="Manage FTP Accounts"><i class="bi bi-hdd-network-fill fs-5"></i></button>
                                     <button class="btn btn-sm btn-link text-danger p-0 ms-2 delete-domain" data-domain="${d.domain_name}" data-user="${d.username}" title="Permanently Delete Domain"><i class="bi bi-trash-fill fs-5"></i></button>
                                 </td>
@@ -1672,6 +1673,65 @@ $(document).ready(function() {
             }
         });
     });
+    $(document).ready(function() {
+    // === 1-CLICK WORDPRESS LOGIC ===
+    // 1. Open the Modal
+    $(document).on('click', '.open-wp-modal', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        
+        $('#wpDomain').val(domain);
+        $('#wpUser').val(user);
+        $('#wpEmailInput').val('admin@' + domain); // Smart default
+        $('#installWpForm')[0].reset();
+        $('#wpPassInput').val('');
+        
+        $('#installWpModal').modal('show');
+    });
+
+    // 2. Generate Password
+    $('#generateWpPass').click(function(e) {
+        e.preventDefault();
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 20; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        $('#wpPassInput').val(pass);
+        
+        navigator.clipboard.writeText(pass);
+        let originalText = $(this).html();
+        $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
+        setTimeout(() => { $(this).html(originalText); }, 2000);
+    });
+
+    // 3. Submit the Form
+    $('#submitInstallWpBtn').click(function() {
+        let btn = $(this);
+        let form = $('#installWpForm');
+        
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Initializing WP-CLI...');
+
+        $.ajax({
+            url: '/ajax/install_wp.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#installWpModal').modal('hide');
+                    alert("WordPress installation queued! Check the Live Tasks log to watch the progress.");
+                    // Switch to Overview tab to watch the task automatically
+                    $('#overview-tab').tab('show'); 
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-down"></i> Install WordPress');
+            }
+        });
+    });
+
+});
 </script>
 
 </body>

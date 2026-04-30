@@ -49,7 +49,9 @@ Privileges: Root (sudo) access.
 Log into your fresh Ubuntu server as root and run this single command to initiate the automated installer:
 
 Bash
+
 wget -O install.sh https://raw.githubusercontent.com/ravikantsingh/oPanel/main/install.sh && sudo bash install.sh
+
 The script will automatically install all core dependencies, bootstrap the MariaDB environment, configure Nginx and the Python task daemon, set up strict permissions, and lock down the firewall. Installation typically takes 3-5 minutes.
 
 🔑 First Steps & Login

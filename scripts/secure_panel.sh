@@ -34,6 +34,8 @@ server {
     root /opt/panel/www;
     index index.php index.html;
 
+    include /etc/nginx/snippets/opanel-errors.conf;
+
     location / {
         try_files \$uri \$uri/ =404;
     }

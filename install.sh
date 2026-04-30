@@ -116,7 +116,16 @@ EOF
 # 5. CONFIGURE PHPMYADMIN
 # ==========================================
 echo -e "\e[34m[5/10] Installing phpMyAdmin...\e[0m"
-wget -q https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
+
+# ---> FIX: Robust Download with Fallback to prevent silent 404s <---
+wget -q --tries=3 --timeout=15 https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
+
+# If wget failed or the file is empty, fallback to curl
+if [ ! -s /tmp/pma.zip ]; then
+    echo -e "\e[33mWarning: wget failed. Falling back to curl...\e[0m"
+    curl -sL https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -o /tmp/pma.zip
+fi
+
 unzip -q /tmp/pma.zip -d /tmp/
 mv /tmp/phpMyAdmin-*-all-languages /opt/panel/www/pma
 rm /tmp/pma.zip

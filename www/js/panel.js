@@ -455,6 +455,36 @@ $(document).ready(function() {
     // Run immediately, then check for new tasks every 5 seconds
     fetchRecentTasks();
     setInterval(fetchRecentTasks, 5000);
+    // === DYNAMIC PHP VERSION LOADER ===
+    function loadPhpVersions() {
+        $.ajax({
+            url: '/ajax/get_php_versions.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.versions.length > 0) {
+                    let options = '';
+                    response.versions.forEach(function(version, index) {
+                        // Mark the highest version as the default selected option
+                        let isSelected = (index === 0) ? 'selected' : '';
+                        let defaultText = (index === 0) ? ' (Default)' : '';
+                        options += `<option value="${version}" ${isSelected}>PHP ${version}${defaultText}</option>`;
+                    });
+                    
+                    // Inject into both the Add Domain and Change PHP modals instantly
+                    $('#phpVersion, #newPhpVersion').html(options);
+                } else {
+                    $('#phpVersion, #newPhpVersion').html('<option value="">Error: No PHP versions found</option>');
+                }
+            },
+            error: function() {
+                $('#phpVersion, #newPhpVersion').html('<option value="">Error contacting API</option>');
+            }
+        });
+    }
+
+    // Trigger the fetch on load
+    loadPhpVersions();
     // Run it immediately on page load, then every 3 seconds (3000ms)
     fetchSystemStats();
     setInterval(fetchSystemStats, 3000);

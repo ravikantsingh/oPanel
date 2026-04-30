@@ -20,7 +20,7 @@
             <div class="mb-3">
                 <label for="phpVersion" class="form-label">PHP Version</label>
                 <select class="form-select" id="phpVersion" name="php_version">
-                    <option value="8.3" selected>PHP 8.3 (Default)</option>
+                    <option value="">Loading installed versions...</option>
                 </select>
             </div>
             <div id="domainFormAlert" class="alert d-none"></div>

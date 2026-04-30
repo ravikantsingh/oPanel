@@ -26,7 +26,8 @@ cat <<EOF > "$FM_DIR/config.php"
 \$theme = 'dark';
 \$root_path = '$DOC_ROOT';
 \$root_url = '';
-\$is_https = true;
+// Dynamically detect HTTPS so cookies don't break over HTTP
+\$is_https = isset(\$_SERVER['HTTPS']) && (\$_SERVER['HTTPS'] === 'on' || \$_SERVER['HTTPS'] == 1);
 ?>
 EOF
 

@@ -51,6 +51,7 @@ if (isset($_GET['sso_t']) && isset($_GET['sso_h'])) {
     
     // Verify the signature is flawless AND the token is less than 60 seconds old
     if (hash_equals($expected, $_GET['sso_h']) && (time() - $_GET['sso_t'] < 60)) {
+        session_name('filemanager');
         session_start();
         
         // THE FIX: Tiny File Manager strictly requires this specific array format!

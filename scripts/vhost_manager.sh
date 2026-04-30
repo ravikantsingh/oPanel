@@ -64,12 +64,14 @@ server {
     server_name $DOMAIN www.$DOMAIN;
     root $WEB_ROOT;
     index index.php index.html index.htm;
+    # Custom oPanel Error Pages
+    include /etc/nginx/snippets/opanel-errors.conf;
 
     access_log $LOG_DIR/access.log;
     error_log $LOG_DIR/error.log;
 
     location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
+        try_files \$uri \$uri/ =404;
     }
 
     location ~ \.php$ {

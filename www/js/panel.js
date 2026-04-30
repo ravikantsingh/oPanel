@@ -294,11 +294,16 @@ $(document).ready(function() {
             }
         });
     }
-    // Fetch Dynamic Tasks
+    // === DYNAMIC PAGINATION GLOBALS ===
+    let currentTaskPage = 1;
+    let taskLimit = 5;
+
+    // Fetch Dynamic Tasks with Pagination
     function fetchRecentTasks() {
         $.ajax({
             url: '/ajax/get_tasks.php',
             type: 'POST',
+            data: { page: currentTaskPage, limit: taskLimit },
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
@@ -306,14 +311,15 @@ $(document).ready(function() {
                     tbody.empty(); // Clear old data
                     
                     if(response.tasks.length === 0) {
-                        tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">No system tasks found.</td></tr>');
+                        tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">No system tasks found.</td></tr>');
+                        $('#taskPaginationContainer').empty();
                         return;
                     }
 
+                    // Loop and render rows (Keeping your exact existing row HTML)
                     response.tasks.forEach(function(task) {
-                        // Create beautiful status badges
                         let badgeClass = 'bg-secondary';
-                        let actionButtons = ''; // Initialize the button variable
+                        let actionButtons = '';
 
                         if(task.status === 'completed') {
                             badgeClass = 'bg-success';
@@ -328,7 +334,6 @@ $(document).ready(function() {
                             actionButtons = `<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>`;
                         }
 
-                        // Format the payload nicely
                         let target = 'System Command';
                         try {
                             let data = JSON.parse(task.payload);
@@ -342,14 +347,74 @@ $(document).ready(function() {
                                 <td>${target}</td>
                                 <td><span class="badge ${badgeClass}">${task.status.toUpperCase()}</span></td>
                                 <td class="small text-muted">${task.created_at}</td>
-                                <td class="text-end">${actionButtons}</td> </tr>
+                                <td class="text-end">${actionButtons}</td> 
+                            </tr>
                         `;
                         tbody.append(row);
                     });
+
+                    // ---> NEW: Render the Pagination UI <---
+                    renderTaskPagination(response.pagination);
                 }
             }
         });
     }
+
+    // Generate the Pagination UI dynamically
+    function renderTaskPagination(p) {
+        let container = $('#taskPaginationContainer');
+        
+        // Inject the container right after the table if it doesn't exist yet
+        if (container.length === 0) {
+            $('#dynamicTasksTable').closest('.table-responsive').after(`
+                <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" id="taskPaginationContainer"></div>
+            `);
+            container = $('#taskPaginationContainer');
+        }
+
+        let pageHtml = `<div class="text-muted small">Showing ${p.limit} tasks (Total: ${p.total_tasks})</div>`;
+        
+        pageHtml += `<div class="d-flex align-items-center">
+            <select class="form-select form-select-sm w-auto me-3 shadow-sm" id="taskLimitSelect">
+                <option value="5" ${p.limit == 5 ? 'selected' : ''}>5 per page</option>
+                <option value="10" ${p.limit == 10 ? 'selected' : ''}>10 per page</option>
+                <option value="25" ${p.limit == 25 ? 'selected' : ''}>25 per page</option>
+            </select>
+            <ul class="pagination pagination-sm mb-0 shadow-sm">`;
+
+        // Previous Button
+        pageHtml += `<li class="page-item ${p.current_page == 1 ? 'disabled' : ''}">
+            <a class="page-link task-page-link" href="#" data-page="${p.current_page - 1}">Prev</a></li>`;
+
+        // Page Numbers
+        for (let i = 1; i <= p.total_pages; i++) {
+            pageHtml += `<li class="page-item ${p.current_page == i ? 'active' : ''}">
+                <a class="page-link task-page-link" href="#" data-page="${i}">${i}</a></li>`;
+        }
+
+        // Next Button
+        pageHtml += `<li class="page-item ${p.current_page == p.total_pages ? 'disabled' : ''}">
+            <a class="page-link task-page-link" href="#" data-page="${p.current_page + 1}">Next</a></li>`;
+
+        pageHtml += `</ul></div>`;
+        
+        container.html(pageHtml);
+    }
+
+    // Pagination Click Listener
+    $(document).on('click', '.task-page-link', function(e) {
+        e.preventDefault();
+        if($(this).parent().hasClass('disabled') || $(this).parent().hasClass('active')) return;
+        currentTaskPage = $(this).data('page');
+        fetchRecentTasks();
+    });
+
+    // Dropdown Change Listener
+    $(document).on('change', '#taskLimitSelect', function() {
+        taskLimit = $(this).val();
+        currentTaskPage = 1; // Reset to page 1 when changing limits
+        fetchRecentTasks();
+    });
     // Open Task Log Terminal
     $(document).on('click', '.view-task-log', function() {
         let taskId = $(this).data('id');
@@ -956,6 +1021,9 @@ $(document).ready(function() {
                                 <td class="fw-bold">${u.username}</td>
                                 <td class="small text-muted">${u.email || 'No email'}</td>
                                 <td>${badges}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger delete-user" data-user="${u.username}" title="Delete User"><i class="bi bi-trash"></i></button>
+                                </td>
                             </tr>`;
                         tbody.append(row);
                     });
@@ -1718,7 +1786,7 @@ $(document).ready(function() {
         $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
         setTimeout(() => { $(this).html(originalText); }, 2000);
     });
-    // Submit Rotate FM Password
+    // Submit Rotate FM Password    
     $('#submitRotateFmBtn').click(function() {
         let btn = $(this);
         let form = $('#rotateFmPassForm');
@@ -1990,6 +2058,24 @@ $(document).ready(function() {
                     alert("Error: " + response.error);
                 }
                 btn.prop('disabled', false).text('Sync Server Time');
+            }
+        });
+    });
+    // === Delete User Logic ===
+    $(document).on('click', '.delete-user', function() {
+        let user = $(this).data('user');
+        
+        if(!confirm(`CRITICAL WARNING: Are you sure you want to permanently delete '${user}' and destroy their home directory? \n\nNOTE: You MUST delete their domains from the Web tab first! `)) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/delete_user.php',
+            type: 'POST',
+            data: { username: user },
+            success: function() {
+                setTimeout(fetchUsers, 3000); 
             }
         });
     });

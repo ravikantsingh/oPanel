@@ -15,7 +15,7 @@
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 text-sm align-middle">
                             <thead class="table-light">
-                                <tr><th>Username</th><th>Email</th><th>Features</th></tr>
+                                <tr><th>Username</th><th>Email</th><th>Features</th><th>Action</th></tr>
                             </thead>
                             <tbody id="dynamicUsersTable">
                                 <tr><td colspan="3" class="text-center text-muted py-3">Loading users...</td></tr>

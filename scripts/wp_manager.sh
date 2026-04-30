@@ -71,5 +71,14 @@ find "$DOC_ROOT" -type d -exec chmod 755 {} \;
 find "$DOC_ROOT" -type f -exec chmod 644 {} \;
 chmod 600 "$DOC_ROOT/wp-config.php"
 
+# ---> NGINX WORDPRESS UPGRADE <---
+# Rewrite the Nginx config to support WordPress Permalinks instead of strict 404s
+VHOST_CONF="/etc/nginx/sites-available/$DOMAIN.conf"
+if [ -f "$VHOST_CONF" ]; then
+    sed -i 's/try_files $uri $uri\/ =404;/try_files $uri $uri\/ \/index.php?$query_string;/g' "$VHOST_CONF"
+    systemctl reload nginx
+fi
+# ---------------------------------
+
 echo "Success: WordPress successfully installed on $DOMAIN!"
 exit 0

@@ -154,13 +154,48 @@ chown bind:bind /etc/bind/zones
 # ==========================================
 # 7. CONFIGURE NGINX & SSL
 # ==========================================
-echo -e "\e[34m[7/10] Provisioning Self-Signed SSL for Port 7443...\e[0m"
+echo -e "\e[34m[7/10] Provisioning Nginx, SSL, and Custom Errors...\e[0m"
 SERVER_IP=$(curl -s ifconfig.me)
 mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -keyout /etc/ssl/private/mypanel-selfsigned.key \
     -out /etc/ssl/certs/mypanel-selfsigned.crt \
     -subj "/C=IN/ST=UP/L=City/O=oPanel/CN=$SERVER_IP" >/dev/null 2>&1
+
+# ---> HIDE OS & NGINX VERSION <---
+# This uncomments the server_tokens rule in the master Nginx config
+sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
+
+# ---> DEPLOY CUSTOM ERROR PAGES <---
+mkdir -p /var/www/opanel_errors
+# Copy the files from your Git repo to the web directory
+cp /tmp/panel_temp/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
+
+# Secure the error pages
+chown -R www-data:www-data /var/www/opanel_errors
+find /var/www/opanel_errors -type f -exec chmod 644 {} +
+chmod 755 /var/www/opanel_errors
+
+# Generate the global error snippet automatically
+cat << 'EOF' > /etc/nginx/snippets/opanel-errors.conf
+# Intercept errors from FastCGI (PHP)
+fastcgi_intercept_errors on;
+
+error_page 404 /opanel_404.html;
+error_page 500 502 503 504 /opanel_50x.html;
+
+location = /opanel_404.html {
+    root /var/www/opanel_errors;
+    allow all;
+    internal;
+}
+
+location = /opanel_50x.html {
+    root /var/www/opanel_errors;
+    allow all;
+    internal;
+}
+EOF
 
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 systemctl restart nginx
@@ -251,6 +286,8 @@ echo -e ""
 echo -e "Login URL: \e[1mhttps://${SERVER_IP}:7443\e[0m"
 echo -e "Username:  \e[1madmin\e[0m"
 echo -e "Password:  \e[1madmin123\e[0m"
+echo -e ""
+echo -e "Access oPanel by running:\e[32m sudo opanel login\e[0m in the Terminal."
 echo -e ""
 echo -e "IMPORTANT: You will see a 'Not Private' warning because the"
 echo -e "initial certificate is self-signed. Click 'Advanced' to bypass it."

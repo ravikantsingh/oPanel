@@ -36,7 +36,7 @@ done
 pure-pw mkdb
 
 # 6. ---> SOURCE OF TRUTH CLEANUP <---
-# Purge all related records from the Control Panel Database
+# Purge all related records from the oPanel Database
 mysql -e "DELETE FROM panel_core.dns_records WHERE domain_name='$DOMAIN';"
 mysql -e "DELETE FROM panel_core.ftp_accounts WHERE domain_name='$DOMAIN';"
 mysql -e "DELETE FROM panel_core.domains WHERE domain_name='$DOMAIN';"

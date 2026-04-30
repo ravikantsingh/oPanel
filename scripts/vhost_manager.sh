@@ -23,6 +23,14 @@ LOG_DIR="/home/$USERNAME/web/$DOMAIN/logs"
 VHOST_CONF="$NGINX_AVAILABLE/$DOMAIN.conf"
 
 # ==========================================
+# SAFETY: Verify User Exists on the OS
+# ==========================================
+if ! id "$USERNAME" >/dev/null 2>&1; then
+    echo "Error: The Linux user '$USERNAME' does not exist on the OS level. Sync failed."
+    exit 1
+fi
+
+# ==========================================
 # ACTION: CREATE DOMAIN
 # ==========================================
 if [ "$ACTION" == "create" ]; then
@@ -40,7 +48,7 @@ if [ "$ACTION" == "create" ]; then
     cat > "$WEB_ROOT/index.php" <<EOF
 <?php
 echo "<h1>Welcome to $DOMAIN!</h1>";
-echo "<p>Hosted securely on your custom control panel.</p>";
+echo "<p>Hosted securely on your custom oPanel.</p>";
 phpinfo();
 ?>
 EOF
@@ -92,7 +100,15 @@ pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
 EOF
-        systemctl restart php$PHP_VERSION-fpm
+        # Test PHP syntax before restarting <---
+        if php-fpm$PHP_VERSION -t > /dev/null 2>&1; then
+            systemctl restart php$PHP_VERSION-fpm
+        else
+            # Rollback the toxic file so the server stays online
+            rm -f "$POOL_CONF"
+            echo "Error: PHP-FPM pool generation failed syntax check. Rolled back."
+            exit 1
+        fi
     fi
 
     # 3. Enable the site and test Nginx

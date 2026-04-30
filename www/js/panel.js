@@ -1776,7 +1776,7 @@ $(document).ready(function() {
         
         if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
         
-        let warning = "Warning: This will lock the Control Panel to the new domain and restart the web server. You will be automatically redirected. Proceed?";
+        let warning = "Warning: This will lock the oPanel to the new domain and restart the web server. You will be automatically redirected. Proceed?";
         if(!confirm(warning)) return;
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Provisioning SSL & Reloading Nginx...');
@@ -1799,12 +1799,12 @@ $(document).ready(function() {
 
                 } else {
                     alertBox.addClass('alert-danger').text("Error: " + response.error).removeClass('d-none');
-                    btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure Control Panel');
+                    btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure oPanel');
                 }
             },
             error: function() {
                 alertBox.addClass('alert-danger').text("A network error occurred.").removeClass('d-none');
-                btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure Control Panel');
+                btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure oPanel');
             }
         });
     });

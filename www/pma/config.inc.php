@@ -25,7 +25,7 @@ $i = 0;
  */
 $i++;
 /* Authentication type */
-/* === CONTROL PANEL SSO BYPASS === */
+/* === oPanel SSO BYPASS === */
 $original_session = session_name('PANEL_SESSION');
 session_start();
 $is_admin = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true);

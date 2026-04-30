@@ -128,7 +128,7 @@ def process_tasks():
     db.close()
 
 if __name__ == '__main__':
-    logging.info("Control Panel Daemon Started.")
+    logging.info("oPanel Daemon Started.")
     print("Daemon running. Press Ctrl+C to stop.")
     
     # The Infinite Loop

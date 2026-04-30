@@ -1,5 +1,5 @@
 -- schema.sql
--- Master Database Initialization for the Control Panel
+-- Master Database Initialization for the oPanel
 
 CREATE DATABASE IF NOT EXISTS panel_core;
 USE panel_core;

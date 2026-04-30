@@ -803,7 +803,7 @@ Select a Domain and Username above, then wait for logs to load...
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-dark text-white border-bottom">
-                <h5 class="modal-title"><i class="bi bi-sliders"></i> Control Panel Settings</h5>
+                <h5 class="modal-title"><i class="bi bi-sliders"></i> oPanel Settings</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
@@ -822,7 +822,7 @@ Select a Domain and Username above, then wait for logs to load...
                 
                 <h6 class="border-bottom pb-2 mb-3 text-primary"><i class="bi bi-shield-lock"></i> Secure Panel Domain</h6>
                 <div class="alert alert-info small">
-                    <i class="bi bi-info-circle"></i> Bind this control panel to a real domain name with a free Let's Encrypt SSL certificate. <strong>DNS must point to this server first!</strong>
+                    <i class="bi bi-info-circle"></i> Bind this oPanel to a real domain name with a free Let's Encrypt SSL certificate. <strong>DNS must point to this server first!</strong>
                 </div>
                 
                 <form id="securePanelForm">
@@ -839,7 +839,7 @@ Select a Domain and Username above, then wait for logs to load...
                     </div>
                     <div id="securePanelAlert" class="alert d-none mt-3"></div>
                     <button type="button" class="btn btn-dark w-100" id="submitSecurePanelBtn">
-                        <i class="bi bi-lock-fill"></i> Secure Control Panel
+                        <i class="bi bi-lock-fill"></i> Secure oPanel
                     </button>
                 </form>
                 <hr class="my-4 border-secondary border-opacity-25">

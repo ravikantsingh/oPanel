@@ -26,21 +26,32 @@ fi
 # ==========================================
 if [ "$ACTION" == "create" ]; then
     
-    # Check if user already exists in Linux
-    if id "$USERNAME" &>/dev/null; then
-        echo "Error: Linux user $USERNAME already exists."
+    # 1. OS-Level Safety Check
+    if id "$USERNAME" &>/dev/null || getent group "$USERNAME" &>/dev/null; then
+        echo "Error: The username or group '$USERNAME' is already reserved by Linux."
         exit 1
     fi
 
-    # Create the user with a home directory and no shell access
-    useradd -m -s /bin/bash "$USERNAME"
-    echo "$USERNAME:$PASSWORD" | chpasswd
+    # 2. Safely Create User
+    if ! useradd -m -s /bin/bash "$USERNAME"; then
+        echo "Error: Linux rejected the useradd command."
+        exit 1
+    fi
 
-    # Grant Nginx access to the user's group 
-    usermod -a -G "$USERNAME" www-data
+    # 3. Safely Set Password
+    if ! echo "$USERNAME:$PASSWORD" | chpasswd; then
+        echo "Error: Password policy rejected. Rolling back..."
+        userdel -r "$USERNAME"
+        exit 1
+    fi
+
+    # 4. Safely configure web directories
+    if ! usermod -a -G "$USERNAME" www-data; then
+        echo "Warning: Could not add www-data to user group."
+    fi
+    
     systemctl restart nginx
 
-    # Build the panel's directory structure
     mkdir -p /home/$USERNAME/web
     mkdir -p /home/$USERNAME/.ssh
 
@@ -49,16 +60,18 @@ if [ "$ACTION" == "create" ]; then
     chmod 750 /home/$USERNAME
     chmod 700 /home/$USERNAME/.ssh
 
-    # ---> THE MISSING SOURCE OF TRUTH <---
-    # Generate a unique webhook token for Git deployments
+    # ---> THE SOURCE OF TRUTH GATEWAY <---
     SECRET_TOKEN=$(openssl rand -hex 16)
     
-    # Insert the user into the Control Panel Database
-    mysql -e "INSERT IGNORE INTO panel_core.users (username, password_hash, email, webhook_token, status) VALUES ('$USERNAME', 'managed_by_os', '$USERNAME@localhost', '$SECRET_TOKEN', 'active');"
-    # -------------------------------------
-
-    echo "Success: User $USERNAME created and synced to database."
-    exit 0
+    # Only if ALL the above OS commands succeeded, we write to the database!
+    if mysql -e "INSERT IGNORE INTO panel_core.users (username, password_hash, email, webhook_token, status) VALUES ('$USERNAME', 'managed_by_os', '$USERNAME@localhost', '$SECRET_TOKEN', 'active');"; then
+        echo "Success: User $USERNAME created and fully synced to the database."
+        exit 0
+    else
+        echo "Critical Error: OS user created, but Database sync failed! Rolling back OS user..."
+        userdel -r "$USERNAME"
+        exit 1
+    fi
 
 # ==========================================
 # ACTION: DELETE USER
@@ -74,7 +87,7 @@ elif [ "$ACTION" == "delete" ]; then
     userdel -r "$USERNAME"
 
     # ---> THE MISSING SOURCE OF TRUTH <---
-    # Remove the user from the Control Panel Database
+    # Remove the user from the oPanel Database
     mysql -e "DELETE FROM panel_core.users WHERE username = '$USERNAME';"
     # -------------------------------------
 

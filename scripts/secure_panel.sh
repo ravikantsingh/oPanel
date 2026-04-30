@@ -1,13 +1,13 @@
 #!/bin/bash
 # /opt/panel/scripts/secure_panel.sh
-# Automates the transition from IP/Self-Signed to a Let's Encrypt Domain for the Control Panel
+# Automates the transition from IP/Self-Signed to a Let's Encrypt Domain for the oPanel
 
 PAYLOAD=$1
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 EMAIL=$(echo "$PAYLOAD" | jq -r '.email // "admin@'$DOMAIN'"')
 
 # 1. Generate the Let's Encrypt Certificate
-echo "Securing Control Panel on ${DOMAIN}..."
+echo "Securing oPanel on ${DOMAIN}..."
 certbot certonly --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${EMAIL}" --keep-until-expiring
 
 if [ $? -ne 0 ]; then
@@ -17,7 +17,7 @@ fi
 
 # 2. Automatically Overwrite the Panel's Nginx Configuration
 cat <<EOF > /etc/nginx/sites-available/default
-# Master Control Panel Configuration (Port 7443 ONLY)
+# Master oPanel Configuration (Port 7443 ONLY)
 server {
     listen 7443 ssl http2;
     listen [::]:7443 ssl http2;
@@ -48,7 +48,7 @@ EOF
 # 3. Test and Reload
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx
-    echo "Success: Control Panel is now secured and locked to ${DOMAIN}!"
+    echo "Success: oPanel is now secured and locked to ${DOMAIN}!"
     exit 0
 else
     echo "Critical Error: Nginx configuration failed. Panel SSL not updated."

@@ -15,6 +15,11 @@ DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 PHP_VERSION=$(echo "$PAYLOAD" | jq -r '.php_version // "8.3"') # Default to 8.3 if not passed
 
+# Auto-discover missing usernames from the Source of Truth
+if [ "$USERNAME" == "null" ] || [ -z "$USERNAME" ]; then
+    USERNAME=$(mysql -N -s -e "SELECT username FROM panel_core.domains WHERE domain_name='$DOMAIN' LIMIT 1;")
+fi
+
 # Define Paths
 NGINX_AVAILABLE="/etc/nginx/sites-available"
 NGINX_ENABLED="/etc/nginx/sites-enabled"

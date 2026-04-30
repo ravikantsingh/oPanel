@@ -485,6 +485,95 @@ $(document).ready(function() {
 
     // Trigger the fetch on load
     loadPhpVersions();
+    // === SOFTWARE CENTER MANAGER ===
+    function renderSoftwareCenter() {
+        // The definitive list of PHP versions supported by the Ondrej PPA
+        const supportedVersions = ['8.4', '8.3', '8.2', '8.1', '8.0', '7.4'];
+        
+        $.ajax({
+            url: '/ajax/get_php_versions.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    let installedVersions = response.versions;
+                    let tableRows = '';
+                    
+                    supportedVersions.forEach(function(ver) {
+                        let isInstalled = installedVersions.includes(ver);
+                        let badge = isInstalled 
+                            ? '<span class="badge bg-success shadow-sm"><i class="bi bi-check-circle"></i> Installed</span>' 
+                            : '<span class="badge bg-secondary shadow-sm">Not Installed</span>';
+                            
+                        let actionBtn = isInstalled
+                            ? `<button class="btn btn-sm btn-outline-danger software-action-btn" data-action="remove" data-version="${ver}"><i class="bi bi-trash"></i> Uninstall</button>`
+                            : `<button class="btn btn-sm btn-primary software-action-btn shadow-sm" data-action="install" data-version="${ver}"><i class="bi bi-download"></i> Install</button>`;
+
+                        tableRows += `
+                            <tr>
+                                <td class="fw-bold text-dark">PHP ${ver}</td>
+                                <td class="text-muted small">FastCGI Process Manager (FPM)</td>
+                                <td>${badge}</td>
+                                <td class="text-end">${actionBtn}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    $('#dynamicSoftwareTable').html(tableRows);
+                }
+            }
+        });
+    }
+
+    // Bind the execution clicks for the Software Center
+    $(document).on('click', '.software-action-btn', function() {
+        let action = $(this).data('action');
+        let version = $(this).data('version');
+        
+        if(confirm(`Are you sure you want to ${action} PHP ${version}? This will run in the background.`)) {
+            
+            let btn = $(this);
+            let originalText = btn.html();
+            // Show a quick loading spinner on the button itself
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Queueing...');
+
+            $.ajax({
+                url: '/ajax/install_php.php', // ---> FIX: Pointing to the real endpoint!
+                type: 'POST',
+                data: {
+                    sub_action: action,
+                    version: version
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if(res.success) {
+                        // 1. Close the Software Center Modal
+                        $('#softwareCenterModal').modal('hide');
+                        
+                        // 2. Instantly switch the UI back to the Overview Dashboard tab
+                        $('#overview-tab').tab('show');
+                        
+                        // 3. Force a task table refresh so the user sees it immediately!
+                        if (typeof fetchRecentTasks === "function") {
+                            fetchRecentTasks();
+                        }
+                    } else {
+                        alert("Error: " + res.error);
+                        btn.prop('disabled', false).html(originalText);
+                    }
+                },
+                error: function() {
+                    alert("Network error occurred.");
+                    btn.prop('disabled', false).html(originalText);
+                }
+            });
+        }
+    });
+
+    // Refresh the table every time the modal is opened
+    $('#softwareCenterModal').on('show.bs.modal', function () {
+        renderSoftwareCenter();
+    });
     // Run it immediately on page load, then every 3 seconds (3000ms)
     fetchSystemStats();
     setInterval(fetchSystemStats, 3000);

@@ -178,7 +178,7 @@ sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 # ---> DEPLOY CUSTOM ERROR PAGES <---
 mkdir -p /var/www/opanel_errors
 # Copy the files from your Git repo to the web directory
-cp /tmp/panel_temp/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
+cp /tmp/panel_temp/www/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
 
 # Secure the error pages
 chown -R www-data:www-data /var/www/opanel_errors
@@ -190,8 +190,15 @@ cat << 'EOF' > /etc/nginx/snippets/opanel-errors.conf
 # Intercept errors from FastCGI (PHP)
 fastcgi_intercept_errors on;
 
+error_page 403 /opanel_403.html;
 error_page 404 /opanel_404.html;
 error_page 500 502 503 504 /opanel_50x.html;
+
+location = /opanel_403.html {
+    root /var/www/opanel_errors;
+    allow all;
+    internal;
+}
 
 location = /opanel_404.html {
     root /var/www/opanel_errors;

@@ -4,6 +4,7 @@
 // 1. Domains & Web
 include 'views/modals/addDomainModal.php';
 include 'views/modals/changePhpModal.php';
+include 'views/modals/softwareCenterModal.php';
 include 'views/modals/phpSettingsModal.php';
 include 'views/modals/installSslModal.php';
 include 'views/modals/installWpModal.php';

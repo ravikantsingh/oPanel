@@ -5,6 +5,7 @@
                 <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addDomainModal"><i class="bi bi-plus"></i> New Domain</button>
                 <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#gitModal"><i class="bi bi-git"></i> Deploy Git Repo</button>
                 <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#changePhpModal"><i class="bi bi-filetype-php"></i> Change PHP</button>
+                <button class="btn btn-sm btn-primary ms-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#softwareCenterModal"><i class="bi bi-box-seam"></i> Software Center</button>
             </div>
         </div>
         <div class="card shadow-sm border-0">

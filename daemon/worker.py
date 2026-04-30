@@ -52,6 +52,7 @@ ALLOWED_ACTIONS = {
     'delete_domain': '/opt/panel/scripts/delete_domain.sh',
     'set_timezone': '/opt/panel/scripts/set_timezone.sh',
     'delete_user': '/opt/panel/scripts/user_manager.sh',
+    'install_php': '/opt/panel/scripts/php_installer.sh',
 }
 
 def get_db_connection():
@@ -96,11 +97,13 @@ def process_tasks():
         # 4. Execute the Bash Script
         try:
             # We pass the JSON payload directly as the first argument to the bash script
+            # 5-Minute Timeout Protection
             result = subprocess.run(
                 [script_path, payload_json],
                 capture_output=True,
                 text=True,
-                check=False # We handle the exit code manually
+                check=False,
+                timeout=300 # Kills the bash script if it hangs for more than 5 minutes
             )
 
             stdout = result.stdout.strip()
@@ -118,12 +121,18 @@ def process_tasks():
                 cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (full_output, task_id))
                 logging.error(f"Task #{task_id} failed with exit code {exit_code}.")
 
+        # Explicit Timeout Handler
+        except subprocess.TimeoutExpired:
+            error_log = "CRITICAL: Task timed out after 300 seconds and was forcefully killed to prevent queue blockage."
+            logging.error(error_log)
+            cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_log, task_id))
+            db.commit()
+
         except Exception as e:
             error_log = f"Python Execution Exception: {str(e)}"
             logging.error(error_log)
             cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_log, task_id))
-
-        db.commit()
+            db.commit()
 
     cursor.close()
     db.close()
@@ -132,6 +141,20 @@ if __name__ == '__main__':
     logging.info("oPanel Daemon Started.")
     print("Daemon running. Press Ctrl+C to stop.")
     
+    # ---> NEW: GHOST TASK CLEANSER <---
+    # Automatically heal orphaned tasks if the daemon is restarted
+    try:
+        db_clean = get_db_connection()
+        if db_clean:
+            clean_cursor = db_clean.cursor()
+            clean_cursor.execute("UPDATE tasks_queue SET status='failed', output_log='Task orphaned due to daemon restart or memory spike.' WHERE status='processing'")
+            db_clean.commit()
+            clean_cursor.close()
+            db_clean.close()
+            logging.info("Ghost tasks cleared.")
+    except Exception as e:
+        logging.error(f"Failed to clean ghost tasks: {e}")
+        
     # The Infinite Loop
     while True:
         process_tasks()

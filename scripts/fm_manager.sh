@@ -90,6 +90,7 @@ if ! grep -q "location \^~ /filemanager" "$VHOST"; then
     awk -v web_root="$WEB_ROOT" -v doc_root="$DOC_ROOT" -v fm_dir="$FM_DIR" -v php_ver="$PHP_VER" -v user="$USERNAME" '/location \/ \{/ {
         print "    # Isolated Tiny File Manager"
         print "    location ^~ /filemanager {"
+        print "        modsecurity off;
         print "        root " web_root ";"
         print "        index index.php;"
         print "        location ~ \\.php$ {"

@@ -36,8 +36,6 @@ apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
     bind9 bind9utils bind9-doc \
     pure-ftpd pure-ftpd-common \
     libnginx-mod-http-modsecurity modsecurity-crs \
-    php8.1-fpm php8.1-mysql \
-    php8.2-fpm php8.2-mysql \
     php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl \
     nodejs
 

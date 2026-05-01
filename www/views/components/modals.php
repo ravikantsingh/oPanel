@@ -40,4 +40,7 @@ include 'views/modals/connectionInfoModal.php';
 include 'views/modals/adminProfileModal.php';
 include 'views/modals/systemSettingsModal.php';
 include 'views/modals/pmaSettingsModal.php';
+
+//7. Mail
+include 'views/modals/mailBoxModal.php';
 ?>

@@ -175,3 +175,24 @@ CREATE TABLE IF NOT EXISTS backup_schedules (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS mail_domains (
+    name VARCHAR(255) NOT NULL PRIMARY KEY
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* Table for physical email accounts */
+CREATE TABLE IF NOT EXISTS mail_users (
+    email VARCHAR(255) NOT NULL PRIMARY KEY,
+    domain VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    quota INT DEFAULT 1024,
+    FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+/* Table for email forwarders/aliases */
+CREATE TABLE IF NOT EXISTS mail_aliases (
+    source VARCHAR(255) NOT NULL PRIMARY KEY,
+    domain VARCHAR(255) NOT NULL,
+    destination TEXT NOT NULL,
+    FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

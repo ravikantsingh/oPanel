@@ -57,6 +57,9 @@ ALLOWED_ACTIONS = {
     'delete_user': '/opt/panel/scripts/user_manager.sh',
     'install_php': '/opt/panel/scripts/php_installer.sh',
     'manage_mail_dns': '/opt/panel/scripts/mail_dns_manager.sh',
+    'manage_mail_user': '/opt/panel/scripts/mail_user_manager.sh',
+    'install_mail_engine': '/opt/panel/scripts/install_mail_engine.sh',
+    'uninstall_mail_engine': '/opt/panel/scripts/uninstall_mail_engine.sh',
 }
 
 def get_db_connection():

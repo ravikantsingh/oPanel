@@ -43,7 +43,7 @@ EOF
 # Fetch the secret token from the database
 WEBHOOK_TOKEN=$(mysql -N -s -e "SELECT webhook_token FROM panel_core.users WHERE username='$USERNAME';")
 
-# ---> NEW CRYPTOGRAPHIC SSO INJECTION <---
+# NEW CRYPTOGRAPHIC SSO INJECTION
 cat << 'EOF' > /tmp/sso_logic.txt
 /* === CRYPTOGRAPHIC CROSS-DOMAIN SSO === */
 if (isset($_GET['sso_t']) && isset($_GET['sso_h'])) {
@@ -82,15 +82,15 @@ rm /tmp/sso_logic.txt
 # 4. Strict Ownership (Crucial for ACL Isolation)
 chown -R $USERNAME:$USERNAME "$FM_DIR"
 
-# 5. Safe Nginx Alias Injection
-# Nginx alias + PHP can be buggy. This exact regex block prevents 404/No Input File errors.
-# 5. Safe Nginx Root Injection (Bypasses the alias 404 bug)
 # 5. Safe Nginx Root Injection with open_basedir override
 if ! grep -q "location \^~ /filemanager" "$VHOST"; then
+    # Backup the config BEFORE modifying it
+    cp "$VHOST" "${VHOST}.bak"
+
     awk -v web_root="$WEB_ROOT" -v doc_root="$DOC_ROOT" -v fm_dir="$FM_DIR" -v php_ver="$PHP_VER" -v user="$USERNAME" '/location \/ \{/ {
         print "    # Isolated Tiny File Manager"
         print "    location ^~ /filemanager {"
-        print "        modsecurity off;
+        print "        modsecurity off;"
         print "        root " web_root ";"
         print "        index index.php;"
         print "        location ~ \\.php$ {"
@@ -106,11 +106,13 @@ fi
 # 6. Test and Reload
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx
+    # Clean up the backup file since it succeeded
+    rm -f "${VHOST}.bak"
     echo "Success: File Manager deployed securely for $DOMAIN."
     exit 0
 else
-    # Rollback if the awk injection failed
-    cp "${VHOST}.bak" "$VHOST" 2>/dev/null
-    echo "Error: Nginx syntax failed during File Manager injection."
+    # Flawless Rollback Protocol
+    mv "${VHOST}.bak" "$VHOST" 2>/dev/null
+    echo "Error: Nginx syntax failed during File Manager injection. Rolled back safely."
     exit 1
 fi

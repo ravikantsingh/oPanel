@@ -56,6 +56,7 @@ git clone "$GITHUB_REPO" /tmp/panel_temp
 cp -r /tmp/panel_temp/daemon /opt/panel/
 cp -r /tmp/panel_temp/scripts /opt/panel/
 cp -r /tmp/panel_temp/www /opt/panel/
+cp -r /tmp/panel_temp/templates /opt/panel/
 
 # ==========================================
 # 3. SET STRICT PERMISSIONS
@@ -67,7 +68,7 @@ mkdir -p /opt/panel/backups/websites
 mkdir -p /etc/nginx/waf
 
 chown -R www-data:www-data /opt/panel/www
-chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs
+chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates
 
 # Make all bash scripts and the Python daemons executable
 chmod +x /opt/panel/scripts/*.sh
@@ -115,7 +116,7 @@ EOF
 # ==========================================
 echo -e "\e[34m[5/10] Installing phpMyAdmin...\e[0m"
 
-# ---> FIX: Robust Download with Fallback to prevent silent 404s <---
+# FIX: Robust Download with Fallback to prevent silent 404s
 wget -q --tries=3 --timeout=15 https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
 
 # If wget failed or the file is empty, fallback to curl
@@ -169,11 +170,11 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -out /etc/ssl/certs/mypanel-selfsigned.crt \
     -subj "/C=IN/ST=UP/L=City/O=oPanel/CN=$SERVER_IP" >/dev/null 2>&1
 
-# ---> HIDE OS & NGINX VERSION <---
+# HIDE OS & NGINX VERSION
 # This uncomments the server_tokens rule in the master Nginx config
 sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 
-# ---> DEPLOY CUSTOM ERROR PAGES <---
+# DEPLOY CUSTOM ERROR PAGES
 mkdir -p /var/www/opanel_errors
 # Copy the files from your Git repo to the web directory
 cp /tmp/panel_temp/www/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
@@ -182,6 +183,18 @@ cp /tmp/panel_temp/www/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
 chown -R www-data:www-data /var/www/opanel_errors
 find /var/www/opanel_errors -type f -exec chmod 644 {} +
 chmod 755 /var/www/opanel_errors
+
+# DEPLOY GLOBAL OPANEL LANDING PAGE
+# Clear out the default Ubuntu/Nginx landing pages
+rm -f /var/www/html/index.nginx-debian.html
+rm -f /var/www/html/index.html
+
+# Copy the master template to the global web root
+cp /opt/panel/templates/index.html /var/www/html/index.html
+
+# Secure the permissions
+chown www-data:www-data /var/www/html/index.html
+chmod 644 /var/www/html/index.html
 
 # Generate the global error snippet automatically
 cat << 'EOF' > /etc/nginx/snippets/opanel-errors.conf
@@ -219,7 +232,7 @@ systemctl restart nginx
 # ==========================================
 echo -e "\e[34m[8/10] Initializing Background Queue Worker...\e[0m"
 
-# ---> NEW: Sync the generated DB password with the Python worker & scheduler <---
+# NEW: Sync the generated DB password with the Python worker & scheduler
 sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
 sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
 
@@ -228,7 +241,7 @@ systemctl daemon-reload
 systemctl enable panel-daemon
 systemctl start panel-daemon
 
-# ---> NEW: WAF & Master Scheduler Cron Jobs <---
+# NEW: WAF & Master Scheduler Cron Jobs
 (crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
 (crontab -l 2>/dev/null; echo "0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1") | crontab -
 

@@ -56,6 +56,7 @@ ALLOWED_ACTIONS = {
     'set_timezone': '/opt/panel/scripts/set_timezone.sh',
     'delete_user': '/opt/panel/scripts/user_manager.sh',
     'install_php': '/opt/panel/scripts/php_installer.sh',
+    'manage_mail_dns': '/opt/panel/scripts/mail_dns_manager.sh',
 }
 
 def get_db_connection():

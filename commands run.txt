@@ -57,3 +57,7 @@
 
     # 4. Check the Daemon's Heartbeat directly!
     sudo systemctl status panel-daemon --no-pager
+
+# Give it the proper permissions so your Python worker can run it:
+    sudo chmod +x /opt/panel/scripts/mail_dns_manager.sh
+    sudo chown root:root /opt/panel/scripts/mail_dns_manager.sh

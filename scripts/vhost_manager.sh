@@ -49,14 +49,13 @@ if [ "$ACTION" == "create" ]; then
     mkdir -p "$WEB_ROOT"
     mkdir -p "$LOG_DIR"
 
-    # Create a default index.php file to prove it works
-    cat > "$WEB_ROOT/index.php" <<EOF
-<?php
-echo "<h1>Welcome to $DOMAIN!</h1>";
-echo "<p>Hosted securely on your custom oPanel.</p>";
-phpinfo();
-?>
-EOF
+    # Copy the oPanel default page into the new domain
+    if [ -f /opt/panel/templates/index.html ]; then
+        cp /opt/panel/templates/index.html "$WEB_ROOT/index.html"
+    else
+        # Fallback just in case the template goes missing
+        echo "<h1>Welcome to $DOMAIN</h1><p>Powered by oPanel</p>" > "$WEB_ROOT/index.html"
+    fi
 
     # Fix permissions (User owns their files, www-data can read them)
     chown -R $USERNAME:$USERNAME "/home/$USERNAME/web/$DOMAIN"
@@ -116,6 +115,30 @@ EOF
             echo "Error: PHP-FPM pool generation failed syntax check. Rolled back."
             exit 1
         fi
+    fi
+    
+# Auto-Generate BIND9 Base Zone
+    ZONE_FILE="/etc/bind/zones/$DOMAIN.db"
+    SERVER_IP=$(curl -s ifconfig.me)
+    
+    if [ ! -f "$ZONE_FILE" ]; then
+        cat <<EOF > "$ZONE_FILE"
+\$TTL 86400
+@   IN  SOA ns1.$DOMAIN. admin.$DOMAIN. (
+            $(date +%Y%m%d)01 ; Serial YYYYMMDDNN
+            3600       ; Refresh
+            1800       ; Retry
+            604800     ; Expire
+            86400 )    ; Minimum TTL
+@   IN  NS  ns1.$DOMAIN.
+@   IN  NS  ns2.$DOMAIN.
+@   IN  A   $SERVER_IP
+www IN  A   $SERVER_IP
+ns1 IN  A   $SERVER_IP
+ns2 IN  A   $SERVER_IP
+EOF
+        chown bind:bind "$ZONE_FILE"
+        systemctl reload bind9
     fi
 
     # 3. Enable the site and test Nginx

@@ -41,3 +41,19 @@
 
 # Now, we need to teach MariaDB all the named timezones in the world. Linux stores these in /usr/share/zoneinfo. We will pipe them directly into the MySQL system tables.
     sudo mysql_tzinfo_to_sql /usr/share/zoneinfo | sudo mysql mysql
+
+# You asked how you can see exactly what the daemon is doing and why it's stuck. We can use a powerful Linux command called strace to look inside the brain of the Python process while it is running.
+    sudo strace -p $(pgrep -f worker.py)
+
+    # 2. Automatically grab the real DB password from your PHP config and inject it into Python
+    REAL_PASS=$(grep "'DB_PASS'" /opt/panel/www/config/database.php | cut -d"'" -f4)
+    sudo sed -i "s/YOUR_SECURE_PASSWORD/$REAL_PASS/g" /opt/panel/daemon/worker.py
+
+    # 3. Secure the file, mark the stuck UI tasks as failed, and restart the daemon
+    sudo chmod +x /opt/panel/daemon/worker.py
+    mysql -e "UPDATE panel_core.tasks_queue SET status='failed', output_log='System reset to fix connection leak.' WHERE status='pending' OR status='processing';"
+    sudo systemctl daemon-reload
+    sudo systemctl restart panel-daemon
+
+    # 4. Check the Daemon's Heartbeat directly!
+    sudo systemctl status panel-daemon --no-pager

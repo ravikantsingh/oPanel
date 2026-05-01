@@ -6,6 +6,9 @@ import time
 import subprocess
 import json
 import logging
+import os
+import signal
+import tempfile
 
 # Configure Logging
 logging.basicConfig(
@@ -14,7 +17,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Database Credentials (Must match your Phase 1.1 setup)
+# Database Credentials
 DB_CONFIG = {
     'host': '127.0.0.1',
     'user': 'panel_user',
@@ -22,7 +25,7 @@ DB_CONFIG = {
     'database': 'panel_core'
 }
 
-# Security Whitelist: Map database actions to specific bash scripts
+# Security Whitelist
 ALLOWED_ACTIONS = {
     'create_user': '/opt/panel/scripts/user_manager.sh',
     'create_vhost': '/opt/panel/scripts/vhost_manager.sh',
@@ -68,8 +71,6 @@ def process_tasks():
         return
 
     cursor = db.cursor(dictionary=True)
-
-    # 1. Look for ONE pending task (oldest first)
     cursor.execute("SELECT id, action, payload FROM tasks_queue WHERE status = 'pending' ORDER BY id ASC LIMIT 1")
     task = cursor.fetchone()
 
@@ -80,57 +81,62 @@ def process_tasks():
 
         logging.info(f"Picked up Task #{task_id}: {action}")
 
-        # 2. Mark task as processing
         cursor.execute("UPDATE tasks_queue SET status = 'processing' WHERE id = %s", (task_id,))
         db.commit()
 
-        # 3. Security Check
         if action not in ALLOWED_ACTIONS:
             error_msg = f"Security Error: Action '{action}' is not whitelisted."
-            logging.error(error_msg)
             cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_msg, task_id))
             db.commit()
+            cursor.close()
+            db.close()
             return
 
         script_path = ALLOWED_ACTIONS[action]
 
-        # 4. Execute the Bash Script
         try:
-            # We pass the JSON payload directly as the first argument to the bash script
-            # 5-Minute Timeout Protection
-            result = subprocess.run(
-                [script_path, payload_json],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=300 # Kills the bash script if it hangs for more than 5 minutes
-            )
+            # ---> THE MASTER SRE FIX: Write to a physical disk file instead of using Pipes <---
+            with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as temp_log:
+                process = subprocess.Popen(
+                    [script_path, payload_json],
+                    stdout=temp_log,
+                    stderr=subprocess.STDOUT, # Merge stderr into stdout
+                    start_new_session=True
+                )
 
-            stdout = result.stdout.strip()
-            stderr = result.stderr.strip()
-            exit_code = result.returncode
+                timeout_seconds = 300
+                start_time = time.time()
+                timed_out = False
+                
+                # Manual timeout polling
+                while process.poll() is None:
+                    time.sleep(1)
+                    if time.time() - start_time > timeout_seconds:
+                        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                        timed_out = True
+                        process.wait() # Wait for the kill to register
+                        break
 
-            # Combine output for the database log
-            full_output = f"EXIT CODE: {exit_code}\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}"
-
-            # 5. Update Database with Results
-            if exit_code == 0:
-                cursor.execute("UPDATE tasks_queue SET status = 'completed', output_log = %s WHERE id = %s", (full_output, task_id))
-                logging.info(f"Task #{task_id} completed successfully.")
-            else:
-                cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (full_output, task_id))
-                logging.error(f"Task #{task_id} failed with exit code {exit_code}.")
-
-        # Explicit Timeout Handler
-        except subprocess.TimeoutExpired:
-            error_log = "CRITICAL: Task timed out after 300 seconds and was forcefully killed to prevent queue blockage."
-            logging.error(error_log)
-            cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_log, task_id))
-            db.commit()
+                # The process is completely dead/finished. Safe to read the physical file.
+                temp_log.seek(0)
+                output_text = temp_log.read()
+                exit_code = process.returncode
+                
+                # Database Update Logic
+                if timed_out:
+                    error_log = f"CRITICAL: Task timed out after 300 seconds. Process Group terminated.\nOUTPUT:\n{output_text}"
+                    cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_log, task_id))
+                elif exit_code == 0:
+                    full_output = f"EXIT CODE: {exit_code}\nOUTPUT:\n{output_text}"
+                    cursor.execute("UPDATE tasks_queue SET status = 'completed', output_log = %s WHERE id = %s", (full_output, task_id))
+                else:
+                    full_output = f"EXIT CODE: {exit_code}\nOUTPUT:\n{output_text}"
+                    cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (full_output, task_id))
+                
+                db.commit()
 
         except Exception as e:
             error_log = f"Python Execution Exception: {str(e)}"
-            logging.error(error_log)
             cursor.execute("UPDATE tasks_queue SET status = 'failed', output_log = %s WHERE id = %s", (error_log, task_id))
             db.commit()
 
@@ -139,23 +145,18 @@ def process_tasks():
 
 if __name__ == '__main__':
     logging.info("oPanel Daemon Started.")
-    print("Daemon running. Press Ctrl+C to stop.")
     
-    # ---> NEW: GHOST TASK CLEANSER <---
-    # Automatically heal orphaned tasks if the daemon is restarted
     try:
         db_clean = get_db_connection()
         if db_clean:
             clean_cursor = db_clean.cursor()
-            clean_cursor.execute("UPDATE tasks_queue SET status='failed', output_log='Task orphaned due to daemon restart or memory spike.' WHERE status='processing'")
+            clean_cursor.execute("UPDATE tasks_queue SET status='failed', output_log='Task orphaned due to daemon restart.' WHERE status='processing'")
             db_clean.commit()
             clean_cursor.close()
             db_clean.close()
-            logging.info("Ghost tasks cleared.")
     except Exception as e:
         logging.error(f"Failed to clean ghost tasks: {e}")
         
-    # The Infinite Loop
     while True:
         process_tasks()
-        time.sleep(3) # Check the database every 3 seconds to save CPU
+        time.sleep(3)

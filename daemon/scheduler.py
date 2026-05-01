@@ -8,6 +8,8 @@ from datetime import datetime
 DB_PASS = 'YOUR_DB_PASSWORD'
 
 def run_scheduler():
+    conn = None
+    cursor = None
     try:
         conn = mysql.connector.connect(
             host="localhost",
@@ -60,12 +62,17 @@ def run_scheduler():
             dispatched_count += 1
             
         conn.commit()
-        cursor.close()
-        conn.close()
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Auto-Backup Engine: Scheduled {dispatched_count} tasks.")
 
     except Exception as e:
         print(f"Scheduler Error: {e}")
+        
+    # ---> THE FIX: Guarantee connection cleanup even if it crashes <---
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 if __name__ == "__main__":
     run_scheduler()

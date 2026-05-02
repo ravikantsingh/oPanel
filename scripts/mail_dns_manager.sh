@@ -6,7 +6,7 @@ PAYLOAD=$1
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 PROVIDER=$(echo "$PAYLOAD" | jq -r '.provider') # 'google' or 'microsoft'
 
-ZONE_FILE="/etc/bind/zones/$DOMAIN.db"
+ZONE_FILE="/etc/bind/zones/db.$DOMAIN"
 
 if [ ! -f "$ZONE_FILE" ]; then
     echo "Error: DNS zone file for $DOMAIN not found."

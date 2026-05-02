@@ -2,6 +2,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Firewall Rules & DNS</h5>
             <div>
+                <button class="btn btn-sm btn-dark me-2" id="initDnsZoneBtn"><i class="bi bi-magic"></i> Initialize New Zone</button>
                 <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#firewallModal"><i class="bi bi-shield-lock"></i> Open Port</button>
                 <button class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#installSslModal"><i class="bi bi-lock"></i> Install SSL</button>
                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#dnsRecordModal"><i class="bi bi-globe"></i> Manage DNS</button>

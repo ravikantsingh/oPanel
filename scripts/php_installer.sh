@@ -26,8 +26,10 @@ LOG_FILE="/tmp/php_mgr_v${VERSION}.log"
 # ==========================================
 if [ "$ACTION" == "install" ]; then
     echo "Initiating unattended installation of PHP $VERSION..." > "$LOG_FILE"
+
+    # Force the PPA to register before updating the cache
+    add-apt-repository ppa:ondrej/php -y >> "$LOG_FILE" 2>&1
     
-    # Run apt-get completely detached, logging to the file
     # Run apt-get completely detached, logging to the file
     apt-get update -qq >> "$LOG_FILE" 2>&1
     apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" php$VERSION-fpm php$VERSION-mysql php$VERSION-cli php$VERSION-curl php$VERSION-mbstring php$VERSION-xml php$VERSION-zip >> "$LOG_FILE" 2>&1

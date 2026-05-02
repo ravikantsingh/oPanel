@@ -2418,5 +2418,31 @@ $(document).ready(function() {
             }
         });
     });
+    // === Initialize Default BIND9 Zone ===
+    $(document).on('click', '#initDnsZoneBtn', function() {
+        let domain = prompt("Enter the exact domain name to initialize its baseline DNS Zone (e.g., example.com):");
+        if(!domain) return;
+
+        let btn = $(this);
+        let originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Generating Zone...');
+
+        $.ajax({
+            url: '/ajax/create_dns.php',
+            type: 'POST',
+            data: { domain: domain },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert(response.message + " Check Live Tasks for status.");
+                    // Auto-refresh the DNS table after 3 seconds so you see the new Source of Truth data!
+                    setTimeout(fetchDnsRecords, 3000); 
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
     
 });

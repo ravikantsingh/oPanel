@@ -117,27 +117,51 @@ EOF
         fi
     fi
     
-# Auto-Generate BIND9 Base Zone
-    ZONE_FILE="/etc/bind/zones/$DOMAIN.db"
+# Auto-Generate BIND9 Base Zone & Sync Source of Truth
+    ZONE_FILE="/etc/bind/zones/db.$DOMAIN"
+    CONF_FILE="/etc/bind/named.conf.local"
     SERVER_IP=$(curl -s ifconfig.me)
+    SERIAL=$(date +%Y%m%d01)
     
     if [ ! -f "$ZONE_FILE" ]; then
         cat <<EOF > "$ZONE_FILE"
-\$TTL 86400
-@   IN  SOA ns1.$DOMAIN. admin.$DOMAIN. (
-            $(date +%Y%m%d)01 ; Serial YYYYMMDDNN
-            3600       ; Refresh
-            1800       ; Retry
-            604800     ; Expire
-            86400 )    ; Minimum TTL
-@   IN  NS  ns1.$DOMAIN.
-@   IN  NS  ns2.$DOMAIN.
-@   IN  A   $SERVER_IP
-www IN  A   $SERVER_IP
-ns1 IN  A   $SERVER_IP
-ns2 IN  A   $SERVER_IP
+\$TTL    86400
+@       IN      SOA     ns1.$DOMAIN. admin.$DOMAIN. (
+                     $SERIAL         ; Serial
+                     3600            ; Refresh
+                     1800            ; Retry
+                     604800          ; Expire
+                     86400 )         ; Minimum TTL
+@       IN      NS      ns1.$DOMAIN.
+@       IN      NS      ns2.$DOMAIN.
+@       IN      A       $SERVER_IP
+ns1     IN      A       $SERVER_IP
+ns2     IN      A       $SERVER_IP
+www     IN      A       $SERVER_IP
+mail    IN      A       $SERVER_IP
+ftp     IN      CNAME   $DOMAIN.
+@       IN      MX      10 mail.$DOMAIN.
+@       IN      TXT     "v=spf1 a mx ip4:$SERVER_IP ~all"
 EOF
         chown bind:bind "$ZONE_FILE"
+        chmod 644 "$ZONE_FILE"
+
+        # Inject into BIND9 config
+        if ! grep -q "zone \"$DOMAIN\"" "$CONF_FILE"; then
+            echo "zone \"$DOMAIN\" { type master; file \"$ZONE_FILE\"; };" >> "$CONF_FILE"
+        fi
+
+        # Sync the Database Source of Truth
+        mysql -e "INSERT IGNORE INTO panel_core.dns_records (domain_name, record_name, record_type, record_value) VALUES 
+        ('$DOMAIN', '@', 'A', '$SERVER_IP'), 
+        ('$DOMAIN', 'ns1', 'A', '$SERVER_IP'), 
+        ('$DOMAIN', 'ns2', 'A', '$SERVER_IP'), 
+        ('$DOMAIN', 'www', 'A', '$SERVER_IP'), 
+        ('$DOMAIN', 'mail', 'A', '$SERVER_IP'),
+        ('$DOMAIN', 'ftp', 'CNAME', '$DOMAIN.'), 
+        ('$DOMAIN', '@', 'MX', '10 mail.$DOMAIN.'), 
+        ('$DOMAIN', '@', 'TXT', 'v=spf1 a mx ip4:$SERVER_IP ~all');"
+        
         systemctl reload bind9
     fi
 

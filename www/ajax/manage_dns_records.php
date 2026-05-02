@@ -12,11 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING); // 'add' or 'delete'
-$domain = strtolower(trim(filter_input(INPUT_POST, 'domain', FILTER_SANITIZE_URL)));
-$type = strtoupper(trim(filter_input(INPUT_POST, 'type', FILTER_SANITIZE_STRING))); // A, CNAME, TXT, MX
-$name = strtolower(trim(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING)));
-$value = trim(filter_input(INPUT_POST, 'value', FILTER_SANITIZE_STRING));
+// Bypassing removed FILTER_SANITIZE_STRING for PHP 8.3 compatibility
+$action = strip_tags($_POST['action'] ?? '');
+$domain = strtolower(trim(strip_tags($_POST['domain'] ?? '')));
+$type = strtoupper(trim(strip_tags($_POST['type'] ?? '')));
+$name = strtolower(trim(strip_tags($_POST['name'] ?? '')));
+$value = trim(strip_tags($_POST['value'] ?? ''));
 
 // Basic Validation
 $allowed_types = ['A', 'CNAME', 'TXT', 'MX'];

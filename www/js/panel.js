@@ -172,33 +172,135 @@ $(document).ready(function() {
         }
     });
     // Install SSL Form Submission
-    $('#installSslForm').on('submit', function(e) {
-        e.preventDefault();
+    // === NEW MODULAR SSL CONTROLLER ===
+    
+    // 1. When the master domain dropdown changes, fetch the SSL status
+    $('#sslTargetDomain').on('change', function() {
+        let domain = $(this).val();
         
-        let btn = $('#submitSslBtn');
-        let alertBox = $('#sslFormAlert');
-        
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Communicating with Let\'s Encrypt...');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+        // Sync the hidden inputs in all 3 forms so they know which domain to target
+        $('.sync-domain').val(domain);
+
+        if(!domain) {
+            // Hide everything if no domain is selected
+            $('#sslStateUnsecured, #sslStateSecured, .tab-content form').addClass('opacity-50').css('pointer-events', 'none');
+            return;
+        }
+
+        // Enable forms
+        $('#sslStateUnsecured, #sslStateSecured, .tab-content form').removeClass('opacity-50').css('pointer-events', 'auto');
+
+        // Show a loading state briefly
+        $('#sslStateSecured').addClass('d-none');
+        $('#sslStateUnsecured').addClass('d-none');
 
         $.ajax({
-            url: '/ajax/install_ssl.php',
+            url: '/ajax/get_ssl_info.php',
+            type: 'POST',
+            data: { domain: domain },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    if(response.is_secured) {
+                        // Populate Telemetry Data
+                        $('#sslIssuerDisplay').text(response.issuer);
+                        $('#sslValidFrom').text(response.valid_from);
+                        $('#sslValidUntil').text(response.valid_until);
+                        $('#sslDaysRemainingText').text(response.days_remaining + ' Days');
+                        
+                        // Update Progress Bar
+                        let bar = $('#sslDaysBar');
+                        bar.css('width', response.percent_remaining + '%');
+                        bar.removeClass('bg-success bg-warning bg-danger').addClass('bg-' + response.status_color);
+
+                        // Show Secured View
+                        $('#sslStateSecured').removeClass('d-none');
+                    } else {
+                        // Show Unsecured (Issue) View
+                        $('#sslStateUnsecured').removeClass('d-none');
+                    }
+                } else {
+                    alert("Error checking SSL status: " + response.error);
+                }
+            }
+        });
+    });
+
+    // 2. Issue Let's Encrypt Form Submission
+    $('#issueLetsEncryptForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        let btn = $('#btnIssueLe');
+        let originalText = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Communicating with Let\'s Encrypt...');
+
+        $.ajax({
+            url: '/ajax/install_ssl.php', // Your existing Phase 1 script
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
-                    $('#installSslForm')[0].reset();
+                    alert("SSL Installed Successfully! The panel will now refresh.");
+                    // Close modal and refresh domains table
+                    $('#installSslModal').modal('hide');
+                    setTimeout(fetchDomains, 1000);
                 } else {
-                    alertBox.addClass('alert-danger').text(response.error).removeClass('d-none');
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false).html(originalText);
                 }
             },
             error: function() {
-                alertBox.addClass('alert-danger').text('A server error occurred.').removeClass('d-none');
-            },
-            complete: function() {
-                btn.prop('disabled', false).text('Secure Domain (HTTPS)');
+                alert("A server error occurred.");
+                btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // 3. HSTS Slider Sync Logic
+    $('#hstsToggle').on('change', function() {
+        if($(this).is(':checked')) {
+            $('.hsts-controls').removeClass('opacity-50').css('pointer-events', 'auto');
+        } else {
+            $('.hsts-controls').addClass('opacity-50').css('pointer-events', 'none');
+        }
+    });
+
+    $('#hstsSlider').on('input', function() {
+        let seconds = $(this).val();
+        let months = Math.round(seconds / 2592000); // 30 days
+        let labelText = months + ' Months';
+        if(months === 12) labelText = '1 Year';
+        if(months === 24) labelText = '2 Years (Recommended)';
+        
+        $('#hstsDurationLabel').text(labelText);
+    });
+
+    // 4. Save Advanced Routing (HSTS/Force HTTPS)
+    $('#sslRoutingForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        let btn = $('#btnSaveRouting');
+        let domain = $('#sslTargetDomain').val();
+        let originalText = btn.html();
+
+        if(!domain) { alert("Select a domain first."); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Applying Rules...');
+
+        $.ajax({
+            url: '/ajax/manage_https_routing.php', // We will build this next!
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert("Routing rules applied successfully!");
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });

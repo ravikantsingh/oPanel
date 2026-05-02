@@ -60,6 +60,8 @@ CREATE TABLE IF NOT EXISTS `domains` (
   `git_branch` varchar(100) DEFAULT 'main',
   `latest_commits` text DEFAULT NULL,
   `has_ssl` tinyint(1) DEFAULT 0,
+  `force_https` tinyint(1) DEFAULT 0,
+  `hsts_enabled` tinyint(1) DEFAULT 0,
   `waf_enabled` tinyint(1) DEFAULT 0,
   `waf_custom_rules` text DEFAULT NULL,
   `php_memory_limit` varchar(10) DEFAULT '128M',

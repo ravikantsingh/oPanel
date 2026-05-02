@@ -12,10 +12,18 @@ echo "Initiating Scorched Earth protocol for $DOMAIN..."
 rm -f /etc/nginx/sites-available/$DOMAIN.conf
 rm -f /etc/nginx/sites-enabled/$DOMAIN.conf
 
-# 2. Clean up Let's Encrypt SSL (Suppress errors if no cert exists)
+# 2. Clean up Let's Encrypt SSL
 certbot delete --cert-name "$DOMAIN" --non-interactive 2>/dev/null
 
-# 3. Destroy the Web Root (Files, Git, TFM)
+# ---> THE NEW FIX: SAFE PANEL FALLBACK <---
+# If the master panel was using this certificate, gracefully revert it to self-signed keys
+if grep -q "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" /etc/nginx/sites-available/default; then
+    echo "Master Panel was using this domain. Reverting port 7443 to self-signed certificates..."
+    sed -i "s|/etc/letsencrypt/live/${DOMAIN}/fullchain.pem|/etc/ssl/certs/mypanel-selfsigned.crt|g" /etc/nginx/sites-available/default
+    sed -i "s|/etc/letsencrypt/live/${DOMAIN}/privkey.pem|/etc/ssl/private/mypanel-selfsigned.key|g" /etc/nginx/sites-available/default
+fi
+
+# 3. Destroy the Web Root
 WEB_ROOT="/home/$USERNAME/web/$DOMAIN"
 if [ -d "$WEB_ROOT" ]; then
     rm -rf "$WEB_ROOT"
@@ -35,8 +43,7 @@ for FTP_USER in $(mysql -N -B -e "SELECT ftp_user FROM panel_core.ftp_accounts W
 done
 pure-pw mkdb
 
-# 6. ---> SOURCE OF TRUTH CLEANUP <---
-# Purge all related records from the oPanel Database
+# 6. Source of Truth Cleanup
 mysql -e "DELETE FROM panel_core.dns_records WHERE domain_name='$DOMAIN';"
 mysql -e "DELETE FROM panel_core.ftp_accounts WHERE domain_name='$DOMAIN';"
 mysql -e "DELETE FROM panel_core.domains WHERE domain_name='$DOMAIN';"

@@ -60,6 +60,7 @@ ALLOWED_ACTIONS = {
     'manage_mail_user': '/opt/panel/scripts/mail_user_manager.sh',
     'install_mail_engine': '/opt/panel/scripts/install_mail_engine.sh',
     'uninstall_mail_engine': '/opt/panel/scripts/uninstall_mail_engine.sh',
+    'https_routing_manager': '/opt/panel/scripts/https_routing_manager.sh',
 }
 
 def get_db_connection():

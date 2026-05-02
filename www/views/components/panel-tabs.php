@@ -17,4 +17,7 @@
   <li class="nav-item" role="presentation">
     <button class="nav-link fw-bold" id="backups-tab" data-bs-toggle="tab" data-bs-target="#backups" type="button"><i class="bi bi-archive"></i> Backups</button>
   </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold text-info" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button"><i class="bi bi-journal-text"></i> User Manual</button>
+  </li>
 </ul>

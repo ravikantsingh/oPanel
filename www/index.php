@@ -44,6 +44,7 @@ include 'views/header.php';
         include 'views/components/tab-users.php'; 
         include 'views/components/tab-cron.php'; 
         include 'views/components/tab-backups.php'; 
+        include 'views/components/tab-docs.php';
     ?>
 </div>
 

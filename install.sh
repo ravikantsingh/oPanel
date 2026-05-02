@@ -256,6 +256,9 @@ ufw allow 7443/tcp
 ufw allow 21/tcp
 ufw allow 20/tcp
 ufw allow 40000:50000/tcp
+ufw allow 53/tcp
+ufw allow 53/udp
+
 ufw --force enable
 
 # Force the Source of Truth to sync on boot!

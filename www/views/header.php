@@ -45,6 +45,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="#" onclick="$('#backups-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-archive me-2"></i> Backups</a>
                 </li>
+                <li class="nav-item mt-4 border-top border-secondary pt-3">
+                    <a class="nav-link text-info" href="#" onclick="$('#docs-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-journal-text me-2"></i> User Manual</a>
+                </li>
             </ul>
 
             <!-- Admin Profile Bottom Menu -->

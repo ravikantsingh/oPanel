@@ -1,4 +1,9 @@
 $(document).ready(function() {
+    // Inject CSS pointer for both log terminals
+    $('<style>').prop('type', 'text/css').html(`
+        #logTaskOutput, #logTerminal { cursor: pointer; transition: opacity 0.2s; }
+        #logTaskOutput:hover, #logTerminal:hover { opacity: 0.8; }
+    `).appendTo('head');
     // === GLOBAL CSRF INTERCEPTOR ===
     // Grabs the token from the <meta> tag and attaches it to all AJAX headers
     let csrfToken = $('meta[name="csrf-token"]').attr('content');
@@ -546,6 +551,131 @@ $(document).ready(function() {
             }
         });
     });
+    // =================================================================
+    // GLOBAL UX: DYNAMIC TOAST NOTIFICATION SYSTEM
+    // =================================================================
+    
+    // 1. Inject the Toast Container into the DOM automatically
+    if ($('#oPanelToastContainer').length === 0) {
+        $('body').append(`
+            <div id="oPanelToastContainer" class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 9999;">
+                <div id="oPanelToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex px-1 py-2">
+                        <div class="toast-body fw-bold fs-6">
+                            <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i> 
+                            <span id="oPanelToastMsg">Copied!</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+
+    // 2. Global Helper Function to trigger the Toast anywhere in the panel
+    window.showToast = function(message) {
+        $('#oPanelToastMsg').text(message);
+        let toastEl = new bootstrap.Toast(document.getElementById('oPanelToast'), { delay: 2500 });
+        toastEl.show();
+    };
+    // =================================================================
+    // GLOBAL UX: 100% BULLETPROOF CUSTOM TOAST SYSTEM
+    // =================================================================
+    
+    // 1. Inject a pure HTML/CSS element (Zero Bootstrap JS dependencies)
+    if ($('#customOpanelToast').length === 0) {
+        $('body').append(`
+            <div id="customOpanelToast" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999999; background:#212529; color:#fff; padding:12px 20px; border-radius:8px; box-shadow:0 10px 20px rgba(0,0,0,0.4); font-weight:bold; border-left:4px solid #198754; pointer-events:none;">
+                <i class="bi bi-check-circle-fill text-success me-2 fs-5" style="vertical-align: middle;"></i> 
+                <span id="customOpanelToastMsg" style="vertical-align: middle;">Copied!</span>
+            </div>
+        `);
+    }
+
+    // 2. Global Helper Function using pure jQuery animations
+    window.showToast = function(message) {
+        $('#customOpanelToastMsg').text(message);
+        let toast = $('#customOpanelToast');
+        toast.stop(true, true).fadeIn(200);
+        setTimeout(() => { toast.fadeOut(400); }, 2500);
+    };
+
+    // =================================================================
+    // UNIVERSAL COPY CONTROLLERS
+    // =================================================================
+
+    // 3. Fix for Password/Text Inputs (.copy-btn)
+    $(document).on('click', '.copy-btn', function() {
+        let targetId = $(this).data('target');
+        let targetEl = $('#' + targetId);
+        
+        // Dynamically grab .val() for inputs or .text() for spans
+        let textToCopy = targetEl.is('input, textarea') ? targetEl.val() : targetEl.text();
+        let btn = $(this);
+        
+        if (!textToCopy) return;
+
+        // The Focus-Trap Beating Fallback for self-signed certs
+        const doFallbackCopy = () => {
+            let $temp = $("<textarea>");
+            $temp.css({position: 'absolute', left: '-9999px'});
+            $('body').append($temp);
+            $temp.val(textToCopy).select();
+            try { document.execCommand("copy"); } catch (e) {}
+            $temp.remove();
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy).catch(() => doFallbackCopy());
+        } else {
+            doFallbackCopy();
+        }
+
+        // Fire UI Feedback
+        let originalIcon = btn.html();
+        btn.html('<i class="bi bi-check2 text-success"></i>');
+        showToast("Copied to clipboard!");
+        setTimeout(() => { btn.html(originalIcon); }, 1500);
+    });
+
+    // 4. Click-to-Copy Universal Log Terminal
+    $(document).on('click', '#logTaskOutput, #logTerminal', function() {
+        let terminal = $(this);
+        let textToCopy = terminal.text();
+        
+        if (!textToCopy || textToCopy.trim() === '') return;
+
+        // Visual Success Feedback
+        const triggerSuccessUI = () => {
+            terminal.addClass('bg-dark bg-opacity-75 text-success');
+            showToast("Terminal log copied to clipboard!");
+            setTimeout(() => { terminal.removeClass('bg-dark bg-opacity-75 text-success'); }, 1500);
+        };
+
+        // Fallback function strictly appended INSIDE the terminal to beat the Modal Focus Trap
+        const fallbackCopy = (text) => {
+            let $temp = $("<textarea>");
+            $temp.css({position: 'absolute', left: '-9999px'});
+            terminal.parent().append($temp); // <--- DEFEATS MODAL FOCUS TRAP
+            $temp.val(text).select();
+            try {
+                document.execCommand("copy");
+                triggerSuccessUI();
+            } catch (err) {
+                console.error("Fallback copy failed.");
+            }
+            $temp.remove();
+        };
+
+        // Try modern API first, use fallback if blocked by SSL
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(textToCopy)
+                .then(triggerSuccessUI)
+                .catch(() => fallbackCopy(textToCopy));
+        } else {
+            fallbackCopy(textToCopy);
+        }
+    });
     // Run immediately, then check for new tasks every 5 seconds
     fetchRecentTasks();
     setInterval(fetchRecentTasks, 5000);
@@ -771,43 +901,41 @@ $(document).ready(function() {
                 if(response.success) {
                     let tbody = $('#dynamicDomainsTable');
                     tbody.empty();
+                    
                     if(response.domains.length === 0) {
                         tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">No domains configured.</td></tr>');
                         return;
                     }
+                    
+                    let allRowsHtml = ''; // <-- Create an empty string to hold all rows
+                    
                     response.domains.forEach(function(d) {
                         let sslBadge = d.has_ssl == 1 ? '<span class="badge bg-success"><i class="bi bi-lock"></i> Secured</span>' : '<span class="badge bg-secondary">Unsecured</span>';
+                        let proto = d.has_ssl == 1 ? 'https' : 'http'; // Your clever protocol detector
                         
-                        // WAF Toggle & Settings Logic
+                        // WAF Toggle
                         let wafBadge = d.waf_enabled == 1 
                             ? `<div class="btn-group"><button class="btn btn-sm btn-success toggle-waf" data-domain="${d.domain_name}" data-action="off" title="Disable WAF"><i class="bi bi-shield-check"></i> ON</button>
                                <button class="btn btn-sm btn-dark edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}" title="Custom Rules"><i class="bi bi-gear"></i></button></div>` 
                             : `<button class="btn btn-sm btn-outline-danger toggle-waf" data-domain="${d.domain_name}" data-action="on" title="Enable WAF"><i class="bi bi-shield-x"></i> OFF</button>`;
 
-                        // Git Logic (keeping your existing code)
+                        // Git Logic
                         let gitDisplay = '<span class="text-muted small">None</span>';
                         if (d.git_repo !== 'Not Configured') {
                             let host = window.location.hostname;
                             let webhookUrl = `https://${host}:7443/ajax/webhook.php?domain=${d.domain_name}&token=${d.webhook_token}`;
                             let currentBranch = d.git_branch || 'main'; 
 
-                            // === RENDER COMMIT HISTORY ===
                             let commitsHtml = '';
                             if (d.latest_commits) {
                                 try {
                                     let commits = JSON.parse(d.latest_commits);
                                     commitsHtml = '<div class="mt-2 border-top pt-2"><h6 class="small fw-bold text-muted mb-1">Latest Commits</h6><ul class="list-unstyled mb-0" style="font-size: 0.75rem;">';
-                                    
                                     commits.forEach(c => {
-                                        commitsHtml += `
-                                            <li class="mb-1 text-truncate" title="${c.message}">
-                                                <span class="text-primary font-monospace me-2">${c.commit}</span>
-                                                <span class="text-muted me-2">${c.date}</span>
-                                                ${c.message}
-                                            </li>`;
+                                        commitsHtml += `<li class="mb-1 text-truncate" title="${c.message}"><span class="text-primary font-monospace me-2">${c.commit}</span><span class="text-muted me-2">${c.date}</span>${c.message}</li>`;
                                     });
                                     commitsHtml += '</ul></div>';
-                                } catch(e) { console.error("Could not parse commits JSON", e); }
+                                } catch(e) {}
                             }
 
                             gitDisplay = `
@@ -816,49 +944,66 @@ $(document).ready(function() {
                                     <span class="badge bg-secondary font-monospace"><i class="bi bi-code-branch"></i> ${currentBranch}</span>
                                 </div>
                                 <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text bg-light border-secondary text-muted" title="Webhook URL"><i class="bi bi-lightning-charge-fill"></i></span>
+                                    <span class="input-group-text bg-light border-secondary text-muted"><i class="bi bi-lightning-charge-fill"></i></span>
                                     <input type="text" class="form-control border-secondary text-muted font-monospace" style="font-size: 0.7rem;" value="${webhookUrl}" readonly onclick="this.select(); document.execCommand('copy'); alert('Webhook URL copied!');">
                                 </div>
-                                <button class="btn btn-sm btn-dark w-100 manual-git-pull mb-2" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}">
-                                    <i class="bi bi-arrow-down-circle"></i> Pull Now
-                                </button>
+                                <button class="btn btn-sm btn-dark w-100 manual-git-pull mb-2" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}"><i class="bi bi-arrow-down-circle"></i> Pull Now</button>
                                 ${commitsHtml}
                             `;
                         }
 
-                        // === DYNAMIC FILE MANAGER BUTTONS ===
-                        let proto = d.has_ssl == 1 ? 'https' : 'http';
-                        // === DYNAMIC FILE MANAGER BUTTONS ===
+                        // File Manager
                         let fmButtons = `
                             <div class="btn-group ms-1">
-                                <button class="btn btn-sm btn-warning deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy / Reset File Manager"><i class="bi bi-cloud-arrow-up-fill"></i></button>
-                                <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open File Manager"><i class="bi bi-folder2-open"></i></button>
-                                <button class="btn btn-sm btn-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate FM Password"><i class="bi bi-key"></i></button>
+                                <button class="btn btn-sm btn-warning deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy FM"><i class="bi bi-cloud-arrow-up-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
+                                <button class="btn btn-sm btn-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
                             </div>
                         `;
 
-                        let row = `
+                        // Add this row to our giant string
+                        allRowsHtml += `
                             <tr>
-                                <td class="fw-bold align-middle">
-                                    ${d.domain_name} 
-                                    <button class="btn btn-sm btn-link text-primary p-0 ms-2 show-connection-info" data-domain="${d.domain_name}" title="Connection Info"><i class="bi bi-info-circle-fill fs-5"></i></button>
-                                    <button class="btn btn-sm btn-link text-secondary p-0 ms-1 edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders fs-5"></i></button>
-                                    ${fmButtons}
-                                    <button class="btn btn-sm btn-link text-primary p-0 ms-1 open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="1-Click Install WordPress"><i class="bi bi-wordpress fs-5"></i></button>
-                                    <button class="btn btn-sm btn-link text-success p-0 ms-1 open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js Deployment"><i class="bi bi-hexagon-fill fs-5"></i></button>
-                                    <button class="btn btn-sm btn-link text-info p-0 ms-1 manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="Manage FTP Accounts"><i class="bi bi-hdd-network-fill fs-5"></i></button>
-                                    <button class="btn btn-sm btn-link text-warning p-0 ms-1 manage-mail" data-domain="${d.domain_name}" title="Manage Mailboxes"><i class="bi bi-envelope-at-fill fs-5"></i></button>
-                                    <button class="btn btn-sm btn-link text-danger p-0 ms-2 delete-domain" data-domain="${d.domain_name}" data-user="${d.username}" title="Permanently Delete Domain"><i class="bi bi-trash-fill fs-5"></i></button>
+                                <td class="align-middle">
+                                    <!-- TOP ROW: Domain Link -->
+                                    <div class="d-flex align-items-center mb-1">
+                                        <a href="${proto}://${d.domain_name}" target="_blank" class="text-dark text-decoration-none fw-bold fs-6 me-2">
+                                            ${d.domain_name} <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.75rem;"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-link text-primary p-0 show-connection-info" data-domain="${d.domain_name}" title="Connection Info">
+                                            <i class="bi bi-info-circle-fill fs-5"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- BOTTOM ROW: Flexbox Action Toolbar -->
+                                    <div class="d-flex flex-wrap gap-1 mt-2">
+                                        <button class="btn btn-sm btn-outline-secondary edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders"></i></button>
+                                        
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-warning text-dark deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy FM"><i class="bi bi-cloud-arrow-up-fill"></i></button>
+                                            <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
+                                            <button class="btn btn-sm btn-outline-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
+                                        </div>
+
+                                        <button class="btn btn-sm btn-outline-primary open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Install WordPress"><i class="bi bi-wordpress"></i></button>
+                                        <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
+                                        <button class="btn btn-sm btn-outline-info manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="FTP Accounts"><i class="bi bi-hdd-network-fill"></i></button>
+                                        <button class="btn btn-sm btn-outline-secondary manage-mail" data-domain="${d.domain_name}" title="Mailboxes"><i class="bi bi-envelope-at-fill"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger delete-domain ms-auto" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain"><i class="bi bi-trash-fill"></i></button>
+                                    </div>
                                 </td>
                                 <td class="align-middle"><i class="bi bi-person text-muted"></i> ${d.username}</td>
-                                <td class="align-middle"><span class="badge bg-info text-dark">v${d.php_version}</span></td>
+                                <td class="align-middle"><span class="badge bg-light border text-dark">v${d.php_version}</span></td>
                                 <td class="align-middle" style="max-width: 300px;">${gitDisplay}</td>
                                 <td class="align-middle">${sslBadge}<br><div class="mt-1">${wafBadge}</div></td>
                             </tr>
                         `;
-                        tbody.append(row);
                     });
-                    // ---> NEW: Populate all domain dropdowns <---
+                    
+                    // Inject all rows into the DOM instantly in one single browser repaint
+                    tbody.html(allRowsHtml);
+                    
+                    // Populate dropdowns
                     let domainDropdowns = $('.domain-dropdown');
                     domainDropdowns.empty().append('<option value="">Select a Domain...</option>');
                     response.domains.forEach(function(d) {
@@ -1595,20 +1740,6 @@ $(document).ready(function() {
                 btn.html(originalIcon);
                 alert("Network error fetching connection info.");
             }
-        });
-    });
-
-    // 2. Universal Copy to Clipboard Button Logic
-    $(document).on('click', '.copy-btn', function() {
-        let targetId = $(this).data('target');
-        let textToCopy = $('#' + targetId).text();
-        let btn = $(this);
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            // Momentarily change icon to a checkmark
-            let originalIcon = btn.html();
-            btn.html('<i class="bi bi-check2 text-success"></i>');
-            setTimeout(() => { btn.html(originalIcon); }, 1500);
         });
     });
 

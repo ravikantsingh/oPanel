@@ -19,8 +19,15 @@
                         <input type="text" class="form-control bg-light" id="fmUserDisplay" disabled>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Set Access Password</label>
-                        <input type="password" class="form-control" name="fm_password" placeholder="Enter a secure password..." required>
+                        <label class="form-label small fw-bold d-flex justify-content-between w-100">
+                            Set Access Password
+                            <a href="#" class="text-decoration-none" id="generateFmPass"><i class="bi bi-magic"></i> Generate</a>
+                        </label>
+                        <div class="input-group">
+                            <!-- Changed to type="text" so the user can copy the generated password -->
+                            <input type="text" class="form-control font-monospace" name="fm_password" id="fmPassInput" placeholder="Enter or generate password" required>
+                            <button class="btn btn-outline-secondary copy-btn" type="button" data-target="fmPassInput"><i class="bi bi-clipboard"></i></button>
+                        </div>
                     </div>
                 </form>
             </div>

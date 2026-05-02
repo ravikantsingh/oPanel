@@ -29,6 +29,7 @@ HASH=$(php -r "echo password_hash('$FM_PASS', PASSWORD_DEFAULT);")
 # We hard-lock the root_path to their public_html so they cannot browse the server root
 cat <<EOF > "$FM_DIR/config.php"
 <?php
+\$CONFIG = '{"show_hidden":true,"theme":"dark"}';
 \$auth_users = array('$USERNAME' => '$HASH');
 \$readonly_users = array();
 \$use_auth = true;
@@ -81,6 +82,10 @@ rm /tmp/sso_logic.txt
 
 # 4. Strict Ownership (Crucial for ACL Isolation)
 chown -R $USERNAME:$USERNAME "$FM_DIR"
+
+# 4.5 SRE Config Lockdown
+chown root:root "$FM_DIR/config.php"
+chmod 644 "$FM_DIR/config.php"
 
 # 5. Safe Nginx Root Injection with open_basedir override
 if ! grep -q "location \^~ /filemanager" "$VHOST"; then

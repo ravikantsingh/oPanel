@@ -8,20 +8,16 @@ $(document).ready(function() {
             'X-CSRF-TOKEN': csrfToken
         }
     });
-    // ===============================
-    // ... the rest of your existing JS logic ...
+    // === Create User Form Submission ===
     $('#addUserForm').on('submit', function(e) {
-        e.preventDefault(); // Stop the page from reloading
+        e.preventDefault(); 
         
-        // Grab the button and alert box
         let btn = $('#submitUserBtn');
-        let alertBox = $('#formAlert');
+        let originalText = btn.html();
         
         // Set loading state
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Provisioning User...');
 
-        // Send data to PHP
         $.ajax({
             url: '/ajax/create_user.php',
             type: 'POST',
@@ -29,18 +25,17 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
-                    $('#addUserForm')[0].reset(); // Clear form
-                    // Here we would normally trigger a function to check task status
+                    $('#addUserModal').modal('hide'); // Close the modal
+                    $('#addUserForm')[0].reset();     // Clear form
+                    fetchUsers();                     // Auto-refresh the UI table instantly!
                 } else {
-                    alertBox.addClass('alert-danger').text(response.error).removeClass('d-none');
+                    alert("Error: " + response.error);
                 }
+                btn.prop('disabled', false).html(originalText); // Restore button
             },
             error: function() {
-                alertBox.addClass('alert-danger').text('A server error occurred.').removeClass('d-none');
-            },
-            complete: function() {
-                btn.prop('disabled', false).text('Create User');
+                alert('A server error occurred.');
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });
@@ -49,10 +44,9 @@ $(document).ready(function() {
         e.preventDefault();
         
         let btn = $('#submitDomainBtn');
-        let alertBox = $('#domainFormAlert');
+        let originalText = btn.html();
         
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Configuring Nginx...');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
         $.ajax({
             url: '/ajax/create_domain.php',
@@ -61,17 +55,17 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
-                    $('#addDomainForm')[0].reset();
+                    $('#addDomainModal').modal('hide'); // Close modal
+                    $('#addDomainForm')[0].reset();     // Clear form
+                    setTimeout(fetchDomains, 1500);     // Auto-refresh the UI table (delay to let Nginx restart)
                 } else {
-                    alertBox.addClass('alert-danger').text(response.error).removeClass('d-none');
+                    alert("Error: " + response.error);
                 }
+                btn.prop('disabled', false).html(originalText); // Restore button
             },
             error: function() {
-                alertBox.addClass('alert-danger').text('A server error occurred. Check PHP logs.').removeClass('d-none');
-            },
-            complete: function() {
-                btn.prop('disabled', false).text('Create Domain & Nginx vHost');
+                alert('A server error occurred. Check PHP logs.');
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });
@@ -84,14 +78,17 @@ $(document).ready(function() {
         e.preventDefault();
         
         let form = $('#addDbForm');
+        let btn = $(this);
+        let alertBox = $('#dbFormAlert');
+        let originalText = btn.html();
         
-        // Native HTML5 Validation Check (Forces required fields to be filled)
+        // Native HTML5 Validation Check
         if (!form[0].checkValidity()) { 
             form[0].reportValidity(); 
             return; 
         }
 
-        // Build the Custom Privileges String if 'custom' is selected
+        // Build the Custom Privileges String
         if ($('#dbRole').val() === 'custom') {
             let privs = [];
             $('.db-priv-chk:checked').each(function() { privs.push($(this).val()); });
@@ -103,9 +100,6 @@ $(document).ready(function() {
             $('#customPrivString').val(privs.join(', '));
         }
 
-        let btn = $(this);
-        let alertBox = $('#dbFormAlert');
-        
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Provisioning DB...');
         alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
@@ -116,29 +110,27 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
+                    $('#addDbModal').modal('hide'); // <--- THE FIX: Close the modal smoothly
                     
-                    // Reset the UI cleanly
+                    // Reset the UI cleanly in the background
                     form[0].reset();
                     $('#dbPrefixLabel').text('prefix_');
                     $('#dbCustomIp').addClass('d-none');
                     $('#customPrivilegesGrid').addClass('d-none');
                     
-                    // Automatically refresh the table to show the new database!
-                    setTimeout(fetchDatabases, 2500); 
+                    // Auto-refresh the DB table!
+                    setTimeout(fetchDatabases, 1500); 
                 } else {
                     alertBox.addClass('alert-danger').text(response.error).removeClass('d-none');
                 }
+                btn.prop('disabled', false).html(originalText); // Restore button
             },
             error: function() {
                 alertBox.addClass('alert-danger').text('A server error occurred.').removeClass('d-none');
-            },
-            complete: function() {
-                btn.prop('disabled', false).html('<i class="bi bi-database-check"></i> Provision Database');
+                btn.prop('disabled', false).html(originalText); // Restore button
             }
         });
     });
-    // === Advanced Database Modal Logic ===
     
     // Auto Password Generator
     $(document).on('click', '#generateDbPass', function(e) {
@@ -2545,6 +2537,34 @@ $(document).ready(function() {
                 btn.prop('disabled', false).html(originalText);
             }
         });
+    });
+    // === Auto-Generate Linux User Password ===
+    $('#generateUserPass').click(function(e) {
+        e.preventDefault();
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        $('#password').val(pass);
+        
+        // Auto-copy to clipboard
+        navigator.clipboard.writeText(pass);
+        let originalText = $(this).html();
+        $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
+        setTimeout(() => { $(this).html(originalText); }, 2000);
+    });
+    // === Auto-Generate File Manager Password ===
+    $('#generateFmPass').click(function(e) {
+        e.preventDefault();
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        $('#fmPassInput').val(pass);
+        
+        // Auto-copy to clipboard
+        navigator.clipboard.writeText(pass);
+        let originalText = $(this).html();
+        $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
+        setTimeout(() => { $(this).html(originalText); }, 2000);
     });
     
 });

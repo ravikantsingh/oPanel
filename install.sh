@@ -151,6 +151,10 @@ apt-mark hold modsecurity-crs # Prevent OS from overwriting rules
 # FTP
 ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
 echo "yes" > /etc/pure-ftpd/conf/ChrootEveryone
+# CLOUD NAT FIX FOR PASSIVE FTP
+PUBLIC_IP=$(curl -s ifconfig.me)
+echo "40000 50000" > /etc/pure-ftpd/conf/PassivePortRange
+echo "$PUBLIC_IP" > /etc/pure-ftpd/conf/ForcePassiveIP
 touch /etc/pure-ftpd/pureftpd.passwd
 pure-pw mkdb
 systemctl restart pure-ftpd

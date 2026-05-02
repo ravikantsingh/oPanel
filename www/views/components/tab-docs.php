@@ -69,6 +69,7 @@
                         <li><strong>Git Repository Deployment:</strong> Click the <strong>Deploy Git Repo</strong> button.
                             <ul>
                                 <li>oPanel uses SSH keys to authenticate with GitHub/GitLab securely.</li>
+                                <li><strong class="text-dark">One User, One Identity:</strong> For strict security isolation, each system user is assigned exactly <em>one</em> unique SSH Deploy Key. If you are deploying different Git repositories to different domains, you must create a new System User for each project.</li>
                                 <li>Click <em>"View Key"</em> to get your server's public key, and add it to your repo's Deploy Keys.</li>
                                 <li><strong>Webhooks (Auto-Deploy):</strong> Once cloned, oPanel provides a unique Webhook URL. Add this to your GitHub repository settings to enable automatic deployment every time you push code!</li>
                             </ul>
@@ -184,7 +185,7 @@
         <div class="accordion-item border-0">
             <h2 class="accordion-header" id="headingFaq">
                 <button class="accordion-button collapsed fw-bold bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaq">
-                    <i class="bi bi-question-circle-fill me-2 text-info"></i> 6. Frequently Asked Questions (FAQ)
+                    <i class="bi bi-question-circle-fill me-2 text-info"></i> 8. Frequently Asked Questions (FAQ)
                 </button>
             </h2>
             <div id="collapseFaq" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
@@ -195,6 +196,9 @@
 
                     <h6 class="fw-bold text-dark">Q: My Let's Encrypt SSL installation failed! Why?</h6>
                     <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Let's Encrypt must verify that you own the domain. If your DNS hasn't fully propagated globally, or if Cloudflare Proxy (the orange cloud) is turned on during installation, Let's Encrypt cannot verify the IP and will fail. Ensure DNS is propagated and proxying is disabled before retrying.</p>
+
+                    <h6 class="fw-bold text-dark">Q: Can I use multiple Git repositories or generate multiple SSH Deploy Keys for a single user?</h6>
+                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> For security and strict isolation, oPanel enforces a <strong>"One User, One Identity"</strong> rule. Each system user is assigned exactly one unique ED25519 SSH Deploy Key. If you are managing multiple domains that require different Git repositories (e.g., a personal GitHub project and a corporate GitLab project), you must provision a new User in the <strong>Users</strong> tab for the new domain. <br><br><em>Best Practice:</em> Always create a dedicated User for each major project. This ensures that if one website is compromised, the attacker cannot use that user's SSH key to access your other Git repositories.</p>
 
                     <h6 class="fw-bold text-dark">Q: I get a "File too large" error when importing a database in phpMyAdmin.</h6>
                     <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> By default, PHP limits uploads. Go to the <em>Users & DBs</em> tab, click <strong>Global Settings (Gear Icon)</strong> at the top right, and increase the Max Upload Size to 512MB. This applies instantly to the entire server.</p>

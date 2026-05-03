@@ -2701,7 +2701,7 @@ $(document).ready(function() {
     // FAIL2BAN ACTIVE DEFENSE CONTROLLER
     // =================================================================
 
-    // 1. Fetch Live Bans
+    // 1. Fetch Live Bans & Telemetry
     window.fetchFail2Ban = function() {
         $.ajax({
             url: '/ajax/get_fail2ban.php',
@@ -2709,31 +2709,61 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
+                    // --- A. Populate the Main Bans Table ---
                     let tbody = $('#dynamicFail2banTable');
                     tbody.empty();
                     
                     if(response.bans.length === 0) {
                         tbody.html('<tr><td colspan="3" class="text-center text-muted py-4"><i class="bi bi-shield-check text-success fs-4 d-block mb-2"></i> No active IP bans detected.</td></tr>');
-                        return;
+                    } else {
+                        response.bans.forEach(function(b) {
+                            let badgeClass = 'bg-danger';
+                            if(b.jail === 'opanel') badgeClass = 'bg-dark';
+                            if(b.jail === 'sshd') badgeClass = 'bg-primary';
+                            
+                            let row = `<tr>
+                                <td class="fw-bold font-monospace text-danger">${b.ip}</td>
+                                <td><span class="badge ${badgeClass} text-uppercase"><i class="bi bi-lock-fill"></i> ${b.jail}</span></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-success unban-ip fw-bold shadow-sm" data-ip="${b.ip}" data-jail="${b.jail}" title="Unban IP">
+                                        <i class="bi bi-unlock-fill"></i> Unban
+                                    </button>
+                                </td>
+                            </tr>`;
+                            tbody.append(row);
+                        });
                     }
+
+                    // --- B. Populate the Stats Modal ---
+                    let statsBody = $('#dynamicFail2banStatsTable');
+                    statsBody.empty();
                     
-                    response.bans.forEach(function(b) {
-                        // Color code the jails
-                        let badgeClass = 'bg-danger';
-                        if(b.jail === 'opanel') badgeClass = 'bg-dark';
-                        if(b.jail === 'sshd') badgeClass = 'bg-primary';
+                    let globalTotalBans = 0;
+
+                    if(response.stats && response.stats.length > 0) {
+                        $('#f2bGlobalJails').text(response.stats.length);
                         
-                        let row = `<tr>
-                            <td class="fw-bold font-monospace text-danger">${b.ip}</td>
-                            <td><span class="badge ${badgeClass} text-uppercase"><i class="bi bi-lock-fill"></i> ${b.jail}</span></td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-success unban-ip fw-bold shadow-sm" data-ip="${b.ip}" data-jail="${b.jail}" title="Unban IP">
-                                    <i class="bi bi-unlock-fill"></i> Unban
-                                </button>
-                            </td>
-                        </tr>`;
-                        tbody.append(row);
-                    });
+                        response.stats.forEach(function(s) {
+                            globalTotalBans += parseInt(s.total_banned);
+                            
+                            // Visual highlight if a jail is currently under attack
+                            let curBannedHtml = s.currently_banned > 0 
+                                ? `<span class="badge bg-danger fs-6">${s.currently_banned}</span>` 
+                                : `<span class="badge bg-light text-dark border">${s.currently_banned}</span>`;
+
+                            let row = `<tr>
+                                <td class="fw-bold text-uppercase"><i class="bi bi-lock-fill text-muted me-1"></i> ${s.name}</td>
+                                <td><code class="text-muted small">${s.file_list}</code></td>
+                                <td class="text-center">${curBannedHtml}</td>
+                                <td class="text-center fw-bold text-secondary">${s.total_banned}</td>
+                            </tr>`;
+                            statsBody.append(row);
+                        });
+                        
+                        $('#f2bGlobalTotalBans').text(globalTotalBans);
+                    } else {
+                        statsBody.html('<tr><td colspan="4" class="text-center text-danger py-3">No active jails found. Check daemon.</td></tr>');
+                    }
                 }
             }
         });

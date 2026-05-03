@@ -25,6 +25,7 @@ include 'views/modals/gitModal.php';
 include 'views/modals/firewallModal.php';
 include 'views/modals/dnsRecordModal.php';
 include 'views/modals/wafRulesModal.php';
+include 'views/modals/fail2banStatusModal.php';
 
 // 5. Backups & Cron
 include 'views/modals/backupWebModal.php';

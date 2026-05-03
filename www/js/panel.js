@@ -2697,5 +2697,82 @@ $(document).ready(function() {
         $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
         setTimeout(() => { $(this).html(originalText); }, 2000);
     });
+    // =================================================================
+    // FAIL2BAN ACTIVE DEFENSE CONTROLLER
+    // =================================================================
+
+    // 1. Fetch Live Bans
+    window.fetchFail2Ban = function() {
+        $.ajax({
+            url: '/ajax/get_fail2ban.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    let tbody = $('#dynamicFail2banTable');
+                    tbody.empty();
+                    
+                    if(response.bans.length === 0) {
+                        tbody.html('<tr><td colspan="3" class="text-center text-muted py-4"><i class="bi bi-shield-check text-success fs-4 d-block mb-2"></i> No active IP bans detected.</td></tr>');
+                        return;
+                    }
+                    
+                    response.bans.forEach(function(b) {
+                        // Color code the jails
+                        let badgeClass = 'bg-danger';
+                        if(b.jail === 'opanel') badgeClass = 'bg-dark';
+                        if(b.jail === 'sshd') badgeClass = 'bg-primary';
+                        
+                        let row = `<tr>
+                            <td class="fw-bold font-monospace text-danger">${b.ip}</td>
+                            <td><span class="badge ${badgeClass} text-uppercase"><i class="bi bi-lock-fill"></i> ${b.jail}</span></td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-success unban-ip fw-bold shadow-sm" data-ip="${b.ip}" data-jail="${b.jail}" title="Unban IP">
+                                    <i class="bi bi-unlock-fill"></i> Unban
+                                </button>
+                            </td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                }
+            }
+        });
+    };
+
+    // 2. Unban Button Click Handler
+    $(document).on('click', '.unban-ip', function() {
+        let ip = $(this).data('ip');
+        let jail = $(this).data('jail');
+        
+        let warning = `Are you sure you want to remove ${ip} from the ${jail} jail?`;
+        if(!confirm(warning)) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/unban_ip.php',
+            type: 'POST',
+            data: { ip: ip, jail: jail },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    // Switch to the Overview tab so the user can watch the queue process the unban
+                    $('#overview-tab').tab('show');
+                    alert(response.message);
+                    
+                    // Optimistically refresh the UI table
+                    fetchFail2Ban();
+                } else {
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false).html('<i class="bi bi-unlock-fill"></i> Unban');
+                }
+            }
+        });
+    });
+
+    // 3. Initialize and set background polling (every 10 seconds)
+    fetchFail2Ban();
+    setInterval(fetchFail2Ban, 10000);
     
 });

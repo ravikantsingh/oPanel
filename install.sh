@@ -37,7 +37,7 @@ apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
     pure-ftpd pure-ftpd-common \
     libnginx-mod-http-modsecurity modsecurity-crs \
     php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl \
-    nodejs
+    nodejs fail2ban
 
 # Install PM2 Globally and Configure Boot Startup
 echo -e "\e[34m[+] Installing PM2 Process Manager...\e[0m"
@@ -267,6 +267,75 @@ ufw --force enable
 
 # Force the Source of Truth to sync on boot!
 /opt/panel/scripts/sync_firewall.sh
+
+# ==========================================
+# 9.4 CONFIGURE FAIL2BAN ACTIVE DEFENSE
+# ==========================================
+echo -e "\e[34m[9.5/10] Configuring Fail2ban Intrusion Prevention...\e[0m"
+
+# 1. Create the Custom oPanel Filter
+cat << 'EOF' > /etc/fail2ban/filter.d/opanel.conf
+[Definition]
+failregex = ^.*oPanel Auth Failed:.*IP: <HOST>.*$
+ignoreregex =
+EOF
+
+# 2. Configure the Jails
+cat << 'EOF' > /etc/fail2ban/jail.local
+[DEFAULT]
+bantime  = 1h
+findtime  = 10m
+maxretry = 5
+banaction = ufw
+
+[sshd]
+enabled = true
+port    = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+maxretry = 3
+
+[pure-ftpd]
+enabled  = true
+port     = ftp
+filter   = pure-ftpd
+logpath  = /var/log/syslog
+maxretry = 5
+
+[postfix-sasl]
+enabled  = true
+port     = smtp,465,submission
+filter   = postfix[mode=auth]
+logpath  = /var/log/mail.log
+maxretry = 5
+
+[dovecot]
+enabled = true
+port    = pop3,pop3s,imap,imaps,submission,465,sieve
+filter  = dovecot
+logpath = /var/log/mail.log
+maxretry = 5
+
+[opanel]
+enabled  = true
+port     = 7443
+filter   = oPanel
+logpath  = /opt/panel/logs/auth.log
+maxretry = 5
+EOF
+
+# 3. Prepare the oPanel custom auth log (ensure it exists before fail2ban starts)
+touch /opt/panel/logs/auth.log
+chown www-data:www-data /opt/panel/logs/auth.log
+chmod 660 /opt/panel/logs/auth.log
+
+# 4. Create the Sudoers Bridge for PHP
+echo "www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *" > /etc/sudoers.d/opanel-fail2ban
+chmod 440 /etc/sudoers.d/opanel-fail2ban
+
+# 5. Restart and Enable
+systemctl restart fail2ban
+systemctl enable fail2ban
 
 # ==========================================
 # 9.5 CONFIGURE CLI & SERVER BRANDING

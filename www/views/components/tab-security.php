@@ -24,6 +24,30 @@
                     </div>
                 </div>
             </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 border-top border-danger border-3">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h6 class="mb-0 text-danger fw-bold"><i class="bi bi-shield-slash-fill me-2"></i> Active Intrusion Blocks (Fail2ban)</h6>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="fetchFail2Ban()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                        </div>
+                        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <table class="table table-hover mb-0 text-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Banned IP Address</th>
+                                        <th>Triggered Security Jail</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dynamicFail2banTable">
+                                    <tr><td colspan="3" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div> Scanning Jails...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white"><h6 class="mb-0">Active DNS Records (BIND9)</h6></div>

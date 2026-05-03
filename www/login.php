@@ -43,6 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     } else {
         $error = "Invalid username or password.";
+        //Log failed password attempt for fail2ban
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+        $logMessage = "[" . date('Y-m-d H:i:s') . "] oPanel Auth Failed: Invalid credentials for user '{$username}'. IP: {$ip}\n";
+        file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
     }
 }
 
@@ -76,6 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } else {
         $error = "Invalid Authenticator code. Try again.";
         $step = ($admin['is_2fa_enabled'] == 1) ? 3 : 2;
+        //Log failed 2FA attempt for fail2ban
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+        $logMessage = "[" . date('Y-m-d H:i:s') . "] oPanel Auth Failed: Invalid 2FA code. IP: {$ip}\n";
+        file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
+    }
     }
 }
 ?>

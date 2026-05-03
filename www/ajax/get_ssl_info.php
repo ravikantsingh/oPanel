@@ -38,42 +38,47 @@ try {
         exit;
     }
 
-    // 2. SSL is enabled! Let's read the actual certificate file from the disk.
-    // Let's Encrypt default path is our primary check
+    // 2. SSL is enabled! Use the SRE Sudoers Bridge to parse the root-locked certificate directly.
     $certPath = "/etc/letsencrypt/live/{$domain}/cert.pem";
     
-    // If not found in Let's Encrypt, check the custom oPanel path
-    if (!file_exists($certPath)) {
+    // We suppress errors (2>/dev/null) so a missing file just returns empty string instead of crashing
+    $output = shell_exec("sudo /usr/bin/openssl x509 -in " . escapeshellarg($certPath) . " -noout -issuer -dates 2>/dev/null");
+
+    // If Let's Encrypt fails, try the custom oPanel SSL path
+    if (empty(trim($output))) {
         $certPath = "/etc/nginx/ssl/{$domain}.crt";
+        $output = shell_exec("sudo /usr/bin/openssl x509 -in " . escapeshellarg($certPath) . " -noout -issuer -dates 2>/dev/null");
     }
 
-    if (!file_exists($certPath)) {
-        // Edge case: Database says yes, but file is missing from disk!
-        echo json_encode(['success' => false, 'error' => 'Certificate file missing from server disk.']);
+    // If it's STILL empty, the file literally doesn't exist.
+    if (empty(trim($output))) {
+        echo json_encode(['success' => false, 'error' => 'Certificate file missing or inaccessible on disk.']);
         exit;
     }
 
-    // 3. Parse the certificate using OpenSSL
-    $certData = openssl_x509_parse(file_get_contents($certPath));
+    // 3. Parse the OpenSSL text output
+    // Example Output: 
+    // issuer=C = US, O = Let's Encrypt, CN = R3
+    // notBefore=May  3 00:00:00 2026 GMT
+    // notAfter=Aug  1 00:00:00 2026 GMT
 
-    if (!$certData) {
-        echo json_encode(['success' => false, 'error' => 'Failed to parse physical certificate data.']);
-        exit;
+    $issuer = 'Unknown Authority';
+    if (strpos($output, "Let's Encrypt") !== false || strpos($output, "R3") !== false || strpos($output, "E1") !== false) {
+        $issuer = "Let's Encrypt";
+    } elseif (preg_match('/O\s*=\s*([^,\n]+)/', $output, $matches)) {
+        $issuer = trim($matches[1]);
     }
 
-    // 4. Extract Issuer and Dates safely
-    $issuer = $certData['issuer']['O'] ?? 'Unknown Authority';
-    if (strpos($issuer, 'Let\'s Encrypt') !== false) { 
-        $issuer = "Let's Encrypt"; 
-    }
+    preg_match('/notBefore=(.*)/', $output, $fromMatches);
+    preg_match('/notAfter=(.*)/', $output, $toMatches);
 
-    $validFromTimestamp = $certData['validFrom_time_t'] ?? time();
-    $validToTimestamp = $certData['validTo_time_t'] ?? time();
+    $validFromTimestamp = strtotime($fromMatches[1] ?? 'now');
+    $validToTimestamp = strtotime($toMatches[1] ?? 'now');
     
     $validFromDate = date('M d, Y', $validFromTimestamp);
     $validToDate = date('M d, Y', $validToTimestamp);
 
-    // 5. Calculate Days Remaining
+    // 4. Calculate Days Remaining
     $now = time();
     $secondsRemaining = $validToTimestamp - $now;
     $daysRemaining = floor($secondsRemaining / (60 * 60 * 24));
@@ -87,12 +92,11 @@ try {
         $statusColor = 'warning';
     }
 
-    // 6. Calculate Progress Bar Percentage
-    $totalLifespan = max(1, $validToTimestamp - $validFromTimestamp); // Prevent division by zero
+    // 5. Calculate Progress Bar Percentage
+    $totalLifespan = max(1, $validToTimestamp - $validFromTimestamp); 
     $timeElapsed = max(0, $now - $validFromTimestamp);
     $percentUsed = ($timeElapsed / $totalLifespan) * 100;
     
-    // We want the bar to shrink as it gets closer to 0
     $percentRemaining = max(0, min(100, 100 - $percentUsed));
 
     // Return the payload back to the JS Modal
@@ -108,7 +112,6 @@ try {
     ]);
 
 } catch (Exception $e) {
-    // Catch database or other exceptions cleanly
     echo json_encode(['success' => false, 'error' => 'System error: ' . $e->getMessage()]);
 }
 ?>

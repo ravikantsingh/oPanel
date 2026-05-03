@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Ensure running as root
 if [ "$EUID" -ne 0 ]; then
   echo "Error: This command requires root privileges."
   exit 1
@@ -9,30 +8,27 @@ fi
 COMMAND=$1
 
 if [ "$COMMAND" == "login" ]; then
-    
-    # 1. Ensure the token table exists
     mysql -e "CREATE TABLE IF NOT EXISTS panel_core.admin_tokens (
         token VARCHAR(64) PRIMARY KEY,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );"
-
-    # 2. Clean up any abandoned tokens older than 5 minutes
     mysql -e "DELETE FROM panel_core.admin_tokens WHERE created_at < (NOW() - INTERVAL 5 MINUTE);"
 
-    # 3. Generate a mathematically secure 64-character token
     TOKEN=$(openssl rand -hex 32)
-
-    # 4. Save to the database
     mysql -e "INSERT INTO panel_core.admin_tokens (token) VALUES ('$TOKEN');"
 
-    # 5. Get the server IP
-    SERVER_IP=$(curl -s ifconfig.me)
+    # ---> NEW: Fetch Master Domain or Fallback to IP <---
+    PANEL_DOMAIN=$(mysql -N -s -e "SELECT setting_value FROM panel_core.settings WHERE setting_key='panel_domain';" 2>/dev/null)
+    
+    if [ -z "$PANEL_DOMAIN" ]; then
+        URL_HOST=$(curl -s ifconfig.me)
+    else
+        URL_HOST="$PANEL_DOMAIN"
+    fi
 
-    # 6. Output the magic link
     echo -e "\e[32mSuccess! Use the following link to log in securely (Valid for 5 minutes):\e[0m"
-    echo -e "\e[1mhttps://${SERVER_IP}:7443/autologin.php?token=${TOKEN}\e[0m"
+    echo -e "\e[1mhttps://${URL_HOST}:7443/autologin.php?token=${TOKEN}\e[0m"
     echo ""
-
 else
     echo "Usage: opanel login"
 fi

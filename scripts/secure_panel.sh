@@ -1,21 +1,25 @@
 #!/bin/bash
 # /opt/panel/scripts/secure_panel.sh
-# Automates the transition from IP/Self-Signed to a Let's Encrypt Domain for the oPanel
+# Swaps the Master Panel SSL certificates based on the UI flag
 
 PAYLOAD=$1
-DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
-EMAIL=$(echo "$PAYLOAD" | jq -r '.email // "admin@'$DOMAIN'"')
+ACTION=$(echo "$PAYLOAD" | jq -r '.sub_action')
+DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain // empty')
 
-# 1. Generate the Let's Encrypt Certificate
-echo "Securing oPanel on ${DOMAIN}..."
-certbot certonly --nginx -d "${DOMAIN}" --non-interactive --agree-tos -m "${EMAIL}" --keep-until-expiring
-
-if [ $? -ne 0 ]; then
-    echo "Error: Certbot failed to verify ${DOMAIN}. Ensure DNS is pointing to this server."
+if [ "$ACTION" == "bind" ]; then
+    echo "Binding oPanel to ${DOMAIN}..."
+    CERT="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
+    KEY="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
+elif [ "$ACTION" == "unbind" ]; then
+    echo "Unbinding oPanel. Reverting to Server IP..."
+    CERT="/etc/ssl/certs/mypanel-selfsigned.crt"
+    KEY="/etc/ssl/private/mypanel-selfsigned.key"
+    DOMAIN="_" # Nginx catch-all for IP
+else
+    echo "Error: Unknown action."
     exit 1
 fi
 
-# 2. Automatically Overwrite the Panel's Nginx Configuration
 cat <<EOF > /etc/nginx/sites-available/default
 # Master oPanel Configuration (Port 7443 ONLY)
 server {
@@ -24,8 +28,8 @@ server {
     
     server_name ${DOMAIN}; 
 
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_certificate ${CERT};
+    ssl_certificate_key ${KEY};
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
@@ -36,9 +40,11 @@ server {
 
     include /etc/nginx/snippets/opanel-errors.conf;
 
-    location / {
-        try_files \$uri \$uri/ =404;
-    }
+    location ~ /\. { deny all; }
+    location ^~ /classes/ { deny all; }
+    location ^~ /config/ { deny all; }
+
+    location / { try_files \$uri \$uri/ =404; }
 
     location ~ \.php\$ {
         include snippets/fastcgi-php.conf;
@@ -47,12 +53,11 @@ server {
 }
 EOF
 
-# 3. Test and Reload
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx
-    echo "Success: oPanel is now secured and locked to ${DOMAIN}!"
+    echo "Success: Panel Nginx block updated."
     exit 0
 else
-    echo "Critical Error: Nginx configuration failed. Panel SSL not updated."
+    echo "Critical Error: Nginx configuration failed."
     exit 1
 fi

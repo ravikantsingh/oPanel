@@ -3,4 +3,7 @@
     <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#systemSettingsModal">
         <i class="bi bi-sliders"></i> System Settings
     </button>
+    <button class="btn btn-sm btn-outline-primary shadow-sm ms-2" data-bs-toggle="modal" data-bs-target="#brandingModal">
+    <i class="bi bi-palette-fill"></i> Branding & UI
+</button>
 </div>

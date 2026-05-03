@@ -62,6 +62,7 @@ ALLOWED_ACTIONS = {
     'uninstall_mail_engine': '/opt/panel/scripts/uninstall_mail_engine.sh',
     'https_routing_manager': '/opt/panel/scripts/https_routing_manager.sh',
     'manage_fail2ban': '/opt/panel/scripts/fail2ban_manager.sh',
+    'manage_service': '/opt/panel/scripts/service_manager.sh',
 }
 
 def get_db_connection():

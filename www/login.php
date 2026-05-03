@@ -87,6 +87,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
     }
 }
+require_once 'classes/Branding.php';
+$brand = Branding::getSettings();
+
+// Generate the dynamic background CSS
+$bg_css = "background-color: {$brand['login_bg_color']};";
+if (!empty($brand['login_bg_image'])) {
+    $bg_css .= " background-image: url('{$brand['login_bg_image']}'); background-size: {$brand['login_bg_fit']}; background-position: center; background-repeat: no-repeat;";
+} else {
+    // Fallback gradient if no image and color is default
+    if ($brand['login_bg_color'] == '#1e1e2f') {
+        $bg_css = "background: linear-gradient(135deg, #1e1e2f 0%, #0d0d14 100%);";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -98,8 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
+        :root { --bs-primary: <?= $brand['theme_color'] ?>; }
         body {
-            background: linear-gradient(135deg, #1e1e2f 0%, #0d0d14 100%);
+            <?= $bg_css ?>
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -140,9 +154,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 <div class="login-glass text-light">
     <div class="text-center mb-4">
-        <i class="bi bi-hexagon-fill fs-1 text-gradient"></i>
-        <h3 class="fw-bold mt-2 mb-0">oPanel</h3>
-        <p class="text-secondary small tracking-wide text-uppercase mt-1">Unified Server Management</p>
+        <?php if (!empty($brand['logo'])): ?>
+            <img src="<?= $brand['logo'] ?>" alt="Logo" style="max-height: 60px; max-width: 100%; margin-bottom: 10px;">
+        <?php else: ?>
+            <i class="bi bi-hexagon-fill fs-1" style="color: var(--bs-primary);"></i>
+            <h3 class="fw-bold mt-2 mb-0"><?= htmlspecialchars($brand['title']) ?></h3>
+        <?php endif; ?>
+        <p class="text-secondary small tracking-wide text-uppercase mt-1"><?= htmlspecialchars($brand['subtext']) ?></p>
     </div>
 
     <?php if ($error): ?>

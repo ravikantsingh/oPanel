@@ -29,7 +29,19 @@ CREATE TABLE IF NOT EXISTS `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
-('panel_name', 'oPanel');
+('panel_name', 'oPanel'),
+('brand_title', 'oPanel'),
+('brand_logo', ''), 
+('brand_logo_url', '/index.php'),
+('brand_favicon_ico', ''),
+('brand_favicon_svg', ''),
+('brand_theme_color', '#0d6efd'), 
+('brand_sidebar_color', '#1e1e2f'),
+('brand_login_bg_color', '#1e1e2f'),
+('brand_login_bg_image', ''),
+('brand_login_bg_fit', 'cover'),
+('brand_login_subtext', 'Unified Server Management'),
+('brand_hide_footer', '0');
 
 -- ==========================================
 -- 3. CLIENT USERS

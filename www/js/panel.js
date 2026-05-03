@@ -1013,21 +1013,24 @@ $(document).ready(function() {
             }
         });
     }
-    // === SCORCHED EARTH: Delete Domain ===
+    // === SCORCHED EARTH: Delete Domain (Upgraded SRE Fallback) ===
     $(document).on('click', '.delete-domain', function() {
         let domain = $(this).data('domain');
         let user = $(this).data('user');
         
-        // Strict safety check
-        let confirmText = prompt(`CRITICAL WARNING: This will permanently destroy the Nginx configuration, SSL certificates, and all website files for '${domain}'.\n\nType the domain name below to confirm:`);
+        // 1. Is the current browser URL matching the domain they are trying to delete?
+        let isMasterDomain = window.location.hostname === domain;
         
-        if (confirmText !== domain) {
-            if (confirmText !== null) alert("Domain name did not match. Deletion aborted.");
-            return;
+        let confirmText;
+        if (isMasterDomain) {
+            confirmText = prompt(`CRITICAL: '${domain}' is currently securing oPanel. Deleting this will unbind the panel, revert to the raw IP, and disconnect your session. Type the domain name to proceed:`);
+        } else {
+            confirmText = prompt(`WARNING: This will permanently destroy all files and SSL for '${domain}'. Type the domain name to proceed:`);
         }
         
+        if (confirmText !== domain) return;
+        
         let btn = $(this);
-        let originalIcon = btn.html();
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
@@ -1037,11 +1040,17 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    // Wait 3 seconds for Python to wipe the server, then refresh the UI
-                    setTimeout(fetchDomains, 3000); 
+                    if (isMasterDomain) {
+                        // If we just deleted the master domain, we MUST redirect to the IP to save the session
+                        alert("Master domain deleted. Reverting to IP address...");
+                        let ip = response.server_ip || window.location.hostname; // Ensure your delete_domain.php returns the server_ip
+                        window.location.href = "https://" + ip + ":7443";
+                    } else {
+                        setTimeout(fetchDomains, 3000); 
+                    }
                 } else {
                     alert("Error: " + response.error);
-                    btn.prop('disabled', false).html(originalIcon);
+                    btn.prop('disabled', false).html('<i class="bi bi-trash-fill"></i>');
                 }
             }
         });
@@ -2181,43 +2190,57 @@ $(document).ready(function() {
             }
         });
     });
-    // === Secure Panel SSL Automation ===
     $('#submitSecurePanelBtn').click(function() {
         let btn = $(this);
-        let form = $('#securePanelForm');
+        let domain = $('#masterDomainSelect').val();
         let alertBox = $('#securePanelAlert');
         
-        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
-        
-        let warning = "Warning: This will lock the oPanel to the new domain and restart the web server. You will be automatically redirected. Proceed?";
-        if(!confirm(warning)) return;
+        if (!domain) { alert("Please select a domain first."); return; }
+        if(!confirm(`Warning: This will lock oPanel to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
 
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Provisioning SSL & Reloading Nginx...');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Binding...');
         alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
         $.ajax({
             url: '/ajax/secure_panel.php',
             type: 'POST',
-            data: form.serialize(),
+            data: { action: 'bind', domain: domain },
             dataType: 'json',
-            success: function(response) {
-                if(response.success) {
-                    let targetDomain = form.find('input[name="domain"]').val();
-                    alertBox.addClass('alert-success').text("Success! Redirecting to your new secure domain in 5 seconds...").removeClass('d-none');
-                    
-                    // Redirect the user to the new secure domain automatically
-                    setTimeout(function() {
-                        window.location.href = "https://" + targetDomain + ":7443";
-                    }, 5000);
-
+            success: function(res) {
+                if(res.success) {
+                    alertBox.addClass('alert-success').text("Success! Redirecting in 3 seconds...").removeClass('d-none');
+                    setTimeout(() => window.location.href = "https://" + res.domain + ":7443", 3000);
                 } else {
-                    alertBox.addClass('alert-danger').text("Error: " + response.error).removeClass('d-none');
-                    btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure oPanel');
+                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    btn.prop('disabled', false).html('<i class="bi bi-link-45deg"></i> Bind to Panel');
                 }
-            },
-            error: function() {
-                alertBox.addClass('alert-danger').text("A network error occurred.").removeClass('d-none');
-                btn.prop('disabled', false).html('<i class="bi bi-lock-fill"></i> Secure oPanel');
+            }
+        });
+    });
+
+    // === SECURE PANEL: UNBIND & REVERT TO IP ===
+    $('#unbindPanelBtn').click(function() {
+        let btn = $(this);
+        let alertBox = $('#securePanelAlert');
+        
+        if(!confirm("Are you sure you want to unbind the panel? This reverts to the raw IP address and self-signed certificates.")) return;
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+
+        $.ajax({
+            url: '/ajax/secure_panel.php',
+            type: 'POST',
+            data: { action: 'unbind' },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    alertBox.addClass('alert-success').text("Success! Redirecting to IP in 3 seconds...").removeClass('d-none');
+                    setTimeout(() => window.location.href = "https://" + res.ip + ":7443", 3000);
+                } else {
+                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    btn.prop('disabled', false).html('<i class="bi bi-x-circle"></i> Unbind');
+                }
             }
         });
     });
@@ -2804,5 +2827,162 @@ $(document).ready(function() {
     // 3. Initialize and set background polling (every 10 seconds)
     fetchFail2Ban();
     setInterval(fetchFail2Ban, 10000);
+    // =================================================================
+    // SYSTEM SERVICES MANAGER
+    // =================================================================
+
+    window.fetchServices = function() {
+        $.ajax({
+            url: '/ajax/get_services.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    let tbody = $('#dynamicServicesTable');
+                    tbody.empty();
+                    
+                    res.services.forEach(function(s) {
+                        // 1. Determine Status Badge
+                        let statusBadge = '';
+                        if (s.status === 'active') {
+                            statusBadge = '<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-check-circle-fill me-1"></i> Running</span>';
+                        } else if (s.status === 'inactive' || s.status === 'failed') {
+                            statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-x-circle-fill me-1"></i> Stopped</span>';
+                        } else {
+                            statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">Not Installed</span>';
+                        }
+
+                        // 2. Build Action Buttons
+                        let actions = '';
+                        if (s.status !== 'unknown') { // Only show buttons if installed
+                            let startBtn = `<button class="btn btn-sm btn-outline-success mx-1 execute-service" data-action="start" data-svc="${s.service}" title="Start"><i class="bi bi-play-fill"></i></button>`;
+                            let stopBtn  = `<button class="btn btn-sm btn-outline-danger mx-1 execute-service" data-action="stop" data-svc="${s.service}" title="Stop"><i class="bi bi-stop-fill"></i></button>`;
+                            let resBtn   = `<button class="btn btn-sm btn-outline-dark mx-1 execute-service" data-action="restart" data-svc="${s.service}" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>`;
+
+                            // SRE Guardrail: Hide the stop/start buttons for core services if active to prevent self-sabotage
+                            if (!s.can_stop) {
+                                stopBtn = '';
+                                startBtn = ''; 
+                            }
+                            
+                            // If it's already running, disable the start button. If stopped, disable restart/stop.
+                            if (s.status === 'active') startBtn = startBtn.replace('btn-outline-success', 'btn-outline-success disabled');
+                            if (s.status !== 'active') {
+                                stopBtn = stopBtn.replace('btn-outline-danger', 'btn-outline-danger disabled');
+                                resBtn = resBtn.replace('btn-outline-dark', 'btn-outline-dark disabled');
+                            }
+
+                            actions = startBtn + stopBtn + resBtn;
+                        }
+
+                        // 3. Render Row
+                        let row = `<tr>
+                            <td class="fw-bold text-dark">${s.name}</td>
+                            <td>${statusBadge}</td>
+                            <td class="text-end">${actions}</td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                }
+            }
+        });
+    };
+
+    // Execute Service Action Click Handler
+    $(document).on('click', '.execute-service', function() {
+        if ($(this).hasClass('disabled')) return;
+
+        let action = $(this).data('action');
+        let svc = $(this).data('svc');
+        
+        let warning = `Are you sure you want to ${action.toUpperCase()} the ${svc} service?`;
+        if (action === 'stop' && !confirm(warning)) return;
+
+        let btn = $(this);
+        let originalHtml = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_service.php',
+            type: 'POST',
+            data: { action: action, service: svc },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    showToast(res.message);
+                    // Wait 3 seconds for Python to execute, then refresh the list
+                    setTimeout(fetchServices, 3000);
+                } else {
+                    alert("Error: " + res.error);
+                    btn.prop('disabled', false).html(originalHtml);
+                }
+            }
+        });
+    });
+
+    // Run on load
+    fetchServices();
+    // =================================================================
+    // COMPONENT VERSION MANAGER
+    // =================================================================
+
+    window.fetchComponents = function() {
+        $.ajax({
+            url: '/ajax/get_components.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    let tbody = $('#dynamicComponentsTable');
+                    tbody.empty();
+                    
+                    res.components.forEach(function(c) {
+                        let versionDisplay = c.version === 'Not Installed' 
+                            ? `<span class="badge bg-secondary bg-opacity-10 text-secondary border">Not Installed</span>` 
+                            : `<code class="text-dark bg-light px-2 py-1 rounded shadow-sm border">${c.version}</code>`;
+
+                        let row = `<tr>
+                            <td class="fw-bold text-dark">${c.name}</td>
+                            <td class="text-muted small font-monospace">${c.package}</td>
+                            <td class="text-end">${versionDisplay}</td>
+                        </tr>`;
+                        tbody.append(row);
+                    });
+                }
+            }
+        });
+    };
+
+    // Run on load alongside fetchServices()
+    fetchComponents();
+    
+    $('#brandingForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        let btn = $('#saveBrandingBtn');
+        let alertBox = $('#brandingAlert');
+        let formData = new FormData(this);
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
+        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+
+        $.ajax({
+            url: '/ajax/save_branding.php',
+            type: 'POST',
+            data: formData,
+            contentType: false, // Required for file uploads
+            processData: false, // Required for file uploads
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    alertBox.addClass('alert-success').text("Branding saved! Reloading to apply changes...").removeClass('d-none');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    btn.prop('disabled', false).html('Save Changes');
+                }
+            }
+        });
+    });
     
 });

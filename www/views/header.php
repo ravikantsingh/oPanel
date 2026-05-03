@@ -1,5 +1,7 @@
 <?php
 // /opt/panel/www/views/header.php
+require_once __DIR__ . '/../classes/Branding.php';
+$brand = Branding::getSettings();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -7,12 +9,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo $_SESSION['csrf_token']; ?>">
-    <title>oPanel | Unified Management</title>
+    
+    <title><?= htmlspecialchars($brand['title']) ?> | Unified Management</title>
+    
+    <?php if (!empty($brand['favicon_svg'])): ?>
+        <link rel="icon" type="image/svg+xml" href="<?= $brand['favicon_svg'] ?>">
+    <?php endif; ?>
+    <?php if (!empty($brand['favicon_ico'])): ?>
+        <link rel="alternate icon" href="<?= $brand['favicon_ico'] ?>">
+    <?php endif; ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
+        :root {
+            --bs-primary: <?= $brand['theme_color'] ?>;
+            --bs-primary-rgb: <?= implode(',', sscanf($brand['theme_color'], "#%02x%02x%02x")) ?>;
+        }
         body { background-color: #f4f6f9; }
-        .sidebar { min-height: 100vh; background-color: #1e1e2f; padding-top: 20px;}
+        .sidebar { min-height: 100vh; background-color: <?= $brand['sidebar_color'] ?>; padding-top: 20px;}
         .sidebar a { color: #8b8b9e; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; transition: all 0.2s; }
         .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
         .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); border-left: 3px solid #0d6efd; }
@@ -25,7 +39,13 @@
     <div class="row">
         <!-- Make Sidebar a flex-column to push the admin menu to the bottom -->
         <nav class="col-md-3 col-lg-2 d-md-flex flex-column sidebar collapse">
-            <h4 class="text-center text-white mb-4"><i class="bi bi-hexagon-fill text-primary"></i> oPanel</h4>
+            <a href="<?= htmlspecialchars($brand['logo_url']) ?>" class="text-center d-block mb-4 text-decoration-none">
+                <?php if (!empty($brand['logo'])): ?>
+                    <img src="<?= $brand['logo'] ?>" alt="Logo" style="max-height: 40px; max-width: 80%;">
+                <?php else: ?>
+                    <h4 class="text-white"><i class="bi bi-hexagon-fill text-primary"></i> <?= htmlspecialchars($brand['title']) ?></h4>
+                <?php endif; ?>
+            </a>
             <ul class="nav flex-column mb-auto">
                 <li class="nav-item">
                     <a class="nav-link active" href="#" onclick="$('#overview-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>

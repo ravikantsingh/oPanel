@@ -1,6 +1,7 @@
 <?php
 // /opt/panel/www/views/footer.php
 ?>
+<?php require_once __DIR__ . '/../classes/Branding.php'; $brand = Branding::getSettings(); ?>
         <!--  NEW: True Sidebar Sticky Footer CSS  -->
         <style>
             .main-content {
@@ -17,7 +18,11 @@
         <!-- oPanel Footer -->
         <footer class="py-3 mt-auto border-top text-muted small d-flex justify-content-between align-items-center">
             <div>
-                <span class="fw-bold text-dark"><i class="bi bi-shield-check text-success"></i> oPanel</span> &copy; <?php echo date('Y'); ?>
+                <?php if (!$brand['hide_footer']): ?>
+                    <span class="fw-bold text-dark"><i class="bi bi-shield-check text-success"></i> <?= htmlspecialchars($brand['title']) ?></span> &copy; <?php echo date('Y'); ?>
+                <?php else: ?>
+                    <span>&copy; <?php echo date('Y'); ?> <?= htmlspecialchars($brand['title']) ?></span>
+                <?php endif; ?>
             </div>
             <div>
                 <span class="me-3"><i class="bi bi-hdd-network"></i> Node: <?php echo gethostname(); ?></span>

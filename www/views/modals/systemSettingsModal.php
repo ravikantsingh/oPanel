@@ -19,27 +19,28 @@
                     <p class="fw-bold font-monospace fs-5 text-dark mb-0" id="totpSecretText"></p>
                 </div>
                 
-                <h6 class="border-bottom pb-2 mb-3 text-primary"><i class="bi bi-shield-lock"></i> Secure Panel Domain</h6>
+                <h6 class="border-bottom pb-2 mb-3 text-primary"><i class="bi bi-shield-lock"></i> Master Panel Domain</h6>
                 <div class="alert alert-info small">
-                    <i class="bi bi-info-circle"></i> Bind this oPanel to a real domain name with a free Let's Encrypt SSL certificate. <strong>DNS must point to this server first!</strong>
+                    <i class="bi bi-info-circle"></i> Bind oPanel to an existing domain on this server to use its SSL certificate. <strong>The domain must already be created and secured in the Web tab.</strong>
                 </div>
-                
+
                 <form id="securePanelForm">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Panel Domain Name (e.g., cp.yourdomain.com)</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-globe"></i></span>
-                            <input type="text" class="form-control" name="domain" placeholder="cp.example.com" required>
-                        </div>
+                        <label class="form-label small fw-bold">Select Active Domain</label>
+                        <select class="form-select border-secondary domain-dropdown fw-bold text-dark" name="domain" id="masterDomainSelect" required>
+                            <option value="">Select a secured domain...</option>
+                            <!-- Populated dynamically by panel.js -->
+                        </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Admin Email (For SSL Expiry Alerts)</label>
-                        <input type="email" class="form-control" name="email" required>
+                    <div id="securePanelAlert" class="alert d-none mt-3 small py-2"></div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-dark w-75 fw-bold" id="submitSecurePanelBtn">
+                            <i class="bi bi-link-45deg"></i> Bind to Panel
+                        </button>
+                        <button type="button" class="btn btn-outline-danger w-25 fw-bold" id="unbindPanelBtn" title="Revert to IP & Self-Signed Cert">
+                            <i class="bi bi-x-circle"></i> Unbind
+                        </button>
                     </div>
-                    <div id="securePanelAlert" class="alert d-none mt-3"></div>
-                    <button type="button" class="btn btn-dark w-100" id="submitSecurePanelBtn">
-                        <i class="bi bi-lock-fill"></i> Secure oPanel
-                    </button>
                 </form>
                 <hr class="my-4 border-secondary border-opacity-25">
                 <h6 class="pb-2 mb-3 text-warning"><i class="bi bi-clock-history"></i> Global Server Time</h6>

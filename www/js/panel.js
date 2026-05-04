@@ -2984,5 +2984,51 @@ $(document).ready(function() {
             }
         });
     });
+    // === REDIS CACHE ENGINE ===
+    let redisInterval;
+
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        if ($(e.target).attr('href') === '#redis') {
+            fetchRedisStats();
+            redisInterval = setInterval(fetchRedisStats, 5000); // Live update every 5s
+        } else {
+            clearInterval(redisInterval); // Stop pinging when tab is closed
+        }
+    });
+
+    function fetchRedisStats() {
+        $.getJSON('/ajax/redis_stats.php', function(data) {
+            if (data.success) {
+                $('#redisStatusBadge').removeClass('bg-secondary bg-danger').addClass('bg-success').text('Online');
+                $('#redisClients').text(data.clients);
+                $('#redisHitRate').text(data.hit_rate);
+                $('#redisUptime').text(data.uptime_days);
+                
+                // Animate Memory Bar
+                $('#redisMemText').text(data.used_memory_human + ' / 256M');
+                $('#redisMemBar')
+                    .css('width', data.memory_percent + '%')
+                    .text(data.memory_percent + '%')
+                    .removeClass('bg-secondary bg-primary bg-success bg-warning bg-danger')
+                    .addClass('bg-' + data.memory_color);
+            } else {
+                $('#redisStatusBadge').removeClass('bg-secondary bg-success').addClass('bg-danger').text('Offline');
+                $('#redisMemBar').css('width', '0%').text('0%').removeClass().addClass('progress-bar bg-danger');
+            }
+        });
+    }
+
+    window.redisAction = function(actionType) {
+        if (!confirm('Are you sure you want to ' + actionType + ' the Redis cache?')) return;
+        
+        $.post('/ajax/redis_action.php', { action: actionType, csrf_token: document.querySelector('meta[name="csrf-token"]').content }, function(res) {
+            if(res.success) {
+                alert(res.message);
+                fetchRedisStats(); // Refresh UI instantly
+            } else {
+                alert("Error: " + res.error);
+            }
+        }, 'json');
+    }
     
 });

@@ -234,6 +234,11 @@ echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-ssl
 echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/opanel-ssl
 chmod 440 /etc/sudoers.d/opanel-ssl
 
+# SRE SUDOERS BRIDGE FOR radis Cache
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-redis
+echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc/sudoers.d/opanel-redis
+chmod 440 /etc/sudoers.d/opanel-redis
+
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 systemctl restart nginx
 

@@ -42,6 +42,7 @@ include 'views/header.php';
         include 'views/components/tab-domains.php'; 
         include 'views/components/tab-security.php'; 
         include 'views/components/tab-users.php'; 
+        include 'views/components/tab-redis.php';
         include 'views/components/tab-cron.php'; 
         include 'views/components/tab-backups.php'; 
         include 'views/components/tab-docs.php';

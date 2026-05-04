@@ -216,24 +216,24 @@ fastcgi_intercept_errors on;
 
 error_page 403 /opanel_403.html;
 error_page 404 /opanel_404.html;
-error_page 500 502 503 504 /opanel_50x.html;
+error_page 500 502 504 /opanel_50x.html;
+error_page 503 /opanel_suspended.html;
 
-location = /opanel_403.html {
-    root /var/www/opanel_errors;
-    allow all;
-    internal;
-}
+location = /opanel_403.html { root /var/www/opanel_errors; allow all; internal; }
+location = /opanel_404.html { root /var/www/opanel_errors; allow all; internal; }
+location = /opanel_50x.html { root /var/www/opanel_errors; allow all; internal; }
+location = /opanel_suspended.html { root /var/www/opanel_errors; allow all; internal; }
+EOF
 
-location = /opanel_404.html {
-    root /var/www/opanel_errors;
-    allow all;
-    internal;
-}
+# Generate the dedicated Domain Suspension Snippet
+cat << 'EOF' > /etc/nginx/snippets/domain-suspended.conf
+error_page 503 @suspended;
+return 503;
 
-location = /opanel_50x.html {
+location @suspended {
     root /var/www/opanel_errors;
+    rewrite ^(.*)$ /opanel_suspended.html break;
     allow all;
-    internal;
 }
 EOF
 

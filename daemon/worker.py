@@ -64,6 +64,7 @@ ALLOWED_ACTIONS = {
     'manage_fail2ban': '/opt/panel/scripts/fail2ban_manager.sh',
     'manage_service': '/opt/panel/scripts/service_manager.sh',
     'wp_redis_manager': '/opt/panel/scripts/wp_redis_manager.sh',
+    'domain_status': '/opt/panel/scripts/domain_status.sh',
 }
 
 def get_db_connection():

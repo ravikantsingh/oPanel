@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 CREATE TABLE IF NOT EXISTS `domains` (
   `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `domain_name` varchar(255) NOT NULL UNIQUE,
+  `status` VARCHAR(20) DEFAULT 'active',
   `username` varchar(50) NOT NULL,
   `php_version` varchar(10) DEFAULT '8.3',
   `git_repo` varchar(255) DEFAULT 'Not Configured',

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     $db = Database::getInstance()->getConnection();
     // Fetch domains and join with the users table to get the webhook token
-    $stmt = $db->query("SELECT * FROM domains LEFT JOIN users ON domains.username = users.username ORDER BY domains.domain_name ASC");
+    $stmt = $db->query("SELECT domains.*, users.webhook_token FROM domains LEFT JOIN users ON domains.username = users.username ORDER BY domains.domain_name ASC");
     echo json_encode(['success' => true, 'domains' => $stmt->fetchAll()]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

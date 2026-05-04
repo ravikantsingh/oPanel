@@ -892,6 +892,7 @@ $(document).ready(function() {
         });
     });
     // Fetch Domains & Git Data
+    // Fetch Domains & Git Data
     function fetchDomains() {
         $.ajax({
             url: '/ajax/get_domains.php',
@@ -907,11 +908,18 @@ $(document).ready(function() {
                         return;
                     }
                     
-                    let allRowsHtml = ''; // <-- Create an empty string to hold all rows
+                    let allRowsHtml = ''; 
                     
                     response.domains.forEach(function(d) {
+                        let isSuspended = d.status === 'suspended';
+                        let suspendBadge = isSuspended ? '<span class="badge bg-danger ms-2 shadow-sm"><i class="bi bi-pause-circle"></i> Suspended</span>' : '';
+                        
+                        let suspendBtn = isSuspended
+                            ? `<button class="btn btn-sm btn-outline-success toggle-domain-status" data-domain="${d.domain_name}" data-action="unsuspend" title="Unsuspend Domain"><i class="bi bi-play-fill"></i></button>`
+                            : `<button class="btn btn-sm btn-outline-warning toggle-domain-status" data-domain="${d.domain_name}" data-action="suspend" title="Suspend Domain"><i class="bi bi-pause-fill"></i></button>`;
+
                         let sslBadge = d.has_ssl == 1 ? '<span class="badge bg-success"><i class="bi bi-lock"></i> Secured</span>' : '<span class="badge bg-secondary">Unsecured</span>';
-                        let proto = d.has_ssl == 1 ? 'https' : 'http'; // Your clever protocol detector
+                        let proto = d.has_ssl == 1 ? 'https' : 'http'; 
                         
                         // WAF Toggle
                         let wafBadge = d.waf_enabled == 1 
@@ -969,8 +977,8 @@ $(document).ready(function() {
                                     <div class="d-flex align-items-center mb-1">
                                         <a href="${proto}://${d.domain_name}" target="_blank" class="text-dark text-decoration-none fw-bold fs-6 me-2">
                                             ${d.domain_name} <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.75rem;"></i>
-                                        </a>
-                                        <button class="btn btn-sm btn-link text-primary p-0 show-connection-info" data-domain="${d.domain_name}" title="Connection Info">
+                                        </a> ${suspendBadge}
+                                        <button class="btn btn-sm btn-link text-primary p-0 show-connection-info ms-1" data-domain="${d.domain_name}" title="Connection Info">
                                             <i class="bi bi-info-circle-fill fs-5"></i>
                                         </button>
                                     </div>
@@ -990,6 +998,7 @@ $(document).ready(function() {
                                         <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
                                         <button class="btn btn-sm btn-outline-info manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="FTP Accounts"><i class="bi bi-hdd-network-fill"></i></button>
                                         <button class="btn btn-sm btn-outline-secondary manage-mail" data-domain="${d.domain_name}" title="Mailboxes"><i class="bi bi-envelope-at-fill"></i></button>
+                                        ${suspendBtn}
                                         <button class="btn btn-sm btn-outline-danger delete-domain ms-auto" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain"><i class="bi bi-trash-fill"></i></button>
                                     </div>
                                 </td>
@@ -1014,6 +1023,36 @@ $(document).ready(function() {
             }
         });
     }
+    // === Suspend/Unsuspend Domain Logic ===
+    $(document).on('click', '.toggle-domain-status', function() {
+        let domain = $(this).data('domain');
+        let action = $(this).data('action');
+        let btn = $(this);
+        
+        let warning = action === 'suspend' 
+            ? `Are you sure you want to suspend ${domain}? All traffic will be blocked immediately with a 503 error.` 
+            : `Are you sure you want to unsuspend ${domain} and restore traffic?`;
+            
+        if(!confirm(warning)) return;
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_domain_status.php',
+            type: 'POST',
+            data: { domain: domain, action: action },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    // Refresh the domains table after 2 seconds so Nginx has time to reload
+                    setTimeout(fetchDomains, 2000); 
+                } else {
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false);
+                }
+            }
+        });
+    });
     // === SCORCHED EARTH: Delete Domain (Upgraded SRE Fallback) ===
     $(document).on('click', '.delete-domain', function() {
         let domain = $(this).data('domain');

@@ -18,7 +18,7 @@ export DEBIAN_FRONTEND=noninteractive
 # ==========================================
 # 1. INSTALL CORE DEPENDENCIES & NODE.JS
 # ==========================================
-echo -e "\e[34m[1/10] Installing system dependencies...\e[0m"
+echo -e "\e[34m[1/13] Installing system dependencies...\e[0m"
 apt-get update && apt-get upgrade -y
 apt-get install -y software-properties-common curl wget git unzip jq quota quotatool
 
@@ -50,7 +50,7 @@ apt-get purge -y vsftpd 2>/dev/null || true
 # ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
-echo -e "\e[34m[2/10] Downloading oPanel core...\e[0m"
+echo -e "\e[34m[2/13] Downloading oPanel core...\e[0m"
 mkdir -p /opt/panel
 git clone "$GITHUB_REPO" /tmp/panel_temp
 cp -r /tmp/panel_temp/daemon /opt/panel/
@@ -61,7 +61,7 @@ cp -r /tmp/panel_temp/templates /opt/panel/
 # ==========================================
 # 3. SET STRICT PERMISSIONS
 # ==========================================
-echo -e "\e[34m[3/10] Securing file permissions...\e[0m"
+echo -e "\e[34m[3/13] Securing file permissions...\e[0m"
 mkdir -p /opt/panel/logs
 mkdir -p /opt/panel/backups/databases
 mkdir -p /opt/panel/backups/websites
@@ -83,7 +83,7 @@ find /opt/panel/backups -type f -exec chmod 640 {} +
 # ==========================================
 # 4. INITIALIZE DATABASE
 # ==========================================
-echo -e "\e[34m[4/10] Bootstrapping MariaDB Environment...\e[0m"
+echo -e "\e[34m[4/13] Bootstrapping MariaDB Environment...\e[0m"
 systemctl start mariadb
 
 # Generate a highly secure random password for the panel's internal DB connection
@@ -114,7 +114,7 @@ EOF
 # ==========================================
 # 5. CONFIGURE PHPMYADMIN
 # ==========================================
-echo -e "\e[34m[5/10] Installing phpMyAdmin...\e[0m"
+echo -e "\e[34m[5/13] Installing phpMyAdmin...\e[0m"
 
 # FIX: Robust Download with Fallback to prevent silent 404s
 wget -q --tries=3 --timeout=15 https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
@@ -138,23 +138,23 @@ chown -R www-data:www-data /opt/panel/www/pma
 # ==========================================
 # 6. CONFIGURE MODSECURITY & PURE-FTPD & BIND9
 # ==========================================
-echo -e "\e[34m[6/10] Configuring WAF, FTP, and DNS...\e[0m"
+echo -e "\e[34m[6/13] Configuring WAF, FTP, and DNS...\e[0m"
 # WAF
 mkdir -p /etc/modsecurity
 wget -qO /etc/modsecurity/modsecurity.conf https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/modsecurity.conf-recommended
 wget -qO /etc/modsecurity/unicode.mapping https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/unicode.mapping
 sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
-echo "Include /usr/share/modsecurity-crs/owasp-crs.load" >> /etc/modsecurity/modsecurity.conf
+echo 'Include /usr/share/modsecurity-crs/owasp-crs.load' >> /etc/modsecurity/modsecurity.conf
 find /usr/share/modsecurity-crs/ -type f -exec sed -i 's/IncludeOptional/Include/g' {} +
 apt-mark hold modsecurity-crs # Prevent OS from overwriting rules
 
 # FTP
 ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
-echo "yes" > /etc/pure-ftpd/conf/ChrootEveryone
+echo 'yes' > /etc/pure-ftpd/conf/ChrootEveryone
 # CLOUD NAT FIX FOR PASSIVE FTP
 PUBLIC_IP=$(curl -s ifconfig.me)
-echo "40000 50000" > /etc/pure-ftpd/conf/PassivePortRange
-echo "$PUBLIC_IP" > /etc/pure-ftpd/conf/ForcePassiveIP
+echo '40000 50000' > /etc/pure-ftpd/conf/PassivePortRange
+echo '$PUBLIC_IP' > /etc/pure-ftpd/conf/ForcePassiveIP
 touch /etc/pure-ftpd/pureftpd.passwd
 pure-pw mkdb
 systemctl restart pure-ftpd
@@ -166,7 +166,7 @@ chown bind:bind /etc/bind/zones
 # ==========================================
 # 7. CONFIGURE NGINX & SSL
 # ==========================================
-echo -e "\e[34m[7/10] Provisioning Nginx, SSL, and Custom Errors...\e[0m"
+echo -e "\e[34m[7/13] Provisioning Nginx, SSL, and Custom Errors...\e[0m"
 SERVER_IP=$(curl -s ifconfig.me)
 mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
@@ -228,13 +228,57 @@ location = /opanel_50x.html {
 }
 EOF
 
+# SRE SUDOERS BRIDGE FOR SSL CHECKS
+echo -e "\e[34m[+] Configuring Sudoers Bridge for SSL telemetry...\e[0m"
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-ssl
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/opanel-ssl
+chmod 440 /etc/sudoers.d/opanel-ssl
+
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 systemctl restart nginx
 
 # ==========================================
+# 7.5 INSTALL & SECURE REDIS CACHE
+# ==========================================
+echo -e "\e[34m[+] Provisioning Redis In-Memory Cache...\e[0m"
+
+# 1. Install Redis and the PHP-Redis extension
+apt-get install -y redis-server php8.3-redis
+
+# 2. Generate a highly secure random password for Redis
+REDIS_PASS=$(openssl rand -hex 16)
+
+# 3. Apply SRE Guardrails and Security to redis.conf
+# Set the password
+sed -i "s/# requirepass foobared/requirepass $REDIS_PASS/g" /etc/redis/redis.conf
+
+# Hard-cap memory to 128MB to prevent OOM crashes
+echo "maxmemory 128mb" >> /etc/redis/redis.conf
+
+# Set eviction policy to seamlessly drop oldest items when full
+echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
+
+# Restart and enable the Redis service
+systemctl restart redis-server
+systemctl enable redis-server
+
+# 4. Save the credentials securely for oPanel to use
+mkdir -p /opt/panel/www/config
+cat <<EOF > /opt/panel/www/config/redis.php
+<?php
+define('REDIS_HOST', '127.0.0.1');
+define('REDIS_PORT', 6379);
+define('REDIS_PASS', '$REDIS_PASS');
+EOF
+
+# Ensure www-data can read the config
+chown root:www-data /opt/panel/www/config/redis.php
+chmod 640 /opt/panel/www/config/redis.php
+
+# ==========================================
 # 8. START PYTHON TASK DAEMON
 # ==========================================
-echo -e "\e[34m[8/10] Initializing Background Queue Worker...\e[0m"
+echo -e "\e[34m[8/13] Initializing Background Queue Worker...\e[0m"
 
 # NEW: Sync the generated DB password with the Python worker & scheduler
 sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
@@ -252,7 +296,7 @@ systemctl start panel-daemon
 # ==========================================
 # 9. CONFIGURE UFW FIREWALL
 # ==========================================
-echo -e "\e[34m[9/10] Securing perimeter...\e[0m"
+echo -e "\e[34m[9/13] Securing perimeter...\e[0m"
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
@@ -269,12 +313,12 @@ ufw --force enable
 /opt/panel/scripts/sync_firewall.sh
 
 # ==========================================
-# 9.4 CONFIGURE FAIL2BAN ACTIVE DEFENSE
+# 10 CONFIGURE FAIL2BAN ACTIVE DEFENSE
 # ==========================================
-echo -e "\e[34m[9.5/10] Configuring Fail2ban Intrusion Prevention...\e[0m"
+echo -e "\e[34m[10/13] Configuring Fail2ban Intrusion Prevention...\e[0m"
 
-# 1. Create the Custom oPanel Filter
-cat << 'EOF' > /etc/fail2ban/filter.d/opanel.conf
+# 1. Create the Custom oPanel Filter (FIXED: Capital P to match jail)
+cat << 'EOF' > /etc/fail2ban/filter.d/oPanel.conf
 [Definition]
 failregex = ^.*oPanel Auth Failed:.*IP: <HOST>.*$
 ignoreregex =
@@ -324,13 +368,14 @@ logpath  = /opt/panel/logs/auth.log
 maxretry = 5
 EOF
 
-# 3. Prepare the oPanel custom auth log (ensure it exists before fail2ban starts)
+# 3. Prepare the oPanel custom auth log
 touch /opt/panel/logs/auth.log
 chown www-data:www-data /opt/panel/logs/auth.log
 chmod 660 /opt/panel/logs/auth.log
 
-# 4. Create the Sudoers Bridge for PHP
-echo "www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *" > /etc/sudoers.d/opanel-fail2ban
+# 4. Create the Sudoers Bridge for PHP (FIXED: Silenced PAM logging)
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-fail2ban
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *' >> /etc/sudoers.d/opanel-fail2ban
 chmod 440 /etc/sudoers.d/opanel-fail2ban
 
 # 5. Restart and Enable
@@ -338,9 +383,18 @@ systemctl restart fail2ban
 systemctl enable fail2ban
 
 # ==========================================
-# 9.5 CONFIGURE CLI & SERVER BRANDING
+# 11 OPTIMIZE SYSTEM JOURNAL LOGGING
 # ==========================================
-echo -e "\e[34m[10/10] Installing oPanel CLI and Branding...\e[0m"
+echo -e "\e[34m[11/13] Capping System Logs to prevent CPU/Disk exhaustion...\e[0m"
+
+# Uncomment and set SystemMaxUse to 200 Megabytes
+sed -i 's/#SystemMaxUse=/SystemMaxUse=200M/g' /etc/systemd/journald.conf
+systemctl restart systemd-journald
+
+# ==========================================
+# 12 CONFIGURE CLI & SERVER BRANDING
+# ==========================================
+echo -e "\e[34m[12/13] Installing oPanel CLI and Branding...\e[0m"
 
 # 1. Install the global CLI tool
 cp /tmp/panel_temp/cli/opanel /usr/local/bin/opanel
@@ -368,7 +422,7 @@ echo -e "\e[1m Open, Omni and Optimize hosting control panel.\e[0m"
 echo -e " ----------------------------------------------"
 echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
 echo -e " \e[32mKernel:\e[0m $(uname -r)"
-echo -e " \e[32mAccess:\e[0m Type \e[1msudo opanel login\e[0m to access the web interface."
+echo -e " \e[1mAccess:\e[0m Type \e[32sudo opanel login\e[0m to access the web interface."
 echo ""
 EOF
 
@@ -379,7 +433,7 @@ chmod +x /etc/update-motd.d/01-opanel
 rm -rf /tmp/panel_temp
 
 # ==========================================
-# 10. COMPLETE
+# 13. COMPLETE
 # ==========================================
 echo -e "\e[32m=========================================================\e[0m"
 echo -e "\e[32m🎉 oPanel Installation Complete! \e[0m"

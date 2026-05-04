@@ -43,6 +43,9 @@ include 'views/modals/systemSettingsModal.php';
 include 'views/modals/pmaSettingsModal.php';
 include 'views/modals/brandingModal.php';
 
+// 6. Redis
+include 'views/modals/devRedisModal.php';
+
 //7. Mail
 include 'views/modals/mailBoxModal.php';
 ?>

@@ -9,6 +9,7 @@ $services = [
     'Reverse Proxy Server (Nginx)' => 'nginx',
     'Database Server (MariaDB)'    => 'mariadb',
     'PHP FastCGI (PHP 8.3 FPM)'    => 'php8.3-fpm',
+    'In-Memory Cache (Redis)'      => 'redis-server',
     'FTP Server (Pure-FTPd)'       => 'pure-ftpd',
     'DNS Server (BIND9)'           => 'bind9',
     'Intrusion Prevention (Fail2ban)' => 'fail2ban',

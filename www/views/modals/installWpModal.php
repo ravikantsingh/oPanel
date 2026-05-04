@@ -35,6 +35,13 @@
                         <label class="form-label small fw-bold">Admin Email</label>
                         <input type="email" class="form-control bg-white" name="wp_email" id="wpEmailInput" required>
                     </div>
+                    <div class="mb-3 form-check form-switch border rounded p-3 bg-white shadow-sm">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="wpRedisToggle" name="enable_redis" value="1" checked>
+                        <label class="form-check-label fw-bold d-block" for="wpRedisToggle">
+                            Enable Redis Object Cache <span class="badge bg-success ms-1">Recommended</span>
+                        </label>
+                        <small class="text-muted d-block mt-1">Automatically configures a secure, isolated in-memory cache for this site to maximize performance.</small>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer bg-light border-top">

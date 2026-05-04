@@ -986,6 +986,7 @@ $(document).ready(function() {
                                         </div>
 
                                         <button class="btn btn-sm btn-outline-primary open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Install WordPress"><i class="bi bi-wordpress"></i></button>
+                                        <button class="btn btn-sm btn-outline-warning text-dark enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}" title="Enable Redis Object Cache"><i class="bi bi-database-fill-up"></i></button>
                                         <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
                                         <button class="btn btn-sm btn-outline-info manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="FTP Accounts"><i class="bi bi-hdd-network-fill"></i></button>
                                         <button class="btn btn-sm btn-outline-secondary manage-mail" data-domain="${d.domain_name}" title="Mailboxes"><i class="bi bi-envelope-at-fill"></i></button>
@@ -1052,6 +1053,37 @@ $(document).ready(function() {
                     alert("Error: " + response.error);
                     btn.prop('disabled', false).html('<i class="bi bi-trash-fill"></i>');
                 }
+            }
+        });
+    });
+    // === Retrofit Redis Button Logic ===
+    $(document).on('click', '.enable-redis-btn', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        let btn = $(this);
+        let originalIcon = btn.html();
+
+        if(!confirm(`Are you sure you want to inject Redis caching into the WordPress installation at ${domain}?`)) return;
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/enable_wp_redis.php',
+            type: 'POST',
+            data: { domain: domain, username: user },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert(response.message);
+                    $('#overview-tab').tab('show'); // Jump to tasks tab to watch it
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalIcon);
+            },
+            error: function() {
+                alert("Network Error.");
+                btn.prop('disabled', false).html(originalIcon);
             }
         });
     });
@@ -3005,7 +3037,7 @@ $(document).ready(function() {
                 $('#redisUptime').text(data.uptime_days);
                 
                 // Animate Memory Bar
-                $('#redisMemText').text(data.used_memory_human + ' / 256M');
+                $('#redisMemText').text(data.used_memory_human + ' / 128M');
                 $('#redisMemBar')
                     .css('width', data.memory_percent + '%')
                     .text(data.memory_percent + '%')
@@ -3030,5 +3062,50 @@ $(document).ready(function() {
             }
         }, 'json');
     }
+    // === Custom App Developer Guide ===
+    $(document).on('click', '#openDevGuideBtn', function() {
+        let btn = $(this);
+        let originalHtml = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Loading Vault...');
+
+        $.ajax({
+            url: '/ajax/get_redis_credentials.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    // Populate the inputs
+                    $('#devRedisPass').val(res.password);
+                    
+                    // Inject the password into the boilerplate code dynamically
+                    let boilerplate = $('#devPhpBoilerplate').val();
+                    boilerplate = boilerplate.replace('PASSWORD_WILL_LOAD_HERE', res.password);
+                    $('#devPhpBoilerplate').val(boilerplate);
+
+                    // Show the modal
+                    $('#devRedisModal').modal('show');
+                } else {
+                    alert("Error fetching credentials: " + res.error);
+                }
+                btn.prop('disabled', false).html(originalHtml);
+            },
+            error: function() {
+                alert("Network error.");
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+
+    // Reset the boilerplate text when the modal closes so it's ready for the next click
+    $('#devRedisModal').on('hidden.bs.modal', function () {
+        let boilerplate = $('#devPhpBoilerplate').val();
+        let currentPass = $('#devRedisPass').val();
+        if(currentPass) {
+            boilerplate = boilerplate.replace(currentPass, 'PASSWORD_WILL_LOAD_HERE');
+            $('#devPhpBoilerplate').val(boilerplate);
+            $('#devRedisPass').val('');
+        }
+    });
     
 });

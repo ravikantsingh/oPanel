@@ -54,6 +54,7 @@
                 <small class="text-muted">Manually intervene with the Redis daemon.</small>
             </div>
             <div>
+                <button class="btn btn-outline-dark fw-bold me-2" id="openDevGuideBtn"><i class="bi bi-code-slash me-1"></i> Custom App Guide</button>
                 <button class="btn btn-primary fw-bold me-2" onclick="redisAction('flush')"><i class="bi bi-eraser-fill me-1"></i> Flush Cache</button>
                 <button class="btn btn-outline-danger fw-bold" onclick="redisAction('restart')"><i class="bi bi-arrow-clockwise me-1"></i> Restart Daemon</button>
             </div>

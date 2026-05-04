@@ -63,6 +63,7 @@ ALLOWED_ACTIONS = {
     'https_routing_manager': '/opt/panel/scripts/https_routing_manager.sh',
     'manage_fail2ban': '/opt/panel/scripts/fail2ban_manager.sh',
     'manage_service': '/opt/panel/scripts/service_manager.sh',
+    'wp_redis_manager': '/opt/panel/scripts/wp_redis_manager.sh',
 }
 
 def get_db_connection():

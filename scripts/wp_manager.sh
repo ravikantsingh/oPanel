@@ -9,6 +9,7 @@ WP_TITLE=$(echo "$PAYLOAD" | jq -r '.wp_title')
 WP_ADMIN=$(echo "$PAYLOAD" | jq -r '.wp_admin')
 WP_PASS=$(echo "$PAYLOAD" | jq -r '.wp_pass')
 WP_EMAIL=$(echo "$PAYLOAD" | jq -r '.wp_email // "admin@'$DOMAIN'"')
+ENABLE_REDIS=$(echo "$PAYLOAD" | jq -r '.enable_redis')
 
 DOC_ROOT="/home/$USERNAME/web/$DOMAIN/public_html"
 
@@ -63,6 +64,33 @@ PHP
 
 # 7. Execute the Installation
 $WP_CMD core install --url="https://$DOMAIN" --title="$WP_TITLE" --admin_user="$WP_ADMIN" --admin_password="$WP_PASS" --admin_email="$WP_EMAIL"
+
+# ==========================================
+# ---> NEW: SRE REDIS CACHE INJECTION <---
+# ==========================================
+if [ "$ENABLE_REDIS" == "true" ]; then
+    echo "Provisioning isolated Redis Cache environment..."
+    
+    # 1. Extract the secure master password safely
+    REDIS_PASS=$(grep REDIS_PASS /opt/panel/www/config/redis.php | cut -d"'" -f4)
+    
+    # 2. Prevent Data Bleeding: Strip out dots/hyphens from the domain to make a clean DB prefix
+    # Example: "my-site.com" becomes "mysitecom_"
+    CLEAN_PREFIX=$(echo "$DOMAIN" | tr -cd 'a-zA-Z0-9' | awk '{print $1"_"}')
+
+    # 3. Inject SRE Configs using WP-CLI
+    $WP_CMD config set WP_REDIS_HOST '127.0.0.1' --type=constant
+    $WP_CMD config set WP_REDIS_PORT 6379 --type=constant --raw
+    $WP_CMD config set WP_REDIS_PASSWORD "$REDIS_PASS" --type=constant
+    $WP_CMD config set WP_REDIS_PREFIX "$CLEAN_PREFIX" --type=constant
+
+    # 4. Install and activate the Till Krüss Drop-in
+    $WP_CMD plugin install redis-cache --activate
+    $WP_CMD redis enable
+    
+    echo "Redis Object Cache secured and activated for $DOMAIN."
+fi
+# ==========================================
 
 # 8. Cleanup & Security Lock
 rm -f /tmp/wp-cli.phar

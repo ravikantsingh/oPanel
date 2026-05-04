@@ -163,6 +163,15 @@ systemctl restart pure-ftpd
 mkdir -p /etc/bind/zones
 chown bind:bind /etc/bind/zones
 
+# SRE FIX FOR SYSTEMD-RESOLVED vs BIND9
+echo -e "\e[34m[+] Resolving local DNS Port 53 conflicts...\e[0m"
+mkdir -p /etc/systemd/resolved.conf.d
+echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/opanel-dns.conf
+systemctl restart systemd-resolved
+rm /etc/resolv.conf
+ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+systemctl restart bind9
+
 # ==========================================
 # 7. CONFIGURE NGINX & SSL
 # ==========================================
@@ -332,6 +341,7 @@ EOF
 # 2. Configure the Jails
 cat << 'EOF' > /etc/fail2ban/jail.local
 [DEFAULT]
+usedns   = no
 bantime  = 1h
 findtime  = 10m
 maxretry = 5
@@ -427,7 +437,7 @@ echo -e "\e[1m Open, Omni and Optimize hosting control panel.\e[0m"
 echo -e " ----------------------------------------------"
 echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
 echo -e " \e[32mKernel:\e[0m $(uname -r)"
-echo -e " \e[1mAccess:\e[0m Type \e[32sudo opanel login\e[0m to access the web interface."
+echo -e " \e[1mAccess:\e[0m Type \e[32msudo opanel login\e[0m to access the web interface."
 echo ""
 EOF
 

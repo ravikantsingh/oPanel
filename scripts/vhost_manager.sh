@@ -48,6 +48,7 @@ if [ "$ACTION" == "create" ]; then
     # 1. Create Web Directories
     mkdir -p "$WEB_ROOT"
     mkdir -p "$LOG_DIR"
+    mkdir -p "/home/$USERNAME/web/$DOMAIN/tmp"
 
     # Copy the oPanel default page into the new domain
     if [ -f /opt/panel/templates/index.html ]; then

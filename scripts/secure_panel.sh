@@ -44,7 +44,18 @@ server {
     location ^~ /classes/ { deny all; }
     location ^~ /config/ { deny all; }
 
-    location / { try_files \$uri \$uri/ =404; }
+    location /ajax/ {
+        try_files \$uri \$uri/ =404;
+    }
+
+    if (\$request_uri ~ ^/(?!(ajax|classes|config))(.*)\.php(\?|\$)) {
+        return 301 /\$1\$2\$is_args\$args;
+    }
+
+    location / {
+        # Try the exact URI, then a directory, then silently append .php and execute
+        try_files \$uri \$uri/ \$uri.php\$is_args\$args;
+    }
 
     location ~ \.php\$ {
         include snippets/fastcgi-php.conf;

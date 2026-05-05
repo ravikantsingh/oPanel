@@ -12,7 +12,7 @@ session_start();
 
 // 1. Existing Login Check
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header("Location: /login.php");
+    header("Location: /login");
     exit;
 }
 
@@ -30,7 +30,7 @@ include 'views/header.php';
 <?php include 'views/components/title.php'; ?>
 
 <!-- 2. Stats Bar (Extracted) -->
-<?php include 'views/components/stats-bar.php'; ?>
+<?php //include 'views/components/stats-bar.php'; ?>
 
 <!-- 3. Panel Tabs -->
 <?php include 'views/components/panel-tabs.php'; ?>

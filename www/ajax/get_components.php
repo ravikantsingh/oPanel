@@ -35,5 +35,13 @@ foreach ($packages as $displayName => $pkgName) {
     ];
 }
 
+// ---> SRE FIX: Inject PM2 Version Tracking <---
+$pm2_version = trim(shell_exec('pm2 -v 2>/dev/null'));
+$results[] = [
+    'name'    => 'PM2 Process Manager',
+    'package' => 'npm pm2',
+    'version' => !empty($pm2_version) ? $pm2_version : 'Not Installed'
+];
+
 echo json_encode(['success' => true, 'components' => $results]);
 ?>

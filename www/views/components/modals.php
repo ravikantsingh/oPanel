@@ -49,4 +49,5 @@ include 'views/modals/devRedisModal.php';
 
 //7. Mail
 include 'views/modals/mailBoxModal.php';
+
 ?>

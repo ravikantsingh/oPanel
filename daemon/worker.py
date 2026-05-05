@@ -66,6 +66,10 @@ ALLOWED_ACTIONS = {
     'wp_redis_manager': '/opt/panel/scripts/wp_redis_manager.sh',
     'domain_status': '/opt/panel/scripts/domain_status.sh',
     'adv_web_compile': '/opt/panel/scripts/advanced_web_compiler.sh',
+    'deploy_laravel': '/opt/panel/scripts/deploy_laravel.sh',
+    'deploy_python': '/opt/panel/scripts/deploy_python.sh',
+    'revert_to_php': '/opt/panel/scripts/revert_to_php.sh',
+    'restart_app': '/opt/panel/scripts/restart_app.sh',
 }
 
 def get_db_connection():

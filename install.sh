@@ -36,8 +36,9 @@ apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
     bind9 bind9utils bind9-doc \
     pure-ftpd pure-ftpd-common \
     libnginx-mod-http-modsecurity modsecurity-crs \
-    php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl \
-    nodejs fail2ban
+    php8.3-fpm php8.3-mysql php8.3-cli php8.3-curl php8.3-common \
+    nodejs fail2ban python3-venv python3-dev build-essential composer \
+    php8.3-intl php8.3-curl php8.3-xml php8.3-mbstring php8.3-zip php8.3-bcmath php8.3-sqlite3
 
 # Install PM2 Globally and Configure Boot Startup
 echo -e "\e[34m[+] Installing PM2 Process Manager...\e[0m"

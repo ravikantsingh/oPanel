@@ -1,4 +1,5 @@
 <?php
+// /opt/panel/www/ajax/get_services.php
 header('Content-Type: application/json');
 require_once 'security.php';
 
@@ -15,6 +16,7 @@ $services = [
     'Intrusion Prevention (Fail2ban)' => 'fail2ban',
     'SMTP Server (Postfix)'        => 'postfix',
     'IMAP/POP3 Server (Dovecot)'   => 'dovecot',
+    'PM2 Process Manager'          => 'pm2-root',
     'oPanel Background Daemon'     => 'panel-daemon'
 ];
 

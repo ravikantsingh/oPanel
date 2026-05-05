@@ -967,6 +967,27 @@ $(document).ready(function() {
                                 <button class="btn btn-sm btn-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
                             </div>
                         `;
+                        // DYNAMIC APP CONTROLS
+                        let appActions = '';
+                        if (!d.app_type || d.app_type === 'php') {
+                            appActions = `
+                                <button class="btn btn-sm btn-outline-primary open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Install WordPress"><i class="bi bi-wordpress"></i></button>
+                                <button class="btn btn-sm btn-outline-danger deploy-laravel" data-domain="${d.domain_name}" data-user="${d.username}" title="Deploy Laravel Environment"><i class="bi bi-box-seam-fill"></i></button>
+                                <button class="btn btn-sm btn-outline-warning text-dark deploy-python" data-domain="${d.domain_name}" data-user="${d.username}" title="Deploy Python Environment"><i class="bi bi-filetype-py"></i></button>
+                                <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
+                            `;
+                        } else if (d.app_type === 'laravel') {
+                            appActions = `
+                                <button class="btn btn-sm btn-danger disabled shadow-sm" title="Laravel Environment Active"><i class="bi bi-box-seam-fill"></i> Laravel</button>
+                                <button class="btn btn-sm btn-outline-secondary revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="laravel" title="Revert to Standard PHP"><i class="bi bi-arrow-counterclockwise"></i> Revert</button>
+                            `;
+                        } else if (d.app_type === 'python') {
+                            appActions = `
+                                <button class="btn btn-sm btn-warning text-dark disabled shadow-sm" title="Python Environment Active"><i class="bi bi-filetype-py"></i> Python</button>
+                                <button class="btn btn-sm btn-dark restart-app" data-domain="${d.domain_name}" data-user="${d.username}" title="Restart Python Engine"><i class="bi bi-arrow-clockwise"></i> Restart Engine</button>
+                                <button class="btn btn-sm btn-outline-secondary revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="python" title="Revert to Standard PHP"><i class="bi bi-arrow-counterclockwise"></i> Revert</button>
+                            `;
+                        }
 
                         // Add this row to our giant string
                         allRowsHtml += `
@@ -991,10 +1012,7 @@ $(document).ready(function() {
                                             <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
                                             <button class="btn btn-sm btn-outline-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
                                         </div>
-
-                                        <button class="btn btn-sm btn-outline-primary open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Install WordPress"><i class="bi bi-wordpress"></i></button>
-                                        <button class="btn btn-sm btn-outline-warning text-dark enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}" title="Enable Redis Object Cache"><i class="bi bi-database-fill-up"></i></button>
-                                        <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
+                                        ${appActions}
                                         <button class="btn btn-sm btn-outline-info manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="FTP Accounts"><i class="bi bi-hdd-network-fill"></i></button>
                                         <button class="btn btn-sm btn-outline-secondary manage-mail" data-domain="${d.domain_name}" title="Mailboxes"><i class="bi bi-envelope-at-fill"></i></button>
                                         ${suspendBtn}
@@ -3275,6 +3293,136 @@ $(document).ready(function() {
                     $('#hotlinkToggle').prop('checked', !isChecked); // Revert UI
                 }
                 $('#hotlinkToggle').prop('disabled', false);
+            }
+        });
+    });
+    // === LARAVEL DEPLOYMENT TRIGGER ===
+    $(document).on('click', '.deploy-laravel', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        let btn = $(this);
+        let originalIcon = btn.html();
+        
+        if(!confirm(`Deploy Laravel Environment for ${domain}?`)) return;
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/deploy_laravel.php',
+            type: 'POST',
+            data: { domain: domain, username: user },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    showToast("Laravel build queued! Switching to Live Tasks...");
+                    $('#overview-tab').tab('show'); 
+                    setTimeout(fetchDomains, 1500); // <--- Auto-refresh the UI to show the Revert button!
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalIcon);
+            },
+            error: function() {
+                alert("API Error: Check the server logs.");
+                btn.prop('disabled', false).html(originalIcon);
+            }
+        });
+    });
+
+    // === PYTHON DEPLOYMENT TRIGGER ===
+    $(document).on('click', '.deploy-python', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        let btn = $(this);
+        let originalIcon = btn.html();
+        
+        if(!confirm(`Deploy Python Environment for ${domain}?`)) return;
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/deploy_python.php',
+            type: 'POST',
+            data: { domain: domain, username: user },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    showToast("Python build queued! Switching to Live Tasks...");
+                    $('#overview-tab').tab('show'); 
+                    setTimeout(fetchDomains, 1500); // <--- Auto-refresh the UI!
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalIcon);
+            },
+            error: function() {
+                alert("API Error: Check the server logs.");
+                btn.prop('disabled', false).html(originalIcon);
+            }
+        });
+    });
+    // =================================================================
+    // DYNAMIC ENVIRONMENT LIFECYCLE MANAGERS
+    // =================================================================
+
+    // === REVERT APP ENVIRONMENT BACK TO PHP ===
+    $(document).on('click', '.revert-app', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        let type = $(this).data('type');
+        let btn = $(this);
+        let originalIcon = btn.html();
+        
+        let warning = `CRITICAL WARNING: Are you sure you want to revert ${domain} back to standard PHP?`;
+        if(!confirm(warning)) return;
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_app_state.php',
+            type: 'POST',
+            data: { domain: domain, username: user, action: 'revert' },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    showToast("Revert sequence initiated! Check Live Tasks.");
+                    $('#overview-tab').tab('show'); 
+                    setTimeout(fetchDomains, 1500); // <--- Auto-refresh the UI to bring back the deploy buttons!
+                } else {
+                    alert("Error: " + res.error);
+                }
+                btn.prop('disabled', false).html(originalIcon);
+            },
+            error: function() {
+                alert("API Error: Check the server logs.");
+                btn.prop('disabled', false).html(originalIcon);
+            }
+        });
+    });
+
+    // 2. RESTART PERSISTENT APP ENGINE (Python/Node)
+    $(document).on('click', '.restart-app', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        let btn = $(this);
+        let originalIcon = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_app_state.php',
+            type: 'POST',
+            data: { domain: domain, username: user, action: 'restart' },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    showToast("Engine Restart queued. App will reload in 1-2 seconds.");
+                    // Give visual feedback then restore button
+                    setTimeout(() => { btn.prop('disabled', false).html(originalIcon); }, 2500);
+                } else {
+                    alert("Error: " + res.error);
+                    btn.prop('disabled', false).html(originalIcon);
+                }
             }
         });
     });

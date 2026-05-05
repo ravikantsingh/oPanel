@@ -66,8 +66,13 @@ if [ "$ACTION" == "create" ]; then
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
+    
+    # MIME Types safety net to prevent files from downloading
+    include /etc/nginx/mime.types;
+    
     root $WEB_ROOT;
     index index.php index.html index.htm;
+    
     # Custom oPanel Error Pages
     include /etc/nginx/snippets/opanel-errors.conf;
 

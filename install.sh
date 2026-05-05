@@ -249,6 +249,15 @@ echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc
 chmod 440 /etc/sudoers.d/opanel-redis
 
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
+
+# SRE FOLDERS FOR REDIRECTS, HOTLINKS AND MIME TYPE
+mkdir -p /etc/nginx/opanel/redirects
+mkdir -p /etc/nginx/opanel/mimes
+mkdir -p /etc/nginx/opanel/hotlink
+chown -R root:root /etc/nginx/opanel
+chmod -R 755 /etc/nginx/opanel
+chown -R root:root /etc/nginx/opanel/hotlink
+
 systemctl restart nginx
 
 # ==========================================

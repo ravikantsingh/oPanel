@@ -65,6 +65,7 @@ ALLOWED_ACTIONS = {
     'manage_service': '/opt/panel/scripts/service_manager.sh',
     'wp_redis_manager': '/opt/panel/scripts/wp_redis_manager.sh',
     'domain_status': '/opt/panel/scripts/domain_status.sh',
+    'adv_web_compile': '/opt/panel/scripts/advanced_web_compiler.sh',
 }
 
 def get_db_connection():

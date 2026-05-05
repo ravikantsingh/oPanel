@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS `domains` (
   `hsts_enabled` tinyint(1) DEFAULT 0,
   `waf_enabled` tinyint(1) DEFAULT 0,
   `waf_custom_rules` text DEFAULT NULL,
+  `hotlink_protection` TINYINT(1) DEFAULT 0,
   `php_memory_limit` varchar(10) DEFAULT '128M',
   `php_max_exec_time` int(11) DEFAULT 30,
   `php_max_input_time` int(11) DEFAULT 60,
@@ -191,11 +192,16 @@ CREATE TABLE IF NOT EXISTS backup_schedules (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ==========================================
+-- 12. Table for email domains
+-- ==========================================
 CREATE TABLE IF NOT EXISTS mail_domains (
     name VARCHAR(255) NOT NULL PRIMARY KEY
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* Table for physical email accounts */
+-- ==========================================
+-- 13. Table for physical email accounts
+-- ==========================================
 CREATE TABLE IF NOT EXISTS mail_users (
     email VARCHAR(255) NOT NULL PRIMARY KEY,
     domain VARCHAR(255) NOT NULL,
@@ -204,10 +210,37 @@ CREATE TABLE IF NOT EXISTS mail_users (
     FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-/* Table for email forwarders/aliases */
+-- ==========================================
+-- 14. Table for email forwarders/aliases
+-- ==========================================
 CREATE TABLE IF NOT EXISTS mail_aliases (
     source VARCHAR(255) NOT NULL PRIMARY KEY,
     domain VARCHAR(255) NOT NULL,
     destination TEXT NOT NULL,
     FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ==========================================
+-- 15. Create Dedicated Redirects Table
+-- ==========================================
+CREATE TABLE IF NOT EXISTS domain_redirects (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_name VARCHAR(255) NOT NULL,
+    source_path VARCHAR(255) NOT NULL,
+    target_url VARCHAR(255) NOT NULL,
+    redirect_type INT NOT NULL DEFAULT 301,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (domain_name) REFERENCES domains(domain_name) ON DELETE CASCADE
+);
+
+-- ==========================================
+-- 16. Create Dedicated MIME Types Table
+-- ==========================================
+CREATE TABLE IF NOT EXISTS domain_mimes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_name VARCHAR(255) NOT NULL,
+    extension VARCHAR(50) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (domain_name) REFERENCES domains(domain_name) ON DELETE CASCADE
+);

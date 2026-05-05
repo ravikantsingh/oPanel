@@ -892,7 +892,6 @@ $(document).ready(function() {
         });
     });
     // Fetch Domains & Git Data
-    // Fetch Domains & Git Data
     function fetchDomains() {
         $.ajax({
             url: '/ajax/get_domains.php',
@@ -986,7 +985,7 @@ $(document).ready(function() {
                                     <!-- BOTTOM ROW: Flexbox Action Toolbar -->
                                     <div class="d-flex flex-wrap gap-1 mt-2">
                                         <button class="btn btn-sm btn-outline-secondary edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders"></i></button>
-                                        
+                                        <button class="btn btn-sm btn-outline-dark open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}" title="Advanced Web Settings"><i class="bi bi-gear-fill"></i></button>
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-warning text-dark deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy FM"><i class="bi bi-cloud-arrow-up-fill"></i></button>
                                             <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
@@ -3145,6 +3144,139 @@ $(document).ready(function() {
             $('#devPhpBoilerplate').val(boilerplate);
             $('#devRedisPass').val('');
         }
+    });
+    // === ADVANCED WEB SETTINGS UI LOGIC ===
+    // 1. Function to Fetch and Render Tables
+     window.fetchAdvancedWebData = function(domain) {
+        $.ajax({
+            url: '/ajax/get_advanced_web.php',
+            type: 'POST',
+            data: { domain: domain },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    // Render Redirects
+                    let rBody = $('#dynamicRedirectsTable');
+                    rBody.empty();
+                    if(res.redirects.length === 0) rBody.html('<tr><td colspan="4" class="text-center text-muted small">No active redirects.</td></tr>');
+                    res.redirects.forEach(r => {
+                        let typeBadge = r.redirect_type == 301 ? '<span class="badge bg-primary">301</span>' : '<span class="badge bg-secondary">302</span>';
+                        rBody.append(`<tr>
+                            <td class="font-monospace small">${r.source_path}</td>
+                            <td class="font-monospace small text-truncate" style="max-width:200px;">${r.target_url}</td>
+                            <td>${typeBadge}</td>
+                            <td class="text-end"><button class="btn btn-sm btn-outline-danger del-adv-btn py-0" data-id="${r.id}" data-action="del_redirect" title="Delete"><i class="bi bi-trash"></i></button></td>
+                        </tr>`);
+                    });
+
+                    // Render MIME Types
+                    let mBody = $('#dynamicMimesTable');
+                    mBody.empty();
+                    if(res.mimes.length === 0) mBody.html('<tr><td colspan="3" class="text-center text-muted small">No custom MIME types.</td></tr>');
+                    res.mimes.forEach(m => {
+                        mBody.append(`<tr>
+                            <td class="fw-bold">.${m.extension}</td>
+                            <td class="font-monospace small text-muted">${m.mime_type}</td>
+                            <td class="text-end"><button class="btn btn-sm btn-outline-danger del-adv-btn py-0" data-id="${m.id}" data-action="del_mime" title="Delete"><i class="bi bi-trash"></i></button></td>
+                        </tr>`);
+                    });
+                }
+            }
+        });
+    }
+
+    // 2. Hook into the Opener logic (Update the existing one from the previous step)
+    $(document).on('click', '.open-advanced-web', function() {
+        let domain = $(this).data('domain');
+        let hotlinkActive = $(this).data('hotlink') == 1;
+        
+        $('#advWebDomainTitle').text(domain);
+        $('.adv-domain-input').val(domain);
+        
+        $('#hotlinkToggle').prop('checked', hotlinkActive);
+        $('#hotlinkStatusText').text(hotlinkActive ? 'Active and protecting assets.' : 'Currently disabled.');
+        
+        $('#dynamicRedirectsTable').html('<tr><td colspan="4" class="text-center text-muted small">Loading...</td></tr>');
+        $('#dynamicMimesTable').html('<tr><td colspan="3" class="text-center text-muted small">Loading...</td></tr>');
+
+        // Fetch the fresh data!
+        fetchAdvancedWebData(domain);
+        $('#advancedWebModal').modal('show');
+    });
+
+    // 3. Handle Add Redirect / Add MIME Submissions
+    $('#addRedirectForm, #addMimeForm').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        let btn = form.find('button[type="submit"]');
+        let actionStr = form.attr('id') === 'addRedirectForm' ? 'add_redirect' : 'add_mime';
+        let domain = form.find('.adv-domain-input').val();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_advanced_web.php',
+            type: 'POST',
+            data: form.serialize() + '&action=' + actionStr,
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    form[0].reset();
+                    showToast("Applied! Rebuilding Nginx...");
+                    setTimeout(() => fetchAdvancedWebData(domain), 1500); // Refresh tables
+                } else { alert("Error: " + res.error); }
+                btn.prop('disabled', false).html('<i class="bi bi-plus-lg"></i> Add');
+            }
+        });
+    });
+
+    // 4. Handle Deletions (Redirects & MIMEs)
+    $(document).on('click', '.del-adv-btn', function() {
+        if(!confirm("Are you sure you want to remove this rule?")) return;
+        let btn = $(this);
+        let id = btn.data('id');
+        let action = btn.data('action');
+        let domain = $('.adv-domain-input').first().val(); // Get domain from active modal
+
+        btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm"></i>');
+
+        $.ajax({
+            url: '/ajax/manage_advanced_web.php',
+            type: 'POST',
+            data: { action: action, id: id, domain: domain },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) setTimeout(() => fetchAdvancedWebData(domain), 1500);
+            }
+        });
+    });
+
+    // 5. Handle Hotlink Toggle
+    $('#hotlinkToggle').on('change', function() {
+        let isChecked = $(this).is(':checked');
+        let domain = $('.adv-domain-input').first().val();
+        let textEl = $('#hotlinkStatusText');
+        
+        $(this).prop('disabled', true);
+        textEl.html('<span class="spinner-border spinner-border-sm text-primary"></span> Updating Engine...');
+
+        $.ajax({
+            url: '/ajax/manage_advanced_web.php',
+            type: 'POST',
+            data: { action: 'toggle_hotlink', domain: domain, status: isChecked },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    textEl.text(isChecked ? 'Active and protecting assets.' : 'Currently disabled.');
+                    // Update the master DOM attribute so it persists if modal closes
+                    $(`.open-advanced-web[data-domain="${domain}"]`).data('hotlink', isChecked ? 1 : 0);
+                } else {
+                    alert("Error: " + res.error);
+                    $('#hotlinkToggle').prop('checked', !isChecked); // Revert UI
+                }
+                $('#hotlinkToggle').prop('disabled', false);
+            }
+        });
     });
     
 });

@@ -7,7 +7,7 @@ ACTION=$(echo "$PAYLOAD" | jq -r '.sub_action')
 SERVICE=$(echo "$PAYLOAD" | jq -r '.service')
 
 # 1. The Master Whitelist
-VALID_SERVICES=("nginx" "mariadb" "php8.3-fpm" "pure-ftpd" "bind9" "fail2ban" "postfix" "dovecot" "panel-daemon")
+VALID_SERVICES=("nginx" "mariadb" "php8.3-fpm" "pure-ftpd" "bind9" "fail2ban" "postfix" "dovecot" "panel-daemon" "redis-server")
 
 if [[ ! " ${VALID_SERVICES[@]} " =~ " ${SERVICE} " ]]; then
     echo "Error: Service '$SERVICE' is not whitelisted for management."

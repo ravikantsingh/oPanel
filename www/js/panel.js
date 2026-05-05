@@ -2637,7 +2637,7 @@ $(document).ready(function() {
                 if(response.success) {
                     alertBox.removeClass('d-none alert-danger').addClass('alert-success').text("Password updated! You will be logged out in 3 seconds.");
                     form[0].reset();
-                    setTimeout(function() { window.location.href = '/logout.php'; }, 3000);
+                    setTimeout(function() { window.location.href = '/logout'; }, 3000);
                 } else {
                     alertBox.removeClass('d-none alert-success').addClass('alert-danger').text(response.error);
                 }

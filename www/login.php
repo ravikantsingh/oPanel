@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Phase 2 & 3: 2FA Verification (Handles both Setup and Login)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'verify_2fa') {
     if (!isset($_SESSION['pre_auth_admin_id'])) {
-        header("Location: login.php"); exit;
+        header("Location: login"); exit;
     }
 
     $code = trim($_POST['totp_code']);

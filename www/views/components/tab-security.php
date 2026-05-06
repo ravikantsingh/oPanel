@@ -80,12 +80,15 @@
         <!-- PANE 3: DNS MANAGER (BIND9) -->
         <div class="tab-pane fade" id="sec-dns" role="tabpanel">
             <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                    <h6 class="mb-0 fw-bold">Active DNS Records (BIND9)</h6>
-                    <div>
-                        <!-- Moved the DNS specific buttons here -->
-                        <button class="btn btn-sm btn-dark me-1 shadow-sm" id="initDnsZoneBtn"><i class="bi bi-magic"></i> Init Zone</button>
-                        <button class="btn btn-sm btn-dark me-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#installSslModal"><i class="bi bi-lock"></i> Install SSL</button>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center py-3">
+                    <h6 class="mb-3 mb-md-0 fw-bold">Active DNS Records (BIND9)</h6>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <select class="form-select form-select-sm border-secondary fw-bold text-primary" id="dnsDomainSelector" style="width: auto; min-width: 160px;">
+                            <option value="all">All Domains</option>
+                            </select>
+                        
+                        <button class="btn btn-sm btn-dark shadow-sm" id="initDnsZoneBtn"><i class="bi bi-magic"></i> Init Zone</button>
+                        <button class="btn btn-sm btn-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#installSslModal"><i class="bi bi-lock"></i> SSL</button>
                         <button class="btn btn-sm btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#dnsRecordModal"><i class="bi bi-globe"></i> Manage DNS</button>
                     </div>
                 </div>

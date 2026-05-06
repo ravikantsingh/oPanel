@@ -112,7 +112,7 @@ pm.start_servers = 2
 pm.min_spare_servers = 1
 pm.max_spare_servers = 3
 EOF
-        # Test PHP syntax before restarting <---
+        # Test PHP syntax before restarting
         if php-fpm$PHP_VERSION -t > /dev/null 2>&1; then
             systemctl restart php$PHP_VERSION-fpm
         else
@@ -123,14 +123,47 @@ EOF
         fi
     fi
     
-# Auto-Generate BIND9 Base Zone & Sync Source of Truth
-    ZONE_FILE="/etc/bind/zones/db.$DOMAIN"
-    CONF_FILE="/etc/bind/named.conf.local"
+    # ==========================================
+    # Auto-Generate BIND9 DNS & Sync Source of Truth
+    # ==========================================
     SERVER_IP=$(curl -s ifconfig.me)
     SERIAL=$(date +%Y%m%d01)
     
-    if [ ! -f "$ZONE_FILE" ]; then
-        cat <<EOF > "$ZONE_FILE"
+    IS_SUBDOMAIN=$(echo "$PAYLOAD" | jq -r '.is_subdomain // "false"')
+
+    if [ "$IS_SUBDOMAIN" == "true" ]; then
+        # ---> SUBDOMAIN DNS LOGIC (Inject into Parent) <---
+        PARENT_DOMAIN=$(echo "$PAYLOAD" | jq -r '.parent_domain')
+        PREFIX=$(echo "$PAYLOAD" | jq -r '.prefix')
+        PARENT_ZONE_FILE="/etc/bind/zones/db.$PARENT_DOMAIN"
+
+        if [ -f "$PARENT_ZONE_FILE" ]; then
+            # Inject the A record for the subdomain and its 'www' alias
+            echo "$PREFIX       IN      A       $SERVER_IP" >> "$PARENT_ZONE_FILE"
+            echo "www.$PREFIX   IN      A       $SERVER_IP" >> "$PARENT_ZONE_FILE"
+            
+            # Increment the Parent's Serial Number safely
+            CURRENT_SERIAL=$(grep -oE '[0-9]{10}' "$PARENT_ZONE_FILE" | head -1)
+            if [ -n "$CURRENT_SERIAL" ]; then
+                NEW_SERIAL=$((CURRENT_SERIAL + 1))
+                sed -i "s/$CURRENT_SERIAL/$NEW_SERIAL/g" "$PARENT_ZONE_FILE"
+            fi
+            
+            systemctl reload bind9
+
+            # Sync the Database Source of Truth
+            mysql -e "INSERT IGNORE INTO panel_core.dns_records (domain_name, record_name, record_type, record_value) VALUES 
+            ('$PARENT_DOMAIN', '$PREFIX', 'A', '$SERVER_IP'),
+            ('$PARENT_DOMAIN', 'www.$PREFIX', 'A', '$SERVER_IP');"
+        fi
+
+    else
+        # ---> PRIMARY DOMAIN DNS LOGIC (Create New SOA Zone) <---
+        ZONE_FILE="/etc/bind/zones/db.$DOMAIN"
+        CONF_FILE="/etc/bind/named.conf.local"
+
+        if [ ! -f "$ZONE_FILE" ]; then
+            cat <<EOF > "$ZONE_FILE"
 \$TTL    86400
 @       IN      SOA     ns1.$DOMAIN. admin.$DOMAIN. (
                      $SERIAL         ; Serial
@@ -149,26 +182,27 @@ ftp     IN      CNAME   $DOMAIN.
 @       IN      MX      10 mail.$DOMAIN.
 @       IN      TXT     "v=spf1 a mx ip4:$SERVER_IP ~all"
 EOF
-        chown bind:bind "$ZONE_FILE"
-        chmod 644 "$ZONE_FILE"
+            chown bind:bind "$ZONE_FILE"
+            chmod 644 "$ZONE_FILE"
 
-        # Inject into BIND9 config
-        if ! grep -q "zone \"$DOMAIN\"" "$CONF_FILE"; then
-            echo "zone \"$DOMAIN\" { type master; file \"$ZONE_FILE\"; };" >> "$CONF_FILE"
+            # Inject into BIND9 config
+            if ! grep -q "zone \"$DOMAIN\"" "$CONF_FILE"; then
+                echo "zone \"$DOMAIN\" { type master; file \"$ZONE_FILE\"; };" >> "$CONF_FILE"
+            fi
+
+            # Sync the Database Source of Truth
+            mysql -e "INSERT IGNORE INTO panel_core.dns_records (domain_name, record_name, record_type, record_value) VALUES 
+            ('$DOMAIN', '@', 'A', '$SERVER_IP'), 
+            ('$DOMAIN', 'ns1', 'A', '$SERVER_IP'), 
+            ('$DOMAIN', 'ns2', 'A', '$SERVER_IP'), 
+            ('$DOMAIN', 'www', 'A', '$SERVER_IP'), 
+            ('$DOMAIN', 'mail', 'A', '$SERVER_IP'),
+            ('$DOMAIN', 'ftp', 'CNAME', '$DOMAIN.'), 
+            ('$DOMAIN', '@', 'MX', '10 mail.$DOMAIN.'), 
+            ('$DOMAIN', '@', 'TXT', 'v=spf1 a mx ip4:$SERVER_IP ~all');"
+            
+            systemctl reload bind9
         fi
-
-        # Sync the Database Source of Truth
-        mysql -e "INSERT IGNORE INTO panel_core.dns_records (domain_name, record_name, record_type, record_value) VALUES 
-        ('$DOMAIN', '@', 'A', '$SERVER_IP'), 
-        ('$DOMAIN', 'ns1', 'A', '$SERVER_IP'), 
-        ('$DOMAIN', 'ns2', 'A', '$SERVER_IP'), 
-        ('$DOMAIN', 'www', 'A', '$SERVER_IP'), 
-        ('$DOMAIN', 'mail', 'A', '$SERVER_IP'),
-        ('$DOMAIN', 'ftp', 'CNAME', '$DOMAIN.'), 
-        ('$DOMAIN', '@', 'MX', '10 mail.$DOMAIN.'), 
-        ('$DOMAIN', '@', 'TXT', 'v=spf1 a mx ip4:$SERVER_IP ~all');"
-        
-        systemctl reload bind9
     fi
 
     # 3. Enable the site and test Nginx
@@ -176,7 +210,7 @@ EOF
     
     if nginx -t; then
         systemctl reload nginx
-        # ---> NEW: SOURCE OF TRUTH TRACKING <---
+        # ---> SOURCE OF TRUTH TRACKING <---
         mysql -e "INSERT IGNORE INTO panel_core.domains (domain_name, username, php_version) VALUES ('$DOMAIN', '$USERNAME', '$PHP_VERSION');"
 
         echo "Success: Domain $DOMAIN created and Nginx reloaded."
@@ -188,6 +222,7 @@ EOF
         echo "Error: Invalid Nginx configuration generated. Rolled back."
         exit 1
     fi
+
 # ==========================================
 # ACTION: UPDATE PHP VERSION
 # ==========================================
@@ -215,6 +250,7 @@ elif [ "$ACTION" == "update_php" ]; then
         echo "Error: Nginx failed to reload after PHP version change."
         exit 1
     fi
+
 # ==========================================
 # ACTION: TOGGLE WAF (MODSECURITY)
 # ==========================================

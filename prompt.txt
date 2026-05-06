@@ -1,1 +1,3 @@
 Here is the oPanel context file. Acknowledge that you understand these rules, and then we will build
+
+i will upload files for you to analyze and make a context at your end. i will upload these files in batches of 10. and will let you know which one is the last batch and then. after the last batch you will provide me a new, in depth, opanel-context.md file which i will save for the future and then we will start developing. if you understood this let me know.

@@ -35,6 +35,11 @@ server {
     ssl_prefer_server_ciphers on;
     ssl_ciphers HIGH:!aNULL:!MD5;
 
+    # Master Panel WAF
+    modsecurity on;
+    modsecurity_rules_file /etc/modsecurity/modsecurity.conf;
+    modsecurity_rules_file /etc/nginx/waf/opanel-master.conf;
+
     root /opt/panel/www;
     index index.php index.html;
 
@@ -53,7 +58,6 @@ server {
     }
 
     location / {
-        # Try the exact URI, then a directory, then silently append .php and execute
         try_files \$uri \$uri/ \$uri.php\$is_args\$args;
     }
 
@@ -63,6 +67,10 @@ server {
     }
 }
 EOF
+
+# ---> NEW: Ensure Master WAF file exists before testing <---
+mkdir -p /etc/nginx/waf/
+touch /etc/nginx/waf/opanel-master.conf
 
 if nginx -t > /dev/null 2>&1; then
     systemctl reload nginx

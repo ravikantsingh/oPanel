@@ -1,172 +1,57 @@
-# OPANEL PROJECT MANIFEST & ARCHITECTURE RULES
+# OPANEL PROJECT MANIFEST & COMPLETE ARCHITECTURE MAP
+
 **Read this entirely before generating any code, file paths, or architecture suggestions.**
 
-## 1. Core Architecture
-*   **Project:** oPanel (Custom Linux web hosting control panel).
-*   **Web Stack:** Nginx, PHP 8.x (FPM), MariaDB.
-*   **Backend Paradigm:** PHP acts as an API/Gatekeeper. It does NOT execute heavy tasks directly. Instead, it dispatches JSON payloads to a Database Queue (`tasks_queue`), which is picked up by a Python/Bash background daemon `worker.py` running as `root`.
-*   **Security Model (SRE Bridge):** The PHP web user (`www-data`) is strictly unprivileged.
-*   **Paradigm:** PHP (API/Gatekeeper) -> MariaDB (tasks_queue) -> Python Worker (Root Execution).
-*   **Security:** PHP `www-data` is unprivileged. Actions must be whitelisted in `worker.py`.
+## 1. Core Architectural Paradigm & Security Model
+* **Project:** oPanel (Custom Linux web hosting control panel).
+* **Web Stack:** Nginx, MariaDB, PHP 8.x (FPM), Node.js, PM2, Redis, Pure-FTPd, ModSecurity.
+* **Separation of Concerns (SRE Bridge):** PHP acts strictly as an unprivileged API/Gatekeeper (`www-data`). It does **not** execute heavy tasks or root-level server modifications directly.
+* **The Execution Bridge:** PHP dispatches formatted JSON payloads to a MariaDB `tasks_queue` using the `TaskQueue->dispatch()` method.
+* **The Execution Engine:** A Python background daemon (`worker.py`) running as `root` polls this queue every 3 seconds. It securely maps the action to a whitelisted Bash script in `/opt/panel/scripts/`, passes the JSON as `$1`, and logs the physical output.
+* **Real-Time State (Sudoers Bridges):** To manage real-time UI states without queue delays, specific Sudoers bridges are configured for `www-data` (e.g., toggling the Master WAF, reading SSL certificates via `openssl`, checking Fail2ban statuses via `shell_exec`).
 
-## 2. File Path Map
-*   **Web Root (UI):** `/opt/panel/www/index.php`
-*   **API/AJAX Controllers:** `/opt/panel/www/ajax/`
-*   **PHP Classes/Logic:** `/opt/panel/www/classes/`
-*   **Frontend JS/CSS:** `/opt/panel/www/js/panel.js`
-*   **Bash Worker Scripts:** `/opt/panel/scripts/`
-*   **Python Daemon:** `/opt/panel/daemon/`
-*   **Nginx vHosts:** `/etc/nginx/sites-available/` (Symlinked to `sites-enabled/`) 
+## 2. Directory Path Map
+* **Web Root (UI):** `/opt/panel/www/`
+* **Main Entry:** `/opt/panel/www/index.php`
+* **API/AJAX Controllers:** `/opt/panel/www/ajax/*.php`
+* **PHP Classes/Logic:** `/opt/panel/www/classes/*.php` (e.g., `Database.php`, `TaskQueue.php`, `TOTP.php`)
+* **Frontend JS/CSS:** `/opt/panel/www/js/panel.js`
+* **Frontend Views & Modals:** `/opt/panel/www/views/components/` and `/opt/panel/www/views/modals/`
+* **Bash Worker Scripts:** `/opt/panel/scripts/*.sh`
+* **Python Daemon:** `/opt/panel/daemon/worker.py` and `scheduler.py`
+* **Nginx vHosts:** `/etc/nginx/sites-available/` (Symlinked to `sites-enabled/`)
+* **System Logs:** `/opt/panel/logs/`
+* **Backup Vault:** `/opt/panel/backups/websites/` and `/opt/panel/backups/databases/`
 
-## 3. Frontend & UI Guidelines
-*   **Frameworks:** Bootstrap 5, pure jQuery, vanilla CSS. (DO NOT use React, Vue, or Tailwind).
-*   **Navigation:** Single Page Application (SPA) feel. Use Bootstrap Tabs for navigation. NO full-page reloads.
-*   **Modals:** Bootstrap Modals must auto-close upon successful AJAX completion using `$('#modalId').modal('hide');` and the form must be reset.
-*   **Notifications:** DO NOT use Bootstrap Toasts or generic `alert()`. We use a custom, pure jQuery/CSS floating Toast system injected at the bottom of the DOM. Trigger it using: `showToast("Your message here");`.
-*   **Clipboard/Copy:** Use the hidden `<textarea>` fallback to bypass Modal Focus Traps and self-signed SSL restrictions.
+## 3. Frontend & UI Strictures
+* **Frameworks:** Bootstrap 5, pure jQuery, vanilla CSS. **(DO NOT use React, Vue, or Tailwind)**.
+* **Design aesthetic:** Clean, professional, and functional UI/UX design with brighter tones to ensure high visibility (avoid dark mode unreadable contrast issues). Utilize icons, hover effects, and playful transitions where appropriate.
+* **Navigation:** Single Page Application (SPA) feel managed by `panel-tabs.php`. Uses Bootstrap Tabs with URL hash persistence (`#domains`, `#security`, etc.) to prevent full-page reloads.
+* **Modals:** Bootstrap Modals must auto-close upon successful AJAX completion using `$('#modalId').modal('hide');` and the form must be reset using `$('#formId')[0].reset();`.
+* **Notifications:** DO NOT use Bootstrap Toasts or generic `alert()`. We use a custom, pure jQuery/CSS floating Toast system injected at the bottom of the DOM. Trigger it using: `showToast("Your message here");`.
+* **Clipboard/Copy:** Use the hidden `<textarea>` fallback to bypass Modal Focus Traps and self-signed SSL restrictions.
+* **Data Polling:** Live telemetry (CPU/RAM/Disk, Redis, Fail2ban, Tasks) is updated via periodic AJAX polling loops in `panel.js`.
 
-## 4. PHP Coding Standards
-*   **Gatekeeper:** EVERY file in the `/ajax/` directory must require `security.php` on line 2 and accept `POST` method only.
-*   **CSRF:** Mandatory `HTTP_X_CSRF_TOKEN` validation in all AJAX requests via `security.php`
-*   **Sessions:** Strict CSRF validation is required. Sessions must immediately call `session_write_close();` after validation to prevent locking.
-*   **Database:** Use the Singleton pattern `Database::getInstance()->getConnection()` with strict PDO Prepared Statements. No raw queries.
-*   **Output:** All AJAX endpoints must return strict JSON: `header('Content-Type: application/json');` with `['success' => true/false]`.
+## 4. PHP Backend Coding Standards
+* **Gatekeeper:** EVERY file in the `/ajax/` directory must require `security.php` on line 2.
+* **Methods:** AJAX controllers accept `POST` method only.
+* **CSRF:** Mandatory `HTTP_X_CSRF_TOKEN` validation in all AJAX requests via `security.php`.
+* **Sessions:** Strict CSRF validation is required. Sessions must immediately call `session_write_close();` after validation to prevent locking.
+* **Database:** Use the Singleton pattern `Database::getInstance()->getConnection()` with strict PDO Prepared Statements. No raw, unescaped queries.
+* **Output:** All AJAX endpoints must return strict JSON: `header('Content-Type: application/json');` with `['success' => true/false, 'error' => 'message']`.
 
-## 5. Current Directory Structure
-/opt/panel
-├── backups
-│   ├── databases
-│   └── websites
-├── daemon
-│   ├── scheduler.py
-│   └── worker.py
-├── logs
-│   ├── daemon.log
-│   └── scheduler.log
-├── scripts
-│   ├── backup_manager.sh
-│   ├── cron_manager.sh
-│   ├── db_manager.sh
-│   ├── delete_backup_manager.sh
-│   ├── delete_domain.sh
-│   ├── dns_manager.sh
-│   ├── dns_record_manager.sh
-│   ├── firewall_manager.sh
-│   ├── fm_manager.sh
-│   ├── ftp_manager.sh
-│   ├── git_manager.sh
-│   ├── git_pull_manager.sh
-│   ├── https_routing_manager.sh
-│   ├── install_mail_engine.sh
-│   ├── mail_dns_manager.sh
-│   ├── mail_user_manager.sh
-│   ├── node_action.sh
-│   ├── node_manager.sh
-│   ├── php_installer.sh
-│   ├── php_manager.sh
-│   ├── restore_manager.sh
-│   ├── rotate_fm.sh
-│   ├── secure_panel.sh
-│   ├── security_manager.sh
-│   ├── set_timezone.sh
-│   ├── ssh_key_manager.sh
-│   ├── ssl_manager.sh
-│   ├── sync_firewall.sh
-│   ├── uninstall_mail_engine.sh
-│   ├── update_limits.sh
-│   ├── user_manager.sh
-│   ├── vhost_manager.sh
-│   ├── waf_updater.sh
-│   └── wp_manager.sh
-├── templates
-│   └── index.html
-└── www
-    ├── ajax
-    │   ├── change_admin_password.php
-    │   ├── change_db_password.php
-    │   ├── change_php.php
-    │   ├── clone_repo.php
-    │   ├── create_backup.php
-    │   ├── create_db.php
-    │   ├── create_dns.php
-    │   ├── create_domain.php
-    │   ├── create_user.php
-    │   ├── delete_backup.php
-    │   ├── delete_db.php
-    │   ├── delete_domain.php
-    │   ├── delete_schedule.php
-    │   ├── delete_user.php
-    │   ├── deploy_node.php
-    │   ├── download_backup.php
-    │   ├── get_backups.php
-    │   ├── get_connection_info.php
-    │   ├── get_cron.php
-    │   ├── get_databases.php
-    │   ├── get_dns.php
-    │   ├── get_domains.php
-    │   ├── get_firewall.php
-    │   ├── get_fm_sso.php
-    │   ├── get_logs.php
-    │   ├── get_mail_engine_status.php
-    │   ├── get_mail_users.php
-    │   ├── get_php_versions.php
-    │   ├── get_schedules.php
-    │   ├── get_security_status.php
-    │   ├── get_ssh_key.php
-    │   ├── get_ssl_info.php
-    │   ├── get_task_log.php
-    │   ├── get_tasks.php
-    │   ├── get_users.php
-    │   ├── install_mail_engine.php
-    │   ├── install_php.php
-    │   ├── install_ssl.php
-    │   ├── install_wp.php
-    │   ├── manage_cron.php
-    │   ├── manage_dns_records.php
-    │   ├── manage_firewall.php
-    │   ├── manage_fm.php
-    │   ├── manage_ftp.php
-    │   ├── manage_https_routing.php
-    │   ├── manage_mail_user.php
-    │   ├── manage_php.php
-    │   ├── manage_schedule.php
-    │   ├── manage_waf.php
-    │   ├── manage_waf_rules.php
-    │   ├── manual_git_pull.php
-    │   ├── node_action.php
-    │   ├── restore_backup.php
-    │   ├── rotate_fm_password.php
-    │   ├── secure_panel.php
-    │   ├── security.php
-    │   ├── set_timezone.php
-    │   ├── system_stats.php
-    │   ├── toggle_2fa.php
-    │   ├── unban_ip.php
-    │   ├── uninstall_mail_engine.php
-    │   ├── update_server_limits.php
-    │   ├── upload_backup.php
-    │   └── webhook.php
-    ├── autologin.php
-    ├── classes
-    │   ├── Database.php
-    │   ├── TOTP.php
-    │   └── TaskQueue.php
-    ├── config
-    │   └── database.php
-    ├── errors
-    │   ├── opanel_403.html
-    │   ├── opanel_404.html
-    │   └── opanel_50x.html
-    ├── index.php
-    ├── js
-    │   └── panel.js
-    ├── login.php
-    ├── logout.php
-    ├── pma
-    │   ├── config.inc.php
-    │   └── phpMyAdmin-5.2.3-all-languages
-    └── views
-        ├── components
-        ├── footer.php
-        ├── header.php
-        └── modals
+## 5. Bash Worker Script Guidelines
+* **Execution:** All worker scripts (`/opt/panel/scripts/*.sh`) are executed by `worker.py` as `root`.
+* **Inputs:** They rely heavily on `jq` to parse the provided JSON payload from the database queue (`PAYLOAD=$1`).
+* **Outputs:** They must return standard exit codes (`exit 0` for success, `exit 1` for failure). The output text (echo) is captured by the Python daemon and written back to the database.
+* **Source of Truth Synchronization:** State changes (creating a user, adding a DNS record, changing a firewall port) MUST be actively synchronized back to the MariaDB `panel_core` database to ensure the UI remains the absolute source of truth.
+* **Data Protection:** Be extremely careful to prevent accidental data deletion (e.g., using scorch-earth wipes). Fail securely.
+
+## 6. Server Infrastructure & Application Deployments
+* **Master Panel:** Runs strictly on Port `7443` over HTTPS. It uses self-signed certificates fallback but can bind to a domain via Let's Encrypt.
+* **Standard PHP:** Uses FastCGI with isolated, self-healing FPM pools generated per user (`/etc/php/8.x/fpm/pool.d/user.conf`).
+* **Laravel:** Shifts Document Root to `public_html/public` and deploys background queue workers via PM2 strictly as the client Linux user.
+* **Python/Node.js:** Dynamically converts Nginx from FastCGI into a WebSocket-compatible Reverse Proxy, allocating specific ports internally and managing the app lifecycle through PM2.
+* **Git Integrations:** Uses `sudo -u $USERNAME` to securely impersonate the client user utilizing their `id_ed25519` deploy keys. Parses commits via `jq`.
+* **Mail Engine:** Integrated with Postfix/Dovecot directly hooked into MariaDB (`panel_core.mail_users`). Fast 1-Click DNS routing templates for Google Workspace and Microsoft 365.
+* **DNS:** Managed via BIND9. Dynamic serial generation (`YYYYMMDDNN`) for zones.

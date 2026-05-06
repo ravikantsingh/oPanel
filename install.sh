@@ -48,6 +48,26 @@ pm2 startup systemd -u root --hp /root
 # Purge vsftpd just in case it was installed, to prevent Port 21 conflicts
 apt-get purge -y vsftpd 2>/dev/null || true
 
+# --- oPanel Master WAF Provisioning ---
+echo "Configuring ModSecurity for Master Panel..."
+
+# Ensure the WAF directory exists
+mkdir -p /etc/nginx/waf/
+
+# Create the dedicated Master Panel exceptions file
+touch /etc/nginx/waf/opanel-master.conf
+
+# Optional: Pre-fill it with common OWASP whitelists for control panels
+cat <<EOF > /etc/nginx/waf/opanel-master.conf
+# oPanel Master WAF Rules & Exceptions
+# Add SecRuleRemoveById directives here if legitimate panel actions get blocked.
+
+# Example: Whitelist oPanel saving Bash/JSON configurations
+# SecRuleRemoveById 941100
+EOF
+
+systemctl restart nginx
+
 # ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
@@ -80,6 +100,11 @@ chmod +x /opt/panel/daemon/scheduler.py # <-- NEW: Backup Scheduler
 chgrp -R www-data /opt/panel/backups
 find /opt/panel/backups -type d -exec chmod 750 {} +
 find /opt/panel/backups -type f -exec chmod 640 {} +
+
+# WAF Sudoers Bridge
+# This allows the PHP UI toggle to control the Master WAF script
+echo 'www-data ALL=(root) NOPASSWD: /opt/panel/scripts/toggle_master_waf.sh *' > /etc/sudoers.d/opanel-waf
+chmod 440 /etc/sudoers.d/opanel-waf
 
 # ==========================================
 # 4. INITIALIZE DATABASE

@@ -3580,5 +3580,78 @@ $(document).ready(function() {
             }
         });
     });
+    // =================================================================
+    // MASTER WAF TOGGLE CONTROLLER & SYNC
+    // =================================================================
+
+    // 1. Sync state when the System Settings modal opens
+    $('#systemSettingsModal').on('show.bs.modal', function () {
+        $('#masterWafToggle').prop('disabled', true);
+        //console.log("[WAF] Checking live Nginx configuration...");
+
+        $.ajax({
+            url: '/ajax/get_master_waf_status.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                //console.log("[WAF] Server Status:", response);
+                if (response.success) {
+                    // Update the toggle to match the live server state
+                    $('#masterWafToggle').prop('checked', response.status === 'on');
+                }
+                $('#masterWafToggle').prop('disabled', false);
+            },
+            error: function() {
+                //console.error("[WAF] Failed to check status.");
+                $('#masterWafToggle').prop('disabled', false);
+            }
+        });
+    });
+
+    // 2. Handle the toggle switch click
+    $(document).on('change', '#masterWafToggle', function() {
+        //console.log("[WAF] Toggle clicked!");
+
+        let isChecked = $(this).is(':checked');
+        let action = isChecked ? 'on' : 'off';
+        let toggleBtn = $(this);
+        
+        let warning = isChecked 
+            ? "Enabling the Master WAF will secure the panel against SQLi and XSS attacks." 
+            : "WARNING: Disabling the Master WAF reduces panel security. Only do this if you are experiencing 403 blocks.";
+            
+        // Show confirmation dialogue
+        if(!confirm(warning)) {
+            //console.log("[WAF] User cancelled action.");
+            toggleBtn.prop('checked', !isChecked); // Revert UI
+            return;
+        }
+
+        //console.log("[WAF] Firing AJAX to toggle WAF:", action);
+        toggleBtn.prop('disabled', true); 
+
+        $.ajax({
+            url: '/ajax/toggle_master_waf.php',
+            type: 'POST',
+            data: { status: action },
+            dataType: 'json',
+            success: function(response) {
+                //console.log("[WAF] Toggle Response:", response);
+                if (response.success) {
+                    showToast("Master WAF is now " + action.toUpperCase() + ".");
+                } else {
+                    alert("Error: " + response.error);
+                    toggleBtn.prop('checked', !isChecked); // Revert UI on error
+                }
+                toggleBtn.prop('disabled', false); 
+            },
+            error: function(xhr, status, error) {
+                //console.error("[WAF] AJAX Error:", xhr.responseText);
+                alert("Network Error. Check browser console.");
+                toggleBtn.prop('checked', !isChecked); // Revert UI on error
+                toggleBtn.prop('disabled', false);
+            }
+        });
+    });
     
 });

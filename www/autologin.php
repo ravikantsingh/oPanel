@@ -35,7 +35,7 @@ try {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
         // 5. Redirect to the dashboard
-        header("Location: /index.php");
+        header("Location: /");
         exit;
     } else {
         die("Token expired or already used.");

@@ -8,22 +8,12 @@
                 <button class="btn btn-sm btn-primary ms-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#softwareCenterModal"><i class="bi bi-box-seam"></i> Software Center</button>
             </div>
         </div>
-        <div class="card shadow-sm border-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 text-sm align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Domain Name</th>
-                            <th>Owner</th>
-                            <th>PHP</th>
-                            <th>Git Repository</th>
-                            <th>SSL Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dynamicDomainsTable">
-                        <tr><td colspan="5" class="text-center text-muted py-3">Loading domains...</td></tr>
-                    </tbody>
-                </table>
+        <!-- The Target Container for panel_12.js -->
+        <div class="accordion" id="dynamicDomainsAccordion">
+            <!-- Default Loading State -->
+            <div class="text-center text-muted py-5 border shadow-sm rounded bg-white">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <div>Loading domains...</div>
             </div>
         </div>
     </div>

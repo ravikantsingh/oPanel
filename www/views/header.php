@@ -80,7 +80,7 @@ $brand = Branding::getSettings();
                 <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="adminMenu">
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#adminProfileModal"><i class="bi bi-key me-2"></i> Change Password</a></li>
                     <li><hr class="dropdown-divider border-secondary"></li>
-                    <li><a class="dropdown-item text-danger" href="/logout.php"><i class="bi bi-box-arrow-left me-2"></i> Sign out</a></li>
+                    <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-left me-2"></i> Sign out</a></li>
                 </ul>
             </div>
         </nav>

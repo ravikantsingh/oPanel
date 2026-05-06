@@ -13,6 +13,38 @@ $(document).ready(function() {
             'X-CSRF-TOKEN': csrfToken
         }
     });
+    // =================================================================
+    // TAB STATE PERSISTENCE (URL HASH METHOD)
+    // =================================================================
+
+    // 1. On page load: Read the URL hash and open the matching tab
+    let activeHash = window.location.hash;
+    if (activeHash) {
+        // Find the physical tab button that corresponds to the hash
+        let targetTab = $('button[data-bs-target="' + activeHash + '"], a[href="' + activeHash + '"]');
+        
+        if (targetTab.length) {
+            targetTab.tab('show'); // Trigger Bootstrap to show the tab
+            
+            // Sync the dark sidebar menu highlight on the left
+            let tabId = targetTab.attr('id');
+            $('.sidebar a').removeClass('active');
+            $('.sidebar a[onclick*="' + tabId + '"]').addClass('active');
+        }
+    }
+
+    // 2. On tab click: Update the URL hash silently
+    $('button[data-bs-toggle="tab"], a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // Grab the ID of the tab that was just opened (e.g., '#security')
+        let target = $(e.target).attr('data-bs-target') || $(e.target).attr('href');
+        
+        // Use replaceState to change the URL without causing the screen to "jump" down
+        if(history.replaceState) {
+            history.replaceState(null, null, target);
+        } else {
+            window.location.hash = target;
+        }
+    });
     // === Create User Form Submission ===
     $('#addUserForm').on('submit', function(e) {
         e.preventDefault(); 
@@ -899,36 +931,76 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    let tbody = $('#dynamicDomainsTable');
-                    tbody.empty();
+                    
+                    let container = $('#dynamicDomainsAccordion');
+                    container.empty();
                     
                     if(response.domains.length === 0) {
-                        tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">No domains configured.</td></tr>');
+                        container.html('<div class="text-center text-muted py-5">No domains configured.</div>');
                         return;
                     }
                     
                     let allRowsHtml = ''; 
                     
                     response.domains.forEach(function(d) {
-                        let isSuspended = d.status === 'suspended';
-                        let suspendBadge = isSuspended ? '<span class="badge bg-danger ms-2 shadow-sm"><i class="bi bi-pause-circle"></i> Suspended</span>' : '';
-                        
-                        let suspendBtn = isSuspended
-                            ? `<button class="btn btn-sm btn-outline-success toggle-domain-status" data-domain="${d.domain_name}" data-action="unsuspend" title="Unsuspend Domain"><i class="bi bi-play-fill"></i></button>`
-                            : `<button class="btn btn-sm btn-outline-warning toggle-domain-status" data-domain="${d.domain_name}" data-action="suspend" title="Suspend Domain"><i class="bi bi-pause-fill"></i></button>`;
-
-                        let sslBadge = d.has_ssl == 1 ? '<span class="badge bg-success"><i class="bi bi-lock"></i> Secured</span>' : '<span class="badge bg-secondary">Unsecured</span>';
                         let proto = d.has_ssl == 1 ? 'https' : 'http'; 
+                        let isPhp = (d.app_type === 'php' || !d.app_type);
                         
-                        // WAF Toggle
-                        let wafBadge = d.waf_enabled == 1 
-                            ? `<div class="btn-group"><button class="btn btn-sm btn-success toggle-waf" data-domain="${d.domain_name}" data-action="off" title="Disable WAF"><i class="bi bi-shield-check"></i> ON</button>
-                               <button class="btn btn-sm btn-dark edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}" title="Custom Rules"><i class="bi bi-gear"></i></button></div>` 
-                            : `<button class="btn btn-sm btn-outline-danger toggle-waf" data-domain="${d.domain_name}" data-action="on" title="Enable WAF"><i class="bi bi-shield-x"></i> OFF</button>`;
+                        // --- Status & Toggle Logic ---
+                        let isSuspended = d.status === 'suspended';
+                        let suspendIcon = isSuspended ? 'bi-play-fill' : 'bi-pause-circle';
+                        let suspendText = isSuspended ? 'Unsuspend' : 'Suspend';
+                        let suspendColor = isSuspended ? 'outline-success' : 'outline-warning text-dark';
+                        let suspendAction = isSuspended ? 'unsuspend' : 'suspend';
 
-                        // Git Logic
-                        let gitDisplay = '<span class="text-muted small">None</span>';
-                        if (d.git_repo !== 'Not Configured') {
+                        // --- WAF UI Logic ---
+                        let wafColor = (d.waf_enabled == 1) ? 'success' : 'outline-secondary';
+                        let wafIcon = (d.waf_enabled == 1) ? 'bi-shield-check' : 'bi-shield-slash';
+                        let wafText = (d.waf_enabled == 1) ? 'WAF: ON' : 'WAF: OFF';
+
+                        // --- App Engine Logic ---
+                        let appActions = '';
+                        if (isPhp) {
+                            appActions = `
+                                <button class="btn btn-sm btn-outline-danger text-start deploy-laravel" data-domain="${d.domain_name}" data-user="${d.username}">
+                                    <i class="bi bi-box-seam me-2"></i> Deploy Laravel
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning text-dark text-start deploy-python" data-domain="${d.domain_name}" data-user="${d.username}">
+                                    <i class="bi bi-filetype-py me-2"></i> Deploy Python
+                                </button>
+                                <button class="btn btn-sm btn-outline-success text-start open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}">
+                                    <i class="bi bi-hexagon-fill me-2"></i> Deploy Node.js
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary text-start open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}">
+                                    <i class="bi bi-wordpress me-2"></i> WordPress
+                                </button>
+                            `;
+                        } else {
+                            let appLabel = d.app_type.charAt(0).toUpperCase() + d.app_type.slice(1);
+                            let color = d.app_type === 'laravel' ? 'danger' : 'warning text-dark';
+                            
+                            let restartBtn = '';
+                            if (d.app_type === 'python' || d.app_type === 'node') {
+                                restartBtn = `
+                                <button class="btn btn-sm btn-outline-dark text-start restart-app" data-domain="${d.domain_name}" data-user="${d.username}">
+                                    <i class="bi bi-arrow-clockwise me-2"></i> Restart Engine
+                                </button>`;
+                            }
+
+                            appActions = `
+                                <button class="btn btn-sm btn-${color} text-start disabled">
+                                    <i class="bi bi-cpu-fill me-2"></i> ${appLabel} Active
+                                </button>
+                                ${restartBtn}
+                                <button class="btn btn-sm btn-outline-secondary text-start revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="${d.app_type}">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i> Revert to PHP
+                                </button>
+                            `;
+                        }
+
+                        // --- Git & CI/CD Horizontal Footer Logic ---
+                        let gitDisplay = '<div class="text-muted small px-2 py-1"><i class="bi bi-github"></i> Git Auto-Deployment Not Configured</div>';
+                        if (d.git_repo && d.git_repo !== 'Not Configured') {
                             let host = window.location.hostname;
                             let webhookUrl = `https://${host}:7443/ajax/webhook.php?domain=${d.domain_name}&token=${d.webhook_token}`;
                             let currentBranch = d.git_branch || 'main'; 
@@ -936,99 +1008,179 @@ $(document).ready(function() {
                             let commitsHtml = '';
                             if (d.latest_commits) {
                                 try {
-                                    let commits = JSON.parse(d.latest_commits);
-                                    commitsHtml = '<div class="mt-2 border-top pt-2"><h6 class="small fw-bold text-muted mb-1">Latest Commits</h6><ul class="list-unstyled mb-0" style="font-size: 0.75rem;">';
+                                    // Slice to strictly grab only the latest 4 commits
+                                    let commits = JSON.parse(d.latest_commits).slice(0, 4);
+                                    
+                                    commitsHtml = '<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-2 mt-2">';
                                     commits.forEach(c => {
-                                        commitsHtml += `<li class="mb-1 text-truncate" title="${c.message}"><span class="text-primary font-monospace me-2">${c.commit}</span><span class="text-muted me-2">${c.date}</span>${c.message}</li>`;
+                                        commitsHtml += `
+                                        <div class="col">
+                                            <div class="p-2 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <span class="badge bg-success bg-opacity-10 text-success me-2 border border-success p-1"><i class="bi bi-check-lg"></i></span>
+                                                    <span class="text-primary font-monospace fw-bold small">[${c.commit}]</span>
+                                                </div>
+                                                <!-- The CSS Clamp limits text to exactly 2 lines -->
+                                                <div class="text-muted" style="font-size: 0.70rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${c.message}">
+                                                    ${c.message}
+                                                </div>
+                                            </div>
+                                        </div>`;
                                     });
-                                    commitsHtml += '</ul></div>';
+                                    commitsHtml += '</div>';
                                 } catch(e) {}
                             }
 
                             gitDisplay = `
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div class="fw-bold"><i class="bi bi-github"></i> ${d.git_repo}</div>
-                                    <span class="badge bg-secondary font-monospace"><i class="bi bi-code-branch"></i> ${currentBranch}</span>
+                                <div class="d-flex flex-wrap justify-content-between align-items-end">
+                                    <div class="flex-grow-1 me-3 mb-2 mb-md-0">
+                                        <div class="fw-bold small text-dark mb-1"><i class="bi bi-github me-1"></i> Repository: <span class="text-primary">${d.git_repo}</span> (Branch: ${currentBranch})</div>
+                                        <div class="input-group input-group-sm shadow-sm">
+                                            <span class="input-group-text bg-light px-2"><i class="bi bi-lightning-charge-fill text-warning"></i> Hook</span>
+                                            <input type="text" class="form-control font-monospace text-muted" style="font-size: 0.70rem;" value="${webhookUrl}" readonly onclick="this.select(); document.execCommand('copy'); showToast('Webhook URL copied!');" title="Click to copy Webhook URL">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-dark manual-git-pull shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}">
+                                            <i class="bi bi-arrow-down-circle me-1"></i> Pull Latest Code
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="input-group input-group-sm mb-2">
-                                    <span class="input-group-text bg-light border-secondary text-muted"><i class="bi bi-lightning-charge-fill"></i></span>
-                                    <input type="text" class="form-control border-secondary text-muted font-monospace" style="font-size: 0.7rem;" value="${webhookUrl}" readonly onclick="this.select(); document.execCommand('copy'); alert('Webhook URL copied!');">
-                                </div>
-                                <button class="btn btn-sm btn-dark w-100 manual-git-pull mb-2" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}"><i class="bi bi-arrow-down-circle"></i> Pull Now</button>
                                 ${commitsHtml}
                             `;
                         }
 
-                        // File Manager
-                        let fmButtons = `
-                            <div class="btn-group ms-1">
-                                <button class="btn btn-sm btn-warning deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy FM"><i class="bi bi-cloud-arrow-up-fill"></i></button>
-                                <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
-                                <button class="btn btn-sm btn-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
-                            </div>
-                        `;
-                        // DYNAMIC APP CONTROLS
-                        let appActions = '';
-                        if (!d.app_type || d.app_type === 'php') {
-                            appActions = `
-                                <button class="btn btn-sm btn-outline-primary open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Install WordPress"><i class="bi bi-wordpress"></i></button>
-                                <button class="btn btn-sm btn-outline-danger deploy-laravel" data-domain="${d.domain_name}" data-user="${d.username}" title="Deploy Laravel Environment"><i class="bi bi-box-seam-fill"></i></button>
-                                <button class="btn btn-sm btn-outline-warning text-dark deploy-python" data-domain="${d.domain_name}" data-user="${d.username}" title="Deploy Python Environment"><i class="bi bi-filetype-py"></i></button>
-                                <button class="btn btn-sm btn-outline-success open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}" title="Node.js App"><i class="bi bi-hexagon-fill"></i></button>
-                            `;
-                        } else if (d.app_type === 'laravel') {
-                            appActions = `
-                                <button class="btn btn-sm btn-danger disabled shadow-sm" title="Laravel Environment Active"><i class="bi bi-box-seam-fill"></i> Laravel</button>
-                                <button class="btn btn-sm btn-outline-secondary revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="laravel" title="Revert to Standard PHP"><i class="bi bi-arrow-counterclockwise"></i> Revert</button>
-                            `;
-                        } else if (d.app_type === 'python') {
-                            appActions = `
-                                <button class="btn btn-sm btn-warning text-dark disabled shadow-sm" title="Python Environment Active"><i class="bi bi-filetype-py"></i> Python</button>
-                                <button class="btn btn-sm btn-dark restart-app" data-domain="${d.domain_name}" data-user="${d.username}" title="Restart Python Engine"><i class="bi bi-arrow-clockwise"></i> Restart Engine</button>
-                                <button class="btn btn-sm btn-outline-secondary revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="python" title="Revert to Standard PHP"><i class="bi bi-arrow-counterclockwise"></i> Revert</button>
-                            `;
-                        }
-
-                        // Add this row to our giant string
+                        // --- Assemble the Accordion Item ---
                         allRowsHtml += `
-                            <tr>
-                                <td class="align-middle">
-                                    <!-- TOP ROW: Domain Link -->
-                                    <div class="d-flex align-items-center mb-1">
-                                        <a href="${proto}://${d.domain_name}" target="_blank" class="text-dark text-decoration-none fw-bold fs-6 me-2">
-                                            ${d.domain_name} <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.75rem;"></i>
-                                        </a> ${suspendBadge}
-                                        <button class="btn btn-sm btn-link text-primary p-0 show-connection-info ms-1" data-domain="${d.domain_name}" title="Connection Info">
-                                            <i class="bi bi-info-circle-fill fs-5"></i>
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- BOTTOM ROW: Flexbox Action Toolbar -->
-                                    <div class="d-flex flex-wrap gap-1 mt-2">
-                                        <button class="btn btn-sm btn-outline-secondary edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}' title="PHP Settings"><i class="bi bi-sliders"></i></button>
-                                        <button class="btn btn-sm btn-outline-dark open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}" title="Advanced Web Settings"><i class="bi bi-gear-fill"></i></button>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-warning text-dark deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}" title="Deploy FM"><i class="bi bi-cloud-arrow-up-fill"></i></button>
-                                            <button class="btn btn-sm btn-outline-dark open-fm-sso" data-domain="${d.domain_name}" title="Open FM"><i class="bi bi-folder2-open"></i></button>
-                                            <button class="btn btn-sm btn-outline-dark rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}" title="Rotate Key"><i class="bi bi-key"></i></button>
+                        <div class="accordion-item mb-3 border shadow-sm rounded">
+                            
+                            <!-- SPLIT HEADER: Safe container for Accordion Toggle + Action Buttons -->
+                            <div class="d-flex align-items-stretch border-bottom bg-white rounded-top">
+                                
+                                <!-- LEFT SIDE: The Accordion Toggle -->
+                                <h2 class="accordion-header flex-grow-1 m-0">
+                                    <button class="accordion-button collapsed py-2 rounded-start border-0 shadow-none bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#acc-${d.id}">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="me-2"><i class="bi bi-globe fs-4 text-primary"></i></div>
+                                            <div class="lh-sm">
+                                                <span class="fw-bold text-dark fs-6">${d.domain_name}</span>
+                                                ${isSuspended ? '<span class="badge bg-danger ms-1" style="font-size:0.65rem;">Suspended</span>' : ''}
+                                                <span class="text-muted small ms-2" style="font-size:0.75rem;">(User: ${d.username} | PHP ${d.php_version})</span>
+                                            </div>
                                         </div>
-                                        ${appActions}
-                                        <button class="btn btn-sm btn-outline-info manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}" title="FTP Accounts"><i class="bi bi-hdd-network-fill"></i></button>
-                                        <button class="btn btn-sm btn-outline-secondary manage-mail" data-domain="${d.domain_name}" title="Mailboxes"><i class="bi bi-envelope-at-fill"></i></button>
-                                        ${suspendBtn}
-                                        <button class="btn btn-sm btn-outline-danger delete-domain ms-auto" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain"><i class="bi bi-trash-fill"></i></button>
+                                    </button>
+                                </h2>
+
+                                <!-- RIGHT SIDE: Pinned Actions (Visit & Delete) -->
+                                <div class="d-flex align-items-center px-3 border-start bg-light rounded-end">
+                                    <a href="${proto}://${d.domain_name}" target="_blank" onclick="event.stopPropagation()" class="btn btn-sm btn-light border shadow-sm me-2 py-1 px-2" title="Visit Site">
+                                        <i class="bi bi-box-arrow-up-right text-primary me-1"></i> Visit
+                                    </a>
+                                    <button class="btn btn-sm btn-danger shadow-sm delete-domain py-1 px-2" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- ACCORDION BODY -->
+                            <div id="acc-${d.id}" class="accordion-collapse collapse" data-bs-parent="#dynamicDomainsAccordion">
+                                <div class="accordion-body bg-light p-3">
+                                    
+                                    <!-- TOP SECTION: 4 Tool Columns -->
+                                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
+                                        
+                                        <!-- COLUMN 1: App Engines -->
+                                        <div class="col">
+                                            <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2">
+                                                <i class="bi bi-cpu me-1"></i> App Engines
+                                            </h6>
+                                            <div class="d-grid gap-2">
+                                                ${appActions}
+                                            </div>
+                                        </div>
+
+                                        <!-- COLUMN 2: Security -->
+                                        <div class="col border-start">
+                                            <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2">
+                                                <i class="bi bi-shield-check me-1"></i> Security
+                                            </h6>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-sm btn-${wafColor} text-start toggle-waf" data-domain="${d.domain_name}" data-action="${d.waf_enabled == 1 ? 'off' : 'on'}">
+                                                    <i class="bi ${wafIcon} me-2"></i> ${wafText}
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark text-start edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}">
+                                                    <i class="bi bi-shield-lock me-2"></i> WAF Rules
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#installSslModal" onclick="$('#sslTargetDomain').val('${d.domain_name}').trigger('change');">
+                                                    <i class="bi bi-shield-lock-fill me-2"></i> Install SSL
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- COLUMN 3: Files & Cache -->
+                                        <div class="col border-start">
+                                            <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2">
+                                                <i class="bi bi-folder2-open me-1"></i> Files & Cache
+                                            </h6>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-sm btn-outline-primary text-start open-fm-sso" data-domain="${d.domain_name}">
+                                                    <i class="bi bi-folder2-open me-2"></i> Open File Manager
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-warning text-dark text-start deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}">
+                                                    <i class="bi bi-cloud-arrow-up-fill me-2"></i> Deploy File Manager
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary text-start rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}">
+                                                    <i class="bi bi-key me-2"></i> Rotate FM Key
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger text-start enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}">
+                                                    <i class="bi bi-memory me-2"></i> Inject Redis Cache
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-dark text-start edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}'>
+                                                    <i class="bi bi-sliders me-2"></i> PHP Config
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- COLUMN 4: Network & Info -->
+                                        <div class="col border-start">
+                                            <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2">
+                                                <i class="bi bi-hdd-network me-1"></i> Network & Info
+                                            </h6>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-sm btn-outline-info text-dark text-start show-connection-info" data-domain="${d.domain_name}">
+                                                    <i class="bi bi-info-circle-fill me-2"></i> Connection Info
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary text-start open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}">
+                                                    <i class="bi bi-gear-wide-connected me-2"></i> Web Settings
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}">
+                                                    <i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary text-start manage-mail" data-domain="${d.domain_name}">
+                                                    <i class="bi bi-envelope-at-fill me-2"></i> Mailboxes
+                                                </button>
+                                                <button class="btn btn-sm btn-${suspendColor} text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}">
+                                                    <i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain
+                                                </button>
+                                            </div>
+                                        </div>
+
                                     </div>
-                                </td>
-                                <td class="align-middle"><i class="bi bi-person text-muted"></i> ${d.username}</td>
-                                <td class="align-middle"><span class="badge bg-light border text-dark">v${d.php_version}</span></td>
-                                <td class="align-middle" style="max-width: 300px;">${gitDisplay}</td>
-                                <td class="align-middle">${sslBadge}<br><div class="mt-1">${wafBadge}</div></td>
-                            </tr>
-                        `;
+
+                                    <!-- BOTTOM SECTION: Full-Width Git Footer -->
+                                    <div class="border-top border-2 border-secondary border-opacity-10 pt-3">
+                                        <h6 class="text-muted small fw-bold text-uppercase mb-2">
+                                            <i class="bi bi-git me-1"></i> CI/CD Pipeline
+                                        </h6>
+                                        ${gitDisplay}
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>`;
                     });
                     
-                    // Inject all rows into the DOM instantly in one single browser repaint
-                    tbody.html(allRowsHtml);
+                    container.html(allRowsHtml);
                     
                     // Populate dropdowns
                     let domainDropdowns = $('.domain-dropdown');
@@ -1190,7 +1342,7 @@ $(document).ready(function() {
             }
         });
     });
-    // 1. Open Modern PHP Settings Modal & Populate 23 Fields
+    // 1. Open Modern PHP Settings Modal & Populate Fields
     $(document).on('click', '.edit-php-settings', function() {
         let d = $(this).data('json');
         
@@ -1199,19 +1351,21 @@ $(document).ready(function() {
         $('#psUser').val(d.username);
         $('#psVer').val(d.php_version);
         
-        // Populate all 23 fields from the database (using logical defaults if null)
+        // Populate fields from the database, using our Secure Defaults if null
         $('#ps_mem').val(d.php_memory_limit || '128M');
         $('#ps_max_exec').val(d.php_max_exec_time || 30);
         $('#ps_max_in').val(d.php_max_input_time || 60);
         $('#ps_post').val(d.php_post_max_size || '8M');
         $('#ps_up').val(d.php_upload_max_filesize || '2M');
         $('#ps_opc').val(d.php_opcache_enable || 'on');
-        $('#ps_dis').val(d.php_disable_functions || '');
+        $('#ps_dis').val(d.php_disable_functions || 'exec,shell_exec,system,passthru,popen,proc_open');
         
-        $('#ps_inc').val(d.php_include_path || '.:/opt/plesk/php/8.3/share/pear');
-        $('#ps_sess').val(d.php_session_save_path || '/var/lib/php/sessions');
-        $('#ps_mail').val(d.php_mail_params || '');
+        // ---> SECURE PATH DEFAULTS <---
+        $('#ps_inc').val(d.php_include_path || '.:/usr/share/php');
+        $('#ps_sess').val(d.php_session_save_path || `/home/${d.username}/web/${d.domain_name}/tmp`);
         $('#ps_open').val(d.php_open_basedir || '{WEBSPACEROOT}{/}{:}{TMP}{/}');
+        
+        $('#ps_mail').val(d.php_mail_params || '');
         $('#ps_err_rep').val(d.php_error_reporting || 'E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED');
         $('#ps_disp_err').val(d.php_display_errors || 'off');
         $('#ps_log_err').val(d.php_log_errors || 'on');
@@ -2483,7 +2637,7 @@ $(document).ready(function() {
                 if(response.success) {
                     alertBox.removeClass('d-none alert-danger').addClass('alert-success').text("Password updated! You will be logged out in 3 seconds.");
                     form[0].reset();
-                    setTimeout(function() { window.location.href = '/logout.php'; }, 3000);
+                    setTimeout(function() { window.location.href = '/logout'; }, 3000);
                 } else {
                     alertBox.removeClass('d-none alert-success').addClass('alert-danger').text(response.error);
                 }

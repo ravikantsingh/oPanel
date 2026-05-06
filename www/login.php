@@ -14,7 +14,7 @@ require_once 'classes/TOTP.php';
 
 // If already logged in, send to dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    header('Location: /index.php');
+    header('Location: /');
     exit;
 }
 
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Phase 2 & 3: 2FA Verification (Handles both Setup and Login)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'verify_2fa') {
     if (!isset($_SESSION['pre_auth_admin_id'])) {
-        header("Location: login.php"); exit;
+        header("Location: login"); exit;
     }
 
     $code = trim($_POST['totp_code']);
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $_SESSION['admin_logged_in'] = true;
         unset($_SESSION['pre_auth_admin_id']);
         unset($_SESSION['temp_2fa_secret']);
-        header("Location: index.php");
+        header("Location: /");
         exit;
     } else {
         $error = "Invalid Authenticator code. Try again.";
@@ -84,7 +84,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
         $logMessage = "[" . date('Y-m-d H:i:s') . "] oPanel Auth Failed: Invalid 2FA code. IP: {$ip}\n";
         file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
-    }
     }
 }
 require_once 'classes/Branding.php';

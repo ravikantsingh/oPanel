@@ -2985,7 +2985,7 @@ $(document).ready(function() {
                     } else {
                         response.bans.forEach(function(b) {
                             let badgeClass = 'bg-danger';
-                            if(b.jail === 'opanel') badgeClass = 'bg-dark';
+                            if(b.jail === 'stackrium') badgeClass = 'bg-dark';
                             if(b.jail === 'sshd') badgeClass = 'bg-primary';
                             
                             let row = `<tr>

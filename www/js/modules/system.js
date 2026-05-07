@@ -790,7 +790,7 @@ $(document).ready(function() {
         let alertBox = $('#securePanelAlert');
         
         if (!domain) { alert("Please select a domain first."); return; }
-        if(!confirm(`Warning: This will lock oPanel to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
+        if(!confirm(`Warning: This will lock Stackrium Control to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Binding...');
         alertBox.addClass('d-none').removeClass('alert-success alert-danger');

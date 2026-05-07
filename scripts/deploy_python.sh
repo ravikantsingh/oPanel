@@ -49,7 +49,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    return "<div style='font-family: sans-serif; text-align: center; margin-top: 100px;'><h1>[ OK ] Python Engine Active</h1><p>Your Python application is successfully running on oPanel.</p></div>"
+    return "<div style='font-family: sans-serif; text-align: center; margin-top: 100px;'><h1>[ OK ] Python Engine Active</h1><p>Your Python application is successfully running on Stackrium.</p></div>"
 
 if __name__ == "__main__":
     app.run()

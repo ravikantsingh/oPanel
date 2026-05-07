@@ -32,7 +32,7 @@ const port = process.env.PORT || $APP_PORT;
 const server = http.createServer((req, res) => {
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
-  res.end('oPanel Node.js Engine: Successfully Deployed! Replace this file with your actual app.\\n');
+  res.end('Stackrium Node.js Engine: Successfully Deployed! Replace this file with your actual app.\\n');
 });
 server.listen(port, () => {
   console.log(\`Server running at port \${port}\`);

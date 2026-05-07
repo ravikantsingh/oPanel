@@ -87,7 +87,7 @@ elif [ "$ACTION" == "delete" ]; then
     userdel -r "$USERNAME"
 
     # ---> THE MISSING SOURCE OF TRUTH <---
-    # Remove the user from the oPanel Database
+    # Remove the user from the Stackrium Database
     mysql -e "DELETE FROM panel_core.users WHERE username = '$USERNAME';"
     # -------------------------------------
 

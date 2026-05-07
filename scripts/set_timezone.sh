@@ -34,7 +34,7 @@ fi
 # ---> THE FIX: Apply instantly WITHOUT restarting MariaDB to prevent severing the Python connection! <---
 mysql -e "SET GLOBAL time_zone = '$TZ';"
 
-# 4. Save to oPanel Database (Source of Truth)
+# 4. Save to Stackrium Database (Source of Truth)
 mysql -e "INSERT INTO panel_core.settings (setting_key, setting_value) VALUES ('server_timezone', '$TZ') ON DUPLICATE KEY UPDATE setting_value = '$TZ';"
 
 # 5. Restart the Python Daemon safely

@@ -15,7 +15,7 @@ class Branding {
             
             // Safe fallbacks in case the database is missing keys
             return [
-                'title' => $settings['brand_title'] ?: 'oPanel',
+                'title' => $settings['brand_title'] ?: 'Stackrium Control',
                 'subtext' => $settings['brand_subtext'] ?: 'Unified Server Management',
                 'logo' => $settings['brand_logo'] ?: '',
                 'logo_url' => $settings['brand_logo_url'] ?: '/index.php',

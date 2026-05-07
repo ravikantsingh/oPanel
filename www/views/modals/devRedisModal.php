@@ -8,7 +8,7 @@
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info border-0 shadow-sm small">
-                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> oPanel provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
+                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> Stackrium provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
                 </div>
 
                 <!-- Credentials Section -->
@@ -42,31 +42,31 @@
                 <p class="small text-muted mb-2">You must define a <strong>unique prefix</strong> (e.g., <code>myapp_</code>) to prevent data collisions with other domains on this server.</p>
                 <div class="position-relative shadow-sm">
                     <textarea class="form-control bg-dark text-success font-monospace" id="devPhpBoilerplate" rows="12" style="font-size: 0.85rem; resize: none;" readonly>
-&lt;?php
-// 1. Connect to oPanel Redis
+<?php
+// 1. Connect to Stackrium Redis
 $redis = new Redis();
-$redis-&gt;connect('127.0.0.1', 6379);
-$redis-&gt;auth('PASSWORD_WILL_LOAD_HERE');
+$redis->connect('127.0.0.1', 6379);
+$redis->auth('PASSWORD_WILL_LOAD_HERE');
 
 // 2. Set Domain Prefix (CRITICAL for Shared Servers)
-$redis-&gt;setOption(Redis::OPT_PREFIX, 'my_domain_com_');
+$redis->setOption(Redis::OPT_PREFIX, 'my_domain_com_');
 
 // 3. Cache Logic
 $cacheKey = 'latest_articles';
-$data = $redis-&gt;get($cacheKey);
+$data = $redis->get($cacheKey);
 
 if (!$data) {
     // Cache Miss: Query MariaDB
     $data = ['article 1', 'article 2']; // fetch_from_db();
     
     // Save to RAM for 1 Hour
-    $redis-&gt;setex($cacheKey, 3600, json_encode($data));
+    $redis->setex($cacheKey, 3600, json_encode($data));
 } else {
     // Cache Hit!
     $data = json_decode($data, true);
 }
 print_r($data);
-?&gt;</textarea>
+?></textarea>
                     <button class="btn btn-sm btn-outline-light copy-btn position-absolute top-0 end-0 m-2" data-target="devPhpBoilerplate"><i class="bi bi-clipboard"></i> Copy</button>
                 </div>
             </div>

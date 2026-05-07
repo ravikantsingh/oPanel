@@ -1,3 +1,5 @@
 Here is the oPanel context file. Acknowledge that you understand these rules, and then we will build
 
 i will upload files for you to analyze and make a context at your end. i will upload these files in batches of 10. and will let you know which one is the last batch and then. after the last batch you will provide me a new, in depth, opanel-context.md file which i will save for the future and then we will start developing. if you understood this let me know.
+
+i have uploaded a php file is basically documentation and faq for oPanel, a custom hosting panel, which i have build from scratch with industry standard security practices. its free for use licence will be automatically installed after opanel deployment through ssh command. i want a nice cool looking and futuristic website for it. you can take inspiration from 1. https://cyberpanel.net/ and 2. https://www.cloudpanel.io/. do make comparison charts like what outhers are providing for(charged /free) and what oPanel provides. make logo and every thing.  aslo make a improved in depth documentation section in the website from the file provided.  

@@ -441,7 +441,7 @@ rm -f /etc/motd
 
 cat <<\EOF > /etc/update-motd.d/01-stackrium
 #!/bin/bash
-echo -e "\e[34m"
+echo -e "\e[33m"
 echo "     .d0000b.  000                      000              000                        "    
 echo "    d00P  Y00b 000                      000              000                        "
 echo "    Y00b.      000                      000                                         "
@@ -450,7 +450,7 @@ echo "        'Y00b. 000        '00b d00P'    000 .00P 000P'   000 000  000 000 
 echo "          '000 000    .d000000 000      00000K   000     000 000  000 000  000  000 "
 echo "    Y00b  d00P Y00b.  000  000 Y00b.    000 '00b 000     000 Y00b 000 000  000  000 "
 echo "     'Y0000P'   'Y000 'Y000000  'Y0000P 000  000 000     000  'Y00000 000  000  000 "
-echo -e "\e[33m"
+echo -e "\e[34m"
 echo "                        00''''''Y00                     00                     00   "
 echo "                        0' .000. '0                     00                     00   "
 echo "                        0  00000oo0 .d0000b. 00d000b. d0000P 00d000b. .d0000b. 00   "

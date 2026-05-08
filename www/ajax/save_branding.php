@@ -10,15 +10,15 @@ $db = Database::getInstance()->getConnection();
 $upload_dir = '/opt/panel/www/assets/custom/';
 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
 
-// 1. Process Text & Color Inputs
+// 1. Process Text & Color Inputs (PHP 8.3 Safe)
 $updates = [
-    'brand_title' => filter_input(INPUT_POST, 'brand_title', FILTER_SANITIZE_STRING),
-    'brand_subtext' => filter_input(INPUT_POST, 'brand_subtext', FILTER_SANITIZE_STRING),
-    'brand_logo_url' => filter_input(INPUT_POST, 'brand_logo_url', FILTER_SANITIZE_URL),
-    'brand_theme_color' => filter_input(INPUT_POST, 'brand_theme_color', FILTER_SANITIZE_STRING),
-    'brand_sidebar_color' => filter_input(INPUT_POST, 'brand_sidebar_color', FILTER_SANITIZE_STRING),
-    'brand_login_bg_color' => filter_input(INPUT_POST, 'brand_login_bg_color', FILTER_SANITIZE_STRING),
-    'brand_login_bg_fit' => filter_input(INPUT_POST, 'brand_login_bg_fit', FILTER_SANITIZE_STRING),
+    'brand_title' => isset($_POST['brand_title']) ? trim(strip_tags($_POST['brand_title'])) : null,
+    'brand_subtext' => isset($_POST['brand_subtext']) ? trim(strip_tags($_POST['brand_subtext'])) : null,
+    'brand_logo_url' => isset($_POST['brand_logo_url']) ? trim(filter_var($_POST['brand_logo_url'], FILTER_SANITIZE_URL)) : null,
+    'brand_theme_color' => isset($_POST['brand_theme_color']) ? trim(strip_tags($_POST['brand_theme_color'])) : null,
+    'brand_sidebar_color' => isset($_POST['brand_sidebar_color']) ? trim(strip_tags($_POST['brand_sidebar_color'])) : null,
+    'brand_login_bg_color' => isset($_POST['brand_login_bg_color']) ? trim(strip_tags($_POST['brand_login_bg_color'])) : null,
+    'brand_login_bg_fit' => isset($_POST['brand_login_bg_fit']) ? trim(strip_tags($_POST['brand_login_bg_fit'])) : null,
     'brand_hide_footer' => isset($_POST['brand_hide_footer']) ? '1' : '0'
 ];
 

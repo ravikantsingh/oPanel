@@ -89,8 +89,8 @@ fi
 
 echo -e "\e[32mLicense activated successfully: $LICENSE_KEY\e[0m"
 echo "$LICENSE_KEY" > /opt/panel/license.key
-chmod 600 /opt/panel/license.key
-chown root:root /opt/panel/license.key
+chown root:www-data /opt/panel/license.key
+chmod 640 /opt/panel/license.key
 
 # ==========================================
 # 3. CLONE PANEL FILES

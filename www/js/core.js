@@ -125,4 +125,64 @@ $(document).ready(function() {
             fallbackCopy(textToCopy);
         }
     });
+    // =================================================================
+    // FIRST-LOGIN GATEKEEPER
+    // =================================================================
+    
+    // 1. Check if the user has completed the initial registration
+    $.ajax({
+        url: '/ajax/check_registration.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            if (res.success && res.is_registered === false) {
+                $('.wrapper, .sidebar').css('filter', 'blur(3px)');
+                $('#firstLoginModal').modal('show');
+            }
+        }
+    });
+
+    // 2. The Bulletproof Form Submission
+    $(document).on('submit', '#firstLoginForm', function(e) {
+        e.preventDefault();
+        
+        let btn = $('#btnSubmitRegistration');
+        let alertBox = $('#registrationAlert');
+        // Automatically append the CSRF token to the payload so security.php accepts it
+let formData = $(this).serialize() + '&csrf_token=' + $('meta[name="csrf-token"]').attr('content');
+        
+        // DEBUGGING: Watch your browser console (F12) to see this!
+        console.log("First Login AJAX Fired!");
+        console.log("Payload being sent:", formData);
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Activating License...');
+        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
+
+        $.ajax({
+            url: '/ajax/complete_registration.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(res) {
+                console.log("Server Response:", res); // DEBUGGING
+                
+                if(res.success) {
+                    alertBox.addClass('alert-success').text("License Activated! Loading dashboard...").removeClass('d-none');
+                    setTimeout(() => {
+                        $('#firstLoginModal').modal('hide');
+                        $('.wrapper, .sidebar').css('filter', 'none');
+                        showToast("Welcome to Stackrium Control!");
+                    }, 1500);
+                } else {
+                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    btn.prop('disabled', false).html('Try Again <i class="bi bi-arrow-right ms-2"></i>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Crash:", xhr.responseText); // DEBUGGING
+                alertBox.addClass('alert-danger').text("Network error. Could not reach Stackrium Central.").removeClass('d-none');
+                btn.prop('disabled', false).html('Try Again <i class="bi bi-arrow-right ms-2"></i>');
+            }
+        });
+    });
 });

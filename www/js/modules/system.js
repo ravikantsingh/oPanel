@@ -784,6 +784,85 @@ $(document).ready(function() {
         });
     });
 
+    // === FETCH & POPULATE BRANDING MODAL ON OPEN ===
+    $('#brandingModal').on('show.bs.modal', function () {
+        $.ajax({
+            url: '/ajax/get_branding.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success && res.data) {
+                    $('input[name="brand_title"]').val(res.data.brand_title || '');
+                    $('input[name="brand_subtext"]').val(res.data.brand_subtext || '');
+                    $('input[name="brand_logo_url"]').val(res.data.brand_logo_url || '');
+                    $('input[name="brand_theme_color"]').val(res.data.brand_theme_color || '#0d6efd');
+                    $('input[name="brand_sidebar_color"]').val(res.data.brand_sidebar_color || '#212529');
+                    $('input[name="brand_login_bg_color"]').val(res.data.brand_login_bg_color || '#f8f9fa');
+                    $('select[name="brand_login_bg_fit"]').val(res.data.brand_login_bg_fit || 'cover');
+                    $('#hideFooterCheck').prop('checked', res.data.brand_hide_footer == '1');
+                }
+            }
+        });
+    });
+    // Open WAF Rules Modal
+    $(document).on('click', '.edit-waf-rules', function() {
+        let domain = $(this).data('domain');
+        // Decode the rules from base64 safely
+        let existingRules = atob($(this).data('rules')); 
+        
+        $('#wafDomainTitle').text(domain);
+        $('#wafDomainInput').val(domain);
+        $('#wafRulesTextarea').val(existingRules);
+        $('#wafRulesModal').modal('show');
+    });
+
+    // Submit Custom WAF Rules
+    $('#saveWafRulesBtn').click(function() {
+        let btn = $(this);
+        let formData = $('#wafRulesForm').serialize();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Compiling...');
+
+        $.ajax({
+            url: '/ajax/manage_waf_rules.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#wafRulesModal').modal('hide');
+                    setTimeout(fetchDomains, 3000); 
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).text('Compile & Apply Rules');
+            }
+        });
+    });
+    // WAF Toggle Button Click Handler
+    $(document).on('click', '.toggle-waf', function() {
+        let btn = $(this);
+        let domain = btn.data('domain');
+        let action = btn.data('action'); // 'on' or 'off'
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_waf.php',
+            type: 'POST',
+            data: { domain: domain, status: action },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    // Refresh the table after 3 seconds to let Python process it
+                    setTimeout(fetchDomains, 3000); 
+                } else {
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false);
+                }
+            }
+        });
+    });
     $('#submitSecurePanelBtn').click(function() {
         let btn = $(this);
         let domain = $('#masterDomainSelect').val();

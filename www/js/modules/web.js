@@ -461,7 +461,49 @@ $(document).ready(function() {
             }
         });
     });
+    // 2. Issue Let's Encrypt Form Submission
+    $('#issueLetsEncryptForm').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#btnIssueLe');
+        let originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Communicating...');
 
+        $.ajax({
+            url: '/ajax/install_ssl.php', 
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    alert("SSL Installed Successfully! The panel will now refresh.");
+                    $('#installSslModal').modal('hide');
+                    setTimeout(window.fetchDomains, 1000);
+                } else {
+                    alert("Error: " + response.error);
+                    btn.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function() { alert("A server error occurred."); btn.prop('disabled', false).html(originalText); }
+        });
+    });
+
+    // 3. HSTS Slider Sync Logic
+    $('#hstsToggle').on('change', function() {
+        if($(this).is(':checked')) {
+            $('.hsts-controls').removeClass('opacity-50').css('pointer-events', 'auto');
+        } else {
+            $('.hsts-controls').addClass('opacity-50').css('pointer-events', 'none');
+        }
+    });
+
+    $('#hstsSlider').on('input', function() {
+        let seconds = $(this).val();
+        let months = Math.round(seconds / 2592000); // 30 days
+        let labelText = months + ' Months';
+        if(months === 12) labelText = '1 Year';
+        if(months === 24) labelText = '2 Years (Recommended)';
+        $('#hstsDurationLabel').text(labelText);
+    });
     // ==========================================
     // DNS Table Filtering Logic
     // ==========================================
@@ -571,7 +613,74 @@ $(document).ready(function() {
             }
         });
     });
+    // 1. Open FTP Modal
+    $(document).on('click', '.manage-ftp', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+        
+        $('#ftpDomainTitle').text(domain);
+        $('#ftpDomain').val(domain);
+        $('#ftpSysUser').val(user);
+        $('#ftpSuffix').text('@' + domain);
+        
+        // Reset form to "Create" mode
+        $('#ftpForm')[0].reset();
+        $('#ftpAction').val('create');
+        $('#ftpUserInput').prop('readonly', false);
+        $('#deleteFtpBtn').addClass('d-none');
+        $('#saveFtpBtn').removeClass('w-100'); // Make room for delete button if needed later
+        
+        $('#ftpModal').modal('show');
+    });
 
+    // 2. Auto Password Generator
+    $('#generateFtpPass').click(function(e) {
+        e.preventDefault();
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 16; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        $('#ftpPassInput').val(pass);
+        
+        // Auto-copy to clipboard
+        navigator.clipboard.writeText(pass);
+        let originalText = $(this).html();
+        $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
+        setTimeout(() => { $(this).html(originalText); }, 2000);
+    });
+
+    // 3. Save / Update FTP User
+    $('#saveFtpBtn').click(function() {
+        let btn = $(this);
+        let form = $('#ftpForm');
+        
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        // Append domain to username to ensure global server uniqueness (e.g., user@domain.com)
+        let rawUser = $('#ftpUserInput').val();
+        if (!rawUser.includes('@')) {
+            $('#ftpUserInput').val(rawUser + $('#ftpSuffix').text());
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+        $.ajax({
+            url: '/ajax/manage_ftp.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#ftpModal').modal('hide');
+                    alert("FTP Account saved successfully.");
+                } else {
+                    alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-save"></i> Save FTP Account');
+            }
+        });
+    });
     // === APP DEPLOYMENTS (Laravel, Node, Python, WP) ===
     $(document).on('click', '.deploy-laravel', function() {
         let domain = $(this).data('domain');

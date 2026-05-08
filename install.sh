@@ -202,6 +202,26 @@ echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/stackrium
 systemctl restart systemd-resolved
 rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+echo -e "\e[34m[+] Configuring BIND9 for Public Access...\e[0m"
+cat << 'EOF' > /etc/bind/named.conf.options
+options {
+        directory "/var/cache/bind";
+
+        // Listen on all IPv4 interfaces
+        listen-on { any; };
+        
+        // Listen on all IPv6 interfaces
+        listen-on-v6 { any; };
+
+        // Allow anyone on the internet to query your DNS server
+        allow-query { any; };
+
+        // SECURITY WARNING: Do NOT enable recursion if this is a public authoritative server!
+        recursion no; 
+};
+EOF
+
 systemctl restart bind9
 
 # ==========================================

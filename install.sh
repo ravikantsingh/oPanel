@@ -5,7 +5,7 @@
 # ==============================================================================
 
 GITHUB_REPO="https://github.com/ravikantsingh/Stackrium.git" # (Keep as your source repo)
-BRANCH="beta"
+BRANCH="lara-py"
 
 # Ensure script is run as root
 if [ "$EUID" -ne 0 ]; then

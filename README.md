@@ -1,7 +1,7 @@
-oPanel ⚡
+Stackrium ⚡
 The Lightweight, Enterprise-Grade Web Hosting Control Panel
 
-oPanel is a modern, open-source control panel designed for absolute speed and security. Bypassing bulky legacy software like Apache, oPanel is built purely on Nginx, PHP-FPM, MariaDB, and a Python-powered background task daemon. It brings enterprise-level features like ModSecurity WAF, Let's Encrypt SSL, and Git automation to your server with a single installation command.
+Stackrium is a modern, open-source control panel designed for absolute speed and security. Bypassing bulky legacy software like Apache, Stackrium is built purely on Nginx, PHP-FPM, MariaDB, and a Python-powered background task daemon. It brings enterprise-level features like ModSecurity WAF, Let's Encrypt SSL, and Git automation to your server with a single installation command.
 
 🚀 Core Features
 Server & Web Environment
@@ -50,7 +50,7 @@ Log into your fresh Ubuntu server as root and run this single command to initiat
 
 Bash
 
-wget -O install.sh https://raw.githubusercontent.com/ravikantsingh/oPanel/main/install.sh && sudo bash install.sh
+wget -O install.sh https://raw.githubusercontent.com/ravikantsingh/Stackrium/main/install.sh && sudo bash install.sh
 
 The script will automatically install all core dependencies, bootstrap the MariaDB environment, configure Nginx and the Python task daemon, set up strict permissions, and lock down the firewall. Installation typically takes 3-5 minutes.
 
@@ -67,10 +67,10 @@ Username: admin
 
 Password: admin123
 
-Secure the Panel: Click the System Settings button in the dashboard to bind a real domain name (e.g., cp.yourdomain.com) to the panel. oPanel will automatically provision a Let's Encrypt certificate and safely reload the interface.
+Secure the Panel: Click the System Settings button in the dashboard to bind a real domain name (e.g., cp.yourdomain.com) to the panel. Stackrium will automatically provision a Let's Encrypt certificate and safely reload the interface.
 
 🛑 The "Scorched Earth" Deletion Protocol
-oPanel is designed to keep your server completely free of orphaned files. When you delete a domain from the UI, oPanel's automated backend completely eradicates its Nginx configuration, SSL certificates, Git repositories, File Manager instances, and database records in seconds.
+Stackrium is designed to keep your server completely free of orphaned files. When you delete a domain from the UI, Stackrium's automated backend completely eradicates its Nginx configuration, SSL certificates, Git repositories, File Manager instances, and database records in seconds.
 
 📄 License
 This project is open-source and available under the MIT License.

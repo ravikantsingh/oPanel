@@ -8,7 +8,7 @@
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info border-0 shadow-sm small">
-                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> oPanel provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
+                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> Stackrium provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
                 </div>
 
                 <!-- Credentials Section -->
@@ -43,7 +43,7 @@
                 <div class="position-relative shadow-sm">
                     <textarea class="form-control bg-dark text-success font-monospace" id="devPhpBoilerplate" rows="12" style="font-size: 0.85rem; resize: none;" readonly>
 &lt;?php
-// 1. Connect to oPanel Redis
+// 1. Connect to Stackrium Redis
 $redis = new Redis();
 $redis-&gt;connect('127.0.0.1', 6379);
 $redis-&gt;auth('PASSWORD_WILL_LOAD_HERE');

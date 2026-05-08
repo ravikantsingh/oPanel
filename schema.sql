@@ -1,5 +1,5 @@
 -- schema.sql
--- Master Database Initialization for the oPanel
+-- Master Database Initialization for the Stackrium
 
 CREATE DATABASE IF NOT EXISTS panel_core;
 USE panel_core;
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
-('panel_name', 'oPanel'),
-('brand_title', 'oPanel'),
+('panel_name', 'Stackrium'),
+('brand_title', 'Stackrium'),
 ('brand_logo', ''), 
 ('brand_logo_url', '/index.php'),
 ('brand_favicon_ico', ''),

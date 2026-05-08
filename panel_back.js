@@ -588,14 +588,14 @@ $(document).ready(function() {
     // =================================================================
     
     // 1. Inject the Toast Container into the DOM automatically
-    if ($('#oPanelToastContainer').length === 0) {
+    if ($('#StackriumToastContainer').length === 0) {
         $('body').append(`
-            <div id="oPanelToastContainer" class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 9999;">
-                <div id="oPanelToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+            <div id="StackriumToastContainer" class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 9999;">
+                <div id="StackriumToast" class="toast align-items-center text-white bg-dark border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex px-1 py-2">
                         <div class="toast-body fw-bold fs-6">
                             <i class="bi bi-check-circle-fill text-success me-2 fs-5"></i> 
-                            <span id="oPanelToastMsg">Copied!</span>
+                            <span id="StackriumToastMsg">Copied!</span>
                         </div>
                         <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
                     </div>
@@ -606,8 +606,8 @@ $(document).ready(function() {
 
     // 2. Global Helper Function to trigger the Toast anywhere in the panel
     window.showToast = function(message) {
-        $('#oPanelToastMsg').text(message);
-        let toastEl = new bootstrap.Toast(document.getElementById('oPanelToast'), { delay: 2500 });
+        $('#StackriumToastMsg').text(message);
+        let toastEl = new bootstrap.Toast(document.getElementById('StackriumToast'), { delay: 2500 });
         toastEl.show();
     };
     // =================================================================
@@ -1234,7 +1234,7 @@ $(document).ready(function() {
         
         let confirmText;
         if (isMasterDomain) {
-            confirmText = prompt(`CRITICAL: '${domain}' is currently securing oPanel. Deleting this will unbind the panel, revert to the raw IP, and disconnect your session. Type the domain name to proceed:`);
+            confirmText = prompt(`CRITICAL: '${domain}' is currently securing Stackrium. Deleting this will unbind the panel, revert to the raw IP, and disconnect your session. Type the domain name to proceed:`);
         } else {
             confirmText = prompt(`WARNING: This will permanently destroy all files and SSL for '${domain}'. Type the domain name to proceed:`);
         }
@@ -2440,7 +2440,7 @@ $(document).ready(function() {
         let alertBox = $('#securePanelAlert');
         
         if (!domain) { alert("Please select a domain first."); return; }
-        if(!confirm(`Warning: This will lock oPanel to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
+        if(!confirm(`Warning: This will lock Stackrium to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Binding...');
         alertBox.addClass('d-none').removeClass('alert-success alert-danger');
@@ -2985,7 +2985,7 @@ $(document).ready(function() {
                     } else {
                         response.bans.forEach(function(b) {
                             let badgeClass = 'bg-danger';
-                            if(b.jail === 'opanel') badgeClass = 'bg-dark';
+                            if(b.jail === 'stackrium') badgeClass = 'bg-dark';
                             if(b.jail === 'sshd') badgeClass = 'bg-primary';
                             
                             let row = `<tr>
@@ -3703,7 +3703,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    // oPanel Architectural Rules: Hide Modal, Reset Form, Show Custom Toast
+                    // Stackrium Architectural Rules: Hide Modal, Reset Form, Show Custom Toast
                     $('#addDomainModal').modal('hide');
                     $('#addDomainForm')[0].reset();
                     

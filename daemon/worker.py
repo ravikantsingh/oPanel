@@ -158,7 +158,7 @@ def process_tasks():
     db.close()
 
 if __name__ == '__main__':
-    logging.info("oPanel Daemon Started.")
+    logging.info("Stackrium Daemon Started.")
     
     try:
         db_clean = get_db_connection()

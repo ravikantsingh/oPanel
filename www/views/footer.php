@@ -15,7 +15,7 @@
             }
         </style>
 
-        <!-- oPanel Footer -->
+        <!-- Stackrium Footer -->
         <footer class="py-3 mt-auto border-top text-muted small d-flex justify-content-between align-items-center">
             <div>
                 <?php if (!$brand['hide_footer']): ?>

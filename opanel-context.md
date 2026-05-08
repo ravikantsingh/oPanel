@@ -3,7 +3,7 @@
 **Read this entirely before generating any code, file paths, or architecture suggestions.**
 
 ## 1. Core Architectural Paradigm & Security Model
-* **Project:** oPanel (Custom Linux web hosting control panel).
+* **Project:** Stackrium (Custom Linux web hosting control panel).
 * **Web Stack:** Nginx, MariaDB, PHP 8.x (FPM), Node.js, PM2, Redis, Pure-FTPd, ModSecurity.
 * **Separation of Concerns (SRE Bridge):** PHP acts strictly as an unprivileged API/Gatekeeper (`www-data`). It does **not** execute heavy tasks or root-level server modifications directly.
 * **The Execution Bridge:** PHP dispatches formatted JSON payloads to a MariaDB `tasks_queue` using the `TaskQueue->dispatch()` method.

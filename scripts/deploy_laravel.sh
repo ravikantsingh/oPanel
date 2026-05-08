@@ -23,7 +23,7 @@ if grep -q "root /home/$USERNAME/web/$DOMAIN/public_html;" "$VHOST"; then
     systemctl reload nginx
 fi
 
-# 2. Extract DB Password to update the oPanel Database
+# 2. Extract DB Password to update the Stackrium Database
 DB_PASS=$(grep DB_PASS /opt/panel/www/config/database.php | cut -d"'" -f4)
 MYSQL_CMD="mysql -B -N -upanel_user -p${DB_PASS} panel_core -e"
 
@@ -69,7 +69,7 @@ if [ -f "artisan" ] || [ -f "composer.json" ]; then
         su - "$USERNAME" -c "pm2 save"
     fi
 
-    # 6. Officially Register the App Environment in the oPanel Database
+    # 6. Officially Register the App Environment in the Stackrium Database
     $MYSQL_CMD "UPDATE domains SET app_type='laravel', document_root='public_html/public', pm2_process='$WORKER_NAME' WHERE domain_name='$DOMAIN';"
 
     echo "Laravel Deployment Complete! App is live."

@@ -17,7 +17,7 @@ $services = [
     'SMTP Server (Postfix)'        => 'postfix',
     'IMAP/POP3 Server (Dovecot)'   => 'dovecot',
     'PM2 Process Manager'          => 'pm2-root',
-    'oPanel Background Daemon'     => 'panel-daemon'
+    'Stackrium Background Daemon'     => 'panel-daemon'
 ];
 
 $core_services = ['nginx', 'mariadb', 'panel-daemon'];

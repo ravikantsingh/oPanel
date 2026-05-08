@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $error = "Invalid username or password.";
         //Log failed password attempt for fail2ban
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
-        $logMessage = "[" . date('Y-m-d H:i:s') . "] oPanel Auth Failed: Invalid credentials for user '{$username}'. IP: {$ip}\n";
+        $logMessage = "[" . date('Y-m-d H:i:s') . "] Stackrium Auth Failed: Invalid credentials for user '{$username}'. IP: {$ip}\n";
         file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
     }
 }
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $step = ($admin['is_2fa_enabled'] == 1) ? 3 : 2;
         //Log failed 2FA attempt for fail2ban
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
-        $logMessage = "[" . date('Y-m-d H:i:s') . "] oPanel Auth Failed: Invalid 2FA code. IP: {$ip}\n";
+        $logMessage = "[" . date('Y-m-d H:i:s') . "] Stackrium Auth Failed: Invalid 2FA code. IP: {$ip}\n";
         file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
     }
 }
@@ -106,7 +106,7 @@ if (!empty($brand['login_bg_image'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>oPanel | Systems Access</title>
+    <title>Stackrium | Systems Access</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
@@ -191,7 +191,7 @@ if (!empty($brand['login_bg_image'])) {
             <div class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill"><i class="bi bi-shield-lock"></i> 2FA Setup Required</div>
             <p class="small text-secondary mb-3">Scan this QR code with Google Authenticator or Authy to secure your admin account.</p>
             <div class="bg-white p-2 rounded-3 d-inline-block mb-3">
-                <img src="<?= TOTP::getQRCodeUrl('oPanel_Admin', $_SESSION['temp_2fa_secret']) ?>" class="img-fluid" alt="QR Code" style="width: 150px;">
+                <img src="<?= TOTP::getQRCodeUrl('Stackrium_Admin', $_SESSION['temp_2fa_secret']) ?>" class="img-fluid" alt="QR Code" style="width: 150px;">
             </div>
             <form method="POST">
                 <input type="hidden" name="action" value="verify_2fa">

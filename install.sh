@@ -4,7 +4,7 @@
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
-GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
+GITHUB_REPO="https://github.com/ravikantsingh/Stackrium.git" # (Keep as your source repo)
 BRANCH="beta"
 
 # Ensure script is run as root
@@ -65,8 +65,8 @@ apt-get purge -y vsftpd 2>/dev/null || true
 # --- Stackrium Master WAF Provisioning ---
 echo "Configuring ModSecurity for Master Panel..."
 mkdir -p /etc/nginx/waf/
-touch /etc/nginx/waf/opanel-master.conf
-cat <<EOF > /etc/nginx/waf/opanel-master.conf
+touch /etc/nginx/waf/stackrium-master.conf
+cat <<EOF > /etc/nginx/waf/stackrium-master.conf
 # Stackrium Master WAF Rules & Exceptions
 EOF
 systemctl restart nginx
@@ -122,8 +122,8 @@ chgrp -R www-data /opt/panel/backups
 find /opt/panel/backups -type d -exec chmod 750 {} +
 find /opt/panel/backups -type f -exec chmod 640 {} +
 
-echo 'www-data ALL=(root) NOPASSWD: /opt/panel/scripts/toggle_master_waf.sh *' > /etc/sudoers.d/opanel-waf
-chmod 440 /etc/sudoers.d/opanel-waf
+echo 'www-data ALL=(root) NOPASSWD: /opt/panel/scripts/toggle_master_waf.sh *' > /etc/sudoers.d/stackrium-waf
+chmod 440 /etc/sudoers.d/stackrium-waf
 
 # ==========================================
 # 5. INITIALIZE DATABASE
@@ -198,7 +198,7 @@ chown bind:bind /etc/bind/zones
 
 echo -e "\e[34m[+] Resolving local DNS Port 53 conflicts...\e[0m"
 mkdir -p /etc/systemd/resolved.conf.d
-echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/opanel-dns.conf
+echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/stackrium-dns.conf
 systemctl restart systemd-resolved
 rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
@@ -217,12 +217,12 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 
 sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 
-mkdir -p /var/www/opanel_errors
-cp /tmp/panel_temp/www/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
+mkdir -p /var/www/stackrium_errors
+cp /tmp/panel_temp/www/errors/*.html /var/www/stackrium_errors/ 2>/dev/null || true
 
-chown -R www-data:www-data /var/www/opanel_errors
-find /var/www/opanel_errors -type f -exec chmod 644 {} +
-chmod 755 /var/www/opanel_errors
+chown -R www-data:www-data /var/www/stackrium_errors
+find /var/www/stackrium_errors -type f -exec chmod 644 {} +
+chmod 755 /var/www/stackrium_errors
 
 rm -f /var/www/html/index.nginx-debian.html
 rm -f /var/www/html/index.html
@@ -231,45 +231,45 @@ cp /opt/panel/templates/index.html /var/www/html/index.html
 chown www-data:www-data /var/www/html/index.html
 chmod 644 /var/www/html/index.html
 
-cat << 'EOF' > /etc/nginx/snippets/opanel-errors.conf
+cat << 'EOF' > /etc/nginx/snippets/stackrium-errors.conf
 fastcgi_intercept_errors on;
-error_page 403 /opanel_403.html;
-error_page 404 /opanel_404.html;
-error_page 500 502 504 /opanel_50x.html;
-error_page 503 /opanel_suspended.html;
-location = /opanel_403.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_404.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_50x.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_suspended.html { root /var/www/opanel_errors; allow all; internal; }
+error_page 403 /stackrium_403.html;
+error_page 404 /stackrium_404.html;
+error_page 500 502 504 /stackrium_50x.html;
+error_page 503 /stackrium_suspended.html;
+location = /stackrium_403.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_404.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_50x.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_suspended.html { root /var/www/stackrium_errors; allow all; internal; }
 EOF
 
 cat << 'EOF' > /etc/nginx/snippets/domain-suspended.conf
 error_page 503 @suspended;
 return 503;
 location @suspended {
-    root /var/www/opanel_errors;
-    rewrite ^(.*)$ /opanel_suspended.html break;
+    root /var/www/stackrium_errors;
+    rewrite ^(.*)$ /stackrium_suspended.html break;
     allow all;
 }
 EOF
 
 echo -e "\e[34m[+] Configuring Sudoers Bridge...\e[0m"
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-ssl
-echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/opanel-ssl
-chmod 440 /etc/sudoers.d/opanel-ssl
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-ssl
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/stackrium-ssl
+chmod 440 /etc/sudoers.d/stackrium-ssl
 
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-redis
-echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc/sudoers.d/opanel-redis
-chmod 440 /etc/sudoers.d/opanel-redis
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-redis
+echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc/sudoers.d/stackrium-redis
+chmod 440 /etc/sudoers.d/stackrium-redis
 
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 
-mkdir -p /etc/nginx/opanel/redirects
-mkdir -p /etc/nginx/opanel/mimes
-mkdir -p /etc/nginx/opanel/hotlink
-chown -R root:root /etc/nginx/opanel
-chmod -R 755 /etc/nginx/opanel
-chown -R root:root /etc/nginx/opanel/hotlink
+mkdir -p /etc/nginx/stackrium/redirects
+mkdir -p /etc/nginx/stackrium/mimes
+mkdir -p /etc/nginx/stackrium/hotlink
+chown -R root:root /etc/nginx/stackrium
+chmod -R 755 /etc/nginx/stackrium
+chown -R root:root /etc/nginx/stackrium/hotlink
 
 systemctl restart nginx
 
@@ -335,9 +335,9 @@ ufw --force enable
 # 12. CONFIGURE FAIL2BAN ACTIVE DEFENSE
 # ==========================================
 echo -e "\e[34m[12/14] Configuring Fail2ban Intrusion Prevention...\e[0m"
-cat << 'EOF' > /etc/fail2ban/filter.d/oPanel.conf
+cat << 'EOF' > /etc/fail2ban/filter.d/Stackrium.conf
 [Definition]
-failregex = ^.*oPanel Auth Failed:.*IP: <HOST>.*$
+failregex = ^.*Stackrium Auth Failed:.*IP: <HOST>.*$
 ignoreregex =
 EOF
 
@@ -377,10 +377,10 @@ filter  = dovecot
 logpath = /var/log/mail.log
 maxretry = 5
 
-[opanel]
+[stackrium]
 enabled  = true
 port     = 7443
-filter   = oPanel
+filter   = Stackrium
 logpath  = /opt/panel/logs/auth.log
 maxretry = 5
 EOF
@@ -389,9 +389,9 @@ touch /opt/panel/logs/auth.log
 chown www-data:www-data /opt/panel/logs/auth.log
 chmod 660 /opt/panel/logs/auth.log
 
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-fail2ban
-echo 'www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *' >> /etc/sudoers.d/opanel-fail2ban
-chmod 440 /etc/sudoers.d/opanel-fail2ban
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-fail2ban
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *' >> /etc/sudoers.d/stackrium-fail2ban
+chmod 440 /etc/sudoers.d/stackrium-fail2ban
 
 systemctl restart fail2ban
 systemctl enable fail2ban
@@ -407,33 +407,41 @@ systemctl restart systemd-journald
 # 14. CONFIGURE CLI & SERVER BRANDING
 # ==========================================
 echo -e "\e[34m[14/14] Installing Stackrium CLI and Branding...\e[0m"
-cp /tmp/panel_temp/cli/opanel /usr/local/bin/stackrium
+cp /tmp/panel_temp/cli/stackrium /usr/local/bin/stackrium
 chmod +x /usr/local/bin/stackrium
 
 chmod -x /etc/update-motd.d/* 2>/dev/null || true
 rm -f /etc/motd
 
-cat <<\EOF > /etc/update-motd.d/01-opanel
+cat <<\EOF > /etc/update-motd.d/01-stackrium
 #!/bin/bash
 echo -e "\e[34m"
-echo "   _____ _             _         _                     "
-echo "  / ____| |           | |       (_)                    "
-echo " | (___ | |_ __ _  ___| |ty____  _ _   _ _ __ ___      "
-echo "  \___ \| __/ _\` |/ __| |/ / __|| | | | | '_ \` _ \     "
-echo "  ____) | || (_| | (__|   <\__ \| | |_| | | | | | |    "
-echo " |_____/ \__\__,_|\___|_|\_\___/|_|\__,_|_| |_| |_|    "
-echo "                                                       "
+echo "     .d0000b.  000                      000              000                        "    
+echo "    d00P  Y00b 000                      000              000                        "
+echo "    Y00b.      000                      000                                         "
+echo "     'Y000b.   000000  0000b.   .d0000b 000  000 000d000 000 000  000 00000b.d00b.  "
+echo "        'Y00b. 000        '00b d00P'    000 .00P 000P'   000 000  000 000 '000 '00b "
+echo "          '000 000    .d000000 000      00000K   000     000 000  000 000  000  000 "
+echo "    Y00b  d00P Y00b.  000  000 Y00b.    000 '00b 000     000 Y00b 000 000  000  000 "
+echo "     'Y0000P'   'Y000 'Y000000  'Y0000P 000  000 000     000  'Y00000 000  000  000 "
+echo -e "\e[33m"
+echo "                        00''''''Y00                     00                     00   "
+echo "                        0' .000. '0                     00                     00   "
+echo "                        0  00000oo0 .d0000b. 00d000b. d0000P 00d000b. .d0000b. 00   "
+echo "                        0  00000000 00'  '00 00'  '00   00   00'  '00 00'  '00 00   "
+echo "                        0. '000' .0 00.  .00 00    00   00   00       00.  .00 00   "
+echo "                        00.......d0 '00000P' 00    00   00   00       '00000P' 00   "
 echo -e "\e[0m"
 echo -e "\e[1m Welcome to Stackrium Control\e[0m"
 echo -e "\e[1m Enterprise Cloud Server Management\e[0m"
 echo -e " ----------------------------------------------"
 echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
 echo -e " \e[32mKernel:\e[0m $(uname -r)"
-echo -e " \e[1mAccess:\e[0m Type \e[32msudo stackrium login\e[0m to access the web interface."
+echo -e " \e[1mAccess:\e[0m Type \e[31msudo stackrium login\e[0m to access the web interface."
 echo ""
 EOF
 
-chmod +x /etc/update-motd.d/01-opanel
+chmod +x /etc/update-motd.d/01-stackrium
 rm -rf /tmp/panel_temp
 
 # ==========================================
@@ -448,7 +456,7 @@ echo -e "Login URL: \e[1mhttps://${SERVER_IP}:7443\e[0m"
 echo -e "Username:  \e[1madmin\e[0m"
 echo -e "Password:  \e[1madmin123\e[0m"
 echo -e ""
-echo -e "Access the CLI by running:\e[32m sudo stackrium\e[0m in the Terminal."
+echo -e "Access the CLI by running:\e[31m sudo stackrium login\e[0m in the Terminal."
 echo -e ""
 echo -e "IMPORTANT: You will see a 'Not Private' warning because the"
 echo -e "initial certificate is self-signed. Click 'Advanced' to bypass it."

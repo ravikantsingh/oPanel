@@ -363,11 +363,74 @@ window.renderSoftwareCenter = function() {
         }
     });
 };
+    // ==========================================
+    // LICENSE & UPDATES LOGIC
+    // ==========================================
+    window.fetchLicenseData = function() {
+        $.ajax({
+            url: '/ajax/get_license_info.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#ui-license-key').text(res.key);
+                    $('#ui-license-owner').text(res.owner_name);
+                    $('#ui-license-email').text(res.owner_email);
+                    $('#ui-license-ip').text(res.ip);
+                    $('#ui-license-expiry').text(res.expiry);
 
+                    let statusBadge = $('#ui-license-status');
+                    statusBadge.removeClass('bg-secondary bg-success bg-danger bg-warning');
+                    
+                    if (res.status === 'active') {
+                        statusBadge.addClass('bg-success bg-opacity-10 text-success border border-success').html('<i class="bi bi-check-circle-fill"></i> Active');
+                    } else if (res.status === 'suspended') {
+                        statusBadge.addClass('bg-warning bg-opacity-10 text-warning border border-warning').html('<i class="bi bi-pause-circle-fill"></i> Suspended');
+                    } else {
+                        statusBadge.addClass('bg-danger bg-opacity-10 text-danger border border-danger').html('<i class="bi bi-x-circle-fill"></i> ' + res.status.toUpperCase());
+                    }
+                }
+            },
+            // NEW: Fallback if the script fails to execute
+            error: function() {
+                $('#ui-license-status').text('Error Loading Data').removeClass('bg-secondary').addClass('badge bg-danger');
+                $('#ui-license-key').text('Network Error');
+            }
+        });
+    };
+
+    window.forceLicenseSync = function() {
+        let btn = $('#btnSyncLicense');
+        let originalText = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Syncing...');
+        
+        $.ajax({
+            url: '/ajax/sync_license.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    window.fetchLicenseData(); // Refresh the UI data
+                    showToast("License successfully synced with Stackrium Central.");
+                }
+                btn.prop('disabled', false).html(originalText);
+            },
+            error: function() {
+                alert("Network error during sync.");
+                btn.prop('disabled', false).html(originalText);
+            }
+        });
+    };
 // =================================================================
 // 2. EVENT LISTENERS
 // =================================================================
 $(document).ready(function() {
+
+    // Auto-fetch the license data when the tab is clicked
+    $('button[data-bs-target="#license-updates"], a[href="#license-updates"]').on('shown.bs.tab', function () {
+        window.fetchLicenseData();
+    });
 
     // === TASK PAGINATION & LOG VIEWER ===
     $(document).on('click', '.task-page-link', function(e) {

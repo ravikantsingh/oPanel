@@ -35,32 +35,42 @@ session_write_close();
 // =================================================================
 // 4. STACKRIUM COMMERCIAL LICENSE ENFORCEMENT
 // =================================================================
-$license_file = '/opt/panel/www/config/license_status.json';
 
-if (file_exists($license_file)) {
-    $license_data = json_decode(file_get_contents($license_file), true);
-    
-    // Check if the central server returned an expired or suspended status
-    if (isset($license_data['status']) && $license_data['status'] !== 'active') {
+// 1. Allow the user to view and sync their license even if suspended!
+$exempt_scripts = [
+    '/ajax/get_license_info.php',
+    '/ajax/sync_license.php',
+    '/ajax/logout.php'
+];
+
+// 2. Only enforce the commercial lock if they are NOT hitting the exempt scripts
+if (!in_array($_SERVER['SCRIPT_NAME'], $exempt_scripts)) {
+    $license_file = '/opt/panel/www/config/license_status.json';
+
+    if (file_exists($license_file)) {
+        $license_data = json_decode(file_get_contents($license_file), true);
         
-        // Define specific error messages based on the state
-        $error_msg = 'Stackrium Control License Error.';
-        if ($license_data['status'] === 'expired') {
-            $error_msg = 'Your Stackrium Control license has expired. Please visit stackrium.com to renew and unlock your panel.';
-        } elseif ($license_data['status'] === 'suspended') {
-            $error_msg = 'This server license has been suspended. Please contact Stackrium support.';
-        } elseif ($license_data['status'] === 'invalid') {
-            $error_msg = 'Invalid License Key detected. Panel locked.';
-        }
+        // Check if the central server returned an expired or suspended status
+        if (isset($license_data['status']) && $license_data['status'] !== 'active') {
+            
+            $error_msg = 'Stackrium Control License Error.';
+            if ($license_data['status'] === 'expired') {
+                $error_msg = 'Your Stackrium Control license has expired. Please visit stackrium.com to renew and unlock your panel.';
+            } elseif ($license_data['status'] === 'suspended') {
+                $error_msg = 'This server license has been suspended. Please contact Stackrium support.';
+            } elseif ($license_data['status'] === 'invalid') {
+                $error_msg = 'Invalid License Key detected. Panel locked.';
+            }
 
-        // Return a hard 403 Forbidden with the commercial error
-        http_response_code(403);
-        echo json_encode([
-            'success' => false, 
-            'error' => $error_msg,
-            'license_status' => $license_data['status']
-        ]);
-        exit; // Terminate the script immediately, blocking the action
+            // Return a hard 403 Forbidden with the commercial error
+            http_response_code(403);
+            echo json_encode([
+                'success' => false, 
+                'error' => $error_msg,
+                'license_status' => $license_data['status']
+            ]);
+            exit; // Terminate the script immediately, blocking the action
+        }
     }
 }
 ?>

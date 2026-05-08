@@ -331,8 +331,14 @@ systemctl start panel-daemon
 (crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
 (crontab -l 2>/dev/null; echo "0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1") | crontab -
 
-# NEW: The Telemetry Heartbeat Cron (Runs once a day at 2 AM)
+# The Telemetry Heartbeat Cron (Runs once a day at 2 AM)
 (crontab -l 2>/dev/null; echo "0 2 * * * /bin/bash /opt/panel/scripts/heartbeat.sh > /dev/null 2>&1") | crontab -
+echo -e "\e[34m[+] Configuring Sudoers Bridge for Heartbeat Sync...\e[0m"
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-heartbeat
+echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/heartbeat.sh' >> /etc/sudoers.d/stackrium-heartbeat
+chmod 440 /etc/sudoers.d/stackrium-heartbeat
+echo -e "\e[34m[+] Performing initial License & Telemetry Sync...\e[0m"
+/bin/bash /opt/panel/scripts/heartbeat.sh
 
 # ==========================================
 # 11. CONFIGURE UFW FIREWALL

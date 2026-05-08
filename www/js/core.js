@@ -10,11 +10,26 @@ $(document).ready(function() {
     `).appendTo('head');
 
     // =================================================================
-    // GLOBAL CSRF INTERCEPTOR
+    // GLOBAL NETWORK CONTROLLER & FIREWALL
     // =================================================================
+    window.stackriumLocked = false;
     let csrfToken = $('meta[name="csrf-token"]').attr('content');
+    
     $.ajaxSetup({
-        headers: { 'X-CSRF-TOKEN': csrfToken }
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        beforeSend: function(jqXHR, settings) {
+            // If the panel is locked, ONLY allow License Sync and Logout. 
+            // Abort EVERYTHING else instantly.
+            if (window.stackriumLocked) {
+                let allowedUrls = ['get_license_info.php', 'sync_license.php', 'logout.php'];
+                let isAllowed = allowedUrls.some(url => settings.url.includes(url));
+                
+                if (!isAllowed) {
+                    jqXHR.abort();
+                    return false;
+                }
+            }
+        }
     });
 
     // =================================================================
@@ -184,5 +199,34 @@ let formData = $(this).serialize() + '&csrf_token=' + $('meta[name="csrf-token"]
                 btn.prop('disabled', false).html('Try Again <i class="bi bi-arrow-right ms-2"></i>');
             }
         });
+    });
+    // =================================================================
+    // GLOBAL AJAX ERROR INTERCEPTOR (Silent Lockouts)
+    // =================================================================
+    $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+        // If the request was aborted by our kill-switch, ignore the error
+        if (jqXHR.status === 0 || jqXHR.statusText === 'abort') return;
+
+        if (jqXHR.status === 403) {
+            try {
+                let res = JSON.parse(jqXHR.responseText);
+                if (res.error && res.hasOwnProperty('license_status')) {
+                    
+                    // 1. ENGAGE MASTER LOCK - Blocks all future AJAX polling
+                    window.stackriumLocked = true;
+                    
+                    // 2. Clean up the UI
+                    $('button').prop('disabled', false);
+                    $('.spinner-border').remove();
+                    
+                    // 3. Un-hide the global PHP banner
+                    $('#globalLicenseBanner').removeClass('d-none').addClass('d-flex');
+                    $('#bannerHeading').text('CRITICAL: Panel Locked (License ' + res.license_status.toUpperCase() + ')');
+                    
+                    // 4. Force them to the License Tab
+                    $('#license-tab').tab('show');
+                }
+            } catch(e) {}
+        }
     });
 });

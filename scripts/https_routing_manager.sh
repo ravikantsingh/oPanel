@@ -23,14 +23,14 @@ cp "$VHOST_CONF" "${VHOST_CONF}.bak"
 # ==========================================
 # 2. FORCE HTTPS LOGIC (Port 80 -> 443)
 # ==========================================
-# Scrub Stackrium's custom redirect if it exists
-sed -i '/# Stackrium Force HTTPS/d' "$VHOST_CONF"
+# Scrub oPanel's custom redirect if it exists
+sed -i '/# oPanel Force HTTPS/d' "$VHOST_CONF"
 # Scrub Certbot's default redirect (if it was added by ssl_manager.sh)
 sed -i '/return 301 https:\/\/\$host\$request_uri;/d' "$VHOST_CONF"
 
 if [ "$FORCE_HTTPS" == "1" ]; then
     # Safely inject the redirect immediately after the 'listen 80;' directive
-    sed -i '/listen 80;/a \    return 301 https://$host$request_uri; # Stackrium Force HTTPS' "$VHOST_CONF"
+    sed -i '/listen 80;/a \    return 301 https://$host$request_uri; # oPanel Force HTTPS' "$VHOST_CONF"
 fi
 
 # ==========================================

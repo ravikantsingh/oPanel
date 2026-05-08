@@ -44,7 +44,7 @@ try {
     // We suppress errors (2>/dev/null) so a missing file just returns empty string instead of crashing
     $output = shell_exec("sudo /usr/bin/openssl x509 -in " . escapeshellarg($certPath) . " -noout -issuer -dates 2>/dev/null");
 
-    // If Let's Encrypt fails, try the custom Stackrium SSL path
+    // If Let's Encrypt fails, try the custom oPanel SSL path
     if (empty(trim($output))) {
         $certPath = "/etc/nginx/ssl/{$domain}.crt";
         $output = shell_exec("sudo /usr/bin/openssl x509 -in " . escapeshellarg($certPath) . " -noout -issuer -dates 2>/dev/null");

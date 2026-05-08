@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-warning small">
-                    <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong> This requires an empty <code>public_html</code> directory. The default Stackrium index file will be overwritten!
+                    <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong> This requires an empty <code>public_html</code> directory. The default oPanel index file will be overwritten!
                 </div>
                 <form id="installWpForm">
                     <input type="hidden" name="domain" id="wpDomain">

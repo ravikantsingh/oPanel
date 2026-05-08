@@ -5,7 +5,7 @@ require_once 'security.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') exit;
 
-// The exact Ubuntu APT package names Stackrium relies on
+// The exact Ubuntu APT package names oPanel relies on
 $packages = [
     'Nginx Web Server'      => 'nginx',
     'MariaDB Server'        => 'mariadb-server',

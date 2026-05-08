@@ -50,12 +50,12 @@ if [ "$ACTION" == "create" ]; then
     mkdir -p "$LOG_DIR"
     mkdir -p "/home/$USERNAME/web/$DOMAIN/tmp"
 
-    # Copy the Stackrium default page into the new domain
+    # Copy the oPanel default page into the new domain
     if [ -f /opt/panel/templates/index.html ]; then
         cp /opt/panel/templates/index.html "$WEB_ROOT/index.html"
     else
         # Fallback just in case the template goes missing
-        echo "<h1>Welcome to $DOMAIN</h1><p>Powered by Stackrium</p>" > "$WEB_ROOT/index.html"
+        echo "<h1>Welcome to $DOMAIN</h1><p>Powered by oPanel</p>" > "$WEB_ROOT/index.html"
     fi
 
     # Fix permissions (User owns their files, www-data can read them)
@@ -74,8 +74,8 @@ server {
     root $WEB_ROOT;
     index index.php index.html index.htm;
     
-    # Custom Stackrium Error Pages
-    include /etc/nginx/snippets/stackrium-errors.conf;
+    # Custom oPanel Error Pages
+    include /etc/nginx/snippets/opanel-errors.conf;
 
     access_log $LOG_DIR/access.log;
     error_log $LOG_DIR/error.log;

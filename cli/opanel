@@ -30,5 +30,5 @@ if [ "$COMMAND" == "login" ]; then
     echo -e "\e[1mhttps://${URL_HOST}:7443/autologin.php?token=${TOKEN}\e[0m"
     echo ""
 else
-    echo "Usage: stackrium login"
+    echo "Usage: opanel login"
 fi

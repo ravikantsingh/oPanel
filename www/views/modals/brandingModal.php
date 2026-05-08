@@ -68,7 +68,7 @@
                         <div class="col-md-6 mb-3 pt-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" name="brand_hide_footer" id="hideFooterCheck">
-                                <label class="form-check-label small fw-bold" for="hideFooterCheck">Hide Stackrium Control Footer Text</label>
+                                <label class="form-check-label small fw-bold" for="hideFooterCheck">Hide oPanel Footer Text</label>
                             </div>
                         </div>
                     </div>

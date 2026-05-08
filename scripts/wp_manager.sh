@@ -24,7 +24,7 @@ if [ "$(ls -A $DOC_ROOT | grep -v 'index.php')" ]; then
     exit 1
 fi
 
-# Clean the default Stackrium index.php if it exists
+# Clean the default oPanel index.php if it exists
 rm -f "$DOC_ROOT/index.php"
 
 # 2. Generate Database Credentials dynamically

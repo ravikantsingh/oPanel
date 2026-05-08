@@ -519,7 +519,7 @@ $(document).ready(function() {
         let isMasterDomain = window.location.hostname === domain;
         
         let confirmText = isMasterDomain 
-            ? prompt(`CRITICAL: '${domain}' is currently securing Stackrium Control. Deleting this will unbind the panel. Type the domain name to proceed:`)
+            ? prompt(`CRITICAL: '${domain}' is currently securing oPanel. Deleting this will unbind the panel. Type the domain name to proceed:`)
             : prompt(`WARNING: This will permanently destroy all files and SSL for '${domain}'. Type the domain name to proceed:`);
             
         if (confirmText !== domain) return;

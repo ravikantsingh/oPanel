@@ -11,7 +11,7 @@
         <!-- THE NEW ROUTING TOGGLE -->
         <ul class="nav nav-pills nav-fill bg-light rounded p-1 mb-4 border" id="mailModeTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-bold" id="local-mail-tab" data-bs-toggle="pill" data-bs-target="#localMailMode" type="button"><i class="bi bi-hdd-network"></i> Host Locally (Stackrium)</button>
+                <button class="nav-link active fw-bold" id="local-mail-tab" data-bs-toggle="pill" data-bs-target="#localMailMode" type="button"><i class="bi bi-hdd-network"></i> Host Locally (oPanel)</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="external-mail-tab" data-bs-toggle="pill" data-bs-target="#externalMailMode" type="button"><i class="bi bi-cloud-check"></i> External Provider (DNS)</button>

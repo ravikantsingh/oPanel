@@ -23,7 +23,7 @@ fi
 CORE_SERVICES=("nginx" "mariadb" "panel-daemon")
 
 if [[ " ${CORE_SERVICES[@]} " =~ " ${SERVICE} " ]] && [ "$ACTION" == "stop" ]; then
-    echo "CRITICAL: You cannot STOP core infrastructure ($SERVICE). Stackrium will go offline. Action blocked."
+    echo "CRITICAL: You cannot STOP core infrastructure ($SERVICE). oPanel will go offline. Action blocked."
     exit 1
 fi
 

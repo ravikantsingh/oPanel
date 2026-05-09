@@ -8,32 +8,66 @@
 
     <div class="row g-4">
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3 border-bottom-0">
-                    <h6 class="mb-0 fw-bold"><i class="bi bi-key text-secondary me-2"></i> Commercial License</h6>
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded p-2 me-3">
+                        <i class="bi bi-shield-check fs-5"></i>
+                    </div>
+                    <h6 class="mb-0 fw-bold fs-5"><s>Commercial License</s> (Kidding: Free License)</h6>
                 </div>
-                <div class="card-body bg-light rounded-bottom">
-                    <div class="mb-3">
-                        <small class="text-muted text-uppercase fw-bold">Status</small><br>
-                        <span id="ui-license-status" class="badge bg-secondary">Loading...</span>
+                <div class="card-body p-4 bg-light bg-opacity-50">
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-white text-center shadow-sm h-100 transition-all">
+                                <small class="text-muted text-uppercase fw-bold d-block mb-2" style="letter-spacing: 0.5px;">Status</small>
+                                <span id="ui-license-status" class="badge bg-secondary fs-6 py-2 w-100 shadow-sm">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-white text-center shadow-sm h-100">
+                                <small class="text-muted text-uppercase fw-bold d-block mb-2" style="letter-spacing: 0.5px;">Valid Until</small>
+                                <span id="ui-license-expiry" class="fw-bold text-dark fs-5">
+                                    <span class="spinner-border spinner-border-sm text-secondary"></span>
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted text-uppercase fw-bold">Valid Until</small><br>
-                        <span id="ui-license-expiry" class="fw-bold text-dark"><span class="spinner-border spinner-border-sm"></span></span>
+
+                    <div class="mb-4 p-3 border rounded bg-white shadow-sm position-relative">
+                        <small class="text-muted text-uppercase fw-bold d-block mb-2" style="letter-spacing: 0.5px;">License Key</small>
+                        <div class="d-flex align-items-center bg-light p-2 rounded border">
+                            <code id="ui-license-key" class="fs-6 text-primary flex-grow-1 user-select-all mb-0" style="font-family: monospace;">--</code>
+                            <button class="btn btn-sm btn-outline-secondary border-0 copy-btn ms-2" data-target="ui-license-key" title="Copy Key">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted text-uppercase fw-bold">License Key</small><br>
-                        <code id="ui-license-key" class="fs-6 text-dark bg-white px-2 py-1 rounded border">--</code>
+
+                    <div class="row g-3">
+                        <div class="col-sm-7">
+                            <div class="p-3 border rounded bg-white shadow-sm h-100">
+                                <small class="text-muted text-uppercase fw-bold d-block mb-2" style="letter-spacing: 0.5px;">Registered To</small>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle fs-3 text-secondary me-3"></i>
+                                    <div class="overflow-hidden">
+                                        <div id="ui-license-owner" class="fw-bold text-dark text-truncate">--</div>
+                                        <div id="ui-license-email" class="small text-muted text-truncate">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
+                            <div class="p-3 border rounded bg-white shadow-sm h-100">
+                                <small class="text-muted text-uppercase fw-bold d-block mb-2" style="letter-spacing: 0.5px;">Authorized Node</small>
+                                <div class="d-flex align-items-center mt-2">
+                                    <i class="bi bi-hdd-network text-success fs-4 me-2"></i>
+                                    <span id="ui-license-ip" class="fw-bold text-dark fs-6">--</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted text-uppercase fw-bold">Registered Owner</small><br>
-                        <span id="ui-license-owner" class="fw-bold text-dark">--</span><br>
-                        <span id="ui-license-email" class="small text-muted">--</span>
-                    </div>
-                    <div>
-                        <small class="text-muted text-uppercase fw-bold">Authorized IP</small><br>
-                        <span id="ui-license-ip" class="fw-bold text-dark">--</span>
-                    </div>
+
                 </div>
             </div>
         </div>

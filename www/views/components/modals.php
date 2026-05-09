@@ -52,4 +52,7 @@ include 'views/modals/mailBoxModal.php';
 
 //8. First Login Modal
 include 'views/modals/firstLoginModal.php';
+
+//9. Updates Modal
+include 'views/modals/updateModal.php';
 ?>

@@ -979,6 +979,137 @@ $(document).ready(function() {
             }
         });
     });
+    // =================================================================
+    // STACKRIUM UPDATE ENGINE LOGIC
+    // =================================================================
+
+    // Global variables to hold the download URLs so the Install button can access them
+    window.latestStableUrl = '';
+    window.latestBetaUrl = '';
+
+    // 1. Trigger the check when the Updates button is clicked
+    $(document).on('click', '#btnCheckUpdates', function() {
+        $('#updateModal').modal('show');
+        
+        // Reset UI to loading state
+        $('.btn-start-update').prop('disabled', true);
+        $('#ui-stable-version, #ui-beta-version').text('Loading...');
+        $('#ui-stable-date, #ui-beta-date').text('--');
+        $('#ui-stable-changelog, #ui-beta-changelog').html('<div class="spinner-border spinner-border-sm text-secondary"></div> Fetching data...');
+        
+        // Fetch from the local PHP Bridge (which pings stackrium.com)
+        $.ajax({
+            url: '/ajax/check_updates.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    // ---> SAVE THE URLS GLOBALLY <---
+                    window.latestStableUrl = res.stable.url;
+                    window.latestBetaUrl = res.beta.url;
+
+                    // Populate Stable Tab
+                    $('#ui-stable-version').text(res.stable.version);
+                    $('#ui-stable-date').text(res.stable.release_date);
+                    $('#ui-stable-changelog').html(res.stable.changelog);
+                    $('button[data-channel="stable"]').prop('disabled', false);
+
+                    // Populate Beta Tab
+                    $('#ui-beta-version').text(res.beta.version);
+                    $('#ui-beta-date').text(res.beta.release_date);
+                    $('#ui-beta-changelog').html(res.beta.changelog);
+                    $('button[data-channel="beta"]').prop('disabled', false);
+
+                    // Set the Auto-Update Toggle State
+                    $('#autoUpdateToggle').prop('checked', res.local_auto_update);
+                } else {
+                    $('#ui-stable-changelog').html('<span class="text-danger"><i class="bi bi-x-circle"></i> ' + res.error + '</span>');
+                    $('#ui-beta-changelog').html('<span class="text-danger">Failed to fetch beta branch.</span>');
+                }
+            },
+            error: function() {
+                $('#ui-stable-changelog').html('<span class="text-danger">Network error reaching update server.</span>');
+            }
+        });
+    });
+
+    // 2. Handle the Auto-Update Toggle Switch
+    $(document).on('change', '#autoUpdateToggle', function() {
+        let isEnabled = $(this).is(':checked');
+        $.ajax({
+            url: '/ajax/toggle_autoupdate.php',
+            type: 'POST',
+            data: { enable: isEnabled },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) showToast(isEnabled ? "Unattended Auto-Updates Enabled!" : "Auto-Updates Disabled.");
+            }
+        });
+    });
+
+    // 3. Handle the "Install Update" Click (The Real Engine)
+    $(document).on('click', '.btn-start-update', function() {
+        let channel = $(this).data('channel');
+        
+        if (!confirm(`Are you sure you want to install the ${channel.toUpperCase()} update? Your panel will be momentarily offline.`)) {
+            return;
+        }
+
+        // Lock the Modal (Prevent closing)
+        $('#closeUpdateModalBtn').hide();
+        $('#updateModal').data('bs-backdrop', 'static').data('bs-keyboard', 'false');
+
+        // Robust UI Transition: Hide tabs instantly, show progress bar instantly
+        $('#updateTabs').hide();
+        $('#updateTabContent').hide();
+        $('#updateProgressUI').removeClass('d-none').show(); // Fixed visibility issue!
+
+        // Grab the correct URL we saved earlier
+        let downloadUrl = channel === 'stable' ? window.latestStableUrl : window.latestBetaUrl;
+
+        // Trigger the Bash Script in the background
+        $.ajax({
+            url: '/ajax/run_update.php',
+            type: 'POST',
+            data: { channel: channel, url: downloadUrl },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    
+                    // Start Polling the JSON status file every 1.5 seconds
+                    let pollInterval = setInterval(function() {
+                        $.ajax({
+                            url: '/config/update_status.json?t=' + Date.now(), // Cache-buster
+                            dataType: 'json',
+                            cache: false,
+                            success: function(statusData) {
+                                // Update the visual Progress Bar
+                                $('#updateProgressBar').css('width', statusData.progress + '%');
+                                $('#updateStepText').text(statusData.step);
+                                
+                                // Success condition
+                                if (statusData.progress === 100 || statusData.status === 'complete') {
+                                    clearInterval(pollInterval);
+                                    $('#updateProgressBar').removeClass('progress-bar-animated bg-primary').addClass('bg-success');
+                                    setTimeout(() => window.location.reload(), 2000);
+                                }
+                                
+                                // Error condition
+                                if (statusData.status === 'error') {
+                                    clearInterval(pollInterval);
+                                    $('#updateProgressBar').removeClass('progress-bar-animated bg-primary').addClass('bg-danger');
+                                    alert("Update Failed: " + statusData.step);
+                                }
+                            }
+                        });
+                    }, 1500);
+
+                } else {
+                    alert("Failed to start update: " + res.error);
+                }
+            }
+        });
+    });
 
     // ==========================================
     // 3. INITIALIZATION CALLS

@@ -4,6 +4,9 @@
         <button class="btn btn-outline-primary btn-sm fw-bold" id="btnSyncLicense" onclick="forceLicenseSync()">
             <i class="bi bi-arrow-clockwise"></i> Force Sync
         </button>
+        <button class="btn btn-outline-primary btn-sm fw-bold" id="btnCheckUpdates">
+            <i class="bi bi-cloud-arrow-down-fill"></i> Fetch Updates
+        </button>
     </div>
 
     <div class="row g-4">

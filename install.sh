@@ -339,6 +339,9 @@ echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/heartbeat.sh' >
 chmod 440 /etc/sudoers.d/stackrium-heartbeat
 echo -e "\e[34m[+] Performing initial License & Telemetry Sync...\e[0m"
 /bin/bash /opt/panel/scripts/heartbeat.sh
+# Update Engine sudoers
+echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/updater.sh *' | tee /etc/sudoers.d/stackrium-updater
+chmod 440 /etc/sudoers.d/stackrium-updater
 
 # ==========================================
 # 11. CONFIGURE UFW FIREWALL

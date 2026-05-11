@@ -101,6 +101,7 @@ cp -r /tmp/panel_temp/daemon /opt/panel/
 cp -r /tmp/panel_temp/scripts /opt/panel/
 cp -r /tmp/panel_temp/www /opt/panel/
 cp -r /tmp/panel_temp/templates /opt/panel/
+cp -r /tmp/panel_temp/cli /opt/panel/
 
 # ==========================================
 # 4. SET STRICT PERMISSIONS
@@ -110,9 +111,13 @@ mkdir -p /opt/panel/logs
 mkdir -p /opt/panel/backups/databases
 mkdir -p /opt/panel/backups/websites
 mkdir -p /etc/nginx/waf
+mkdir -p /opt/panel/cli/migrations
+
+echo "<?php define('PANEL_VERSION', '1.0.0'); ?>" > /opt/panel/www/version.php
+chown www-data:www-data /opt/panel/www/version.php
 
 chown -R www-data:www-data /opt/panel/www
-chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates
+chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates /opt/panel/cli
 
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/worker.py
@@ -328,20 +333,31 @@ systemctl daemon-reload
 systemctl enable panel-daemon
 systemctl start panel-daemon
 
-(crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1") | crontab -
+echo -e "\e[34m[+] Configuring System Cron Jobs...\e[0m"
 
-# The Telemetry Heartbeat Cron (Runs once a day at 2 AM)
-(crontab -l 2>/dev/null; echo "0 2 * * * /bin/bash /opt/panel/scripts/heartbeat.sh > /dev/null 2>&1") | crontab -
-# Automatic Stackrium Control Update Cron (Runs once a day at 4 AM)
-(crontab -l 2>/dev/null; echo "0 3 * * * /usr/bin/php /opt/panel/cli/auto_update.php >> /opt/panel/logs/auto_update.log 2>&1") | crontab -
+cat <<EOF > /etc/cron.d/stackrium-core
+# Stackrium Control Automated Tasks
+# --------------------------------------------------
+# Run Python scheduler every hour
+0 * * * * root /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1
+
+# Telemetry Heartbeat (2:00 AM)
+0 2 * * * root /bin/bash /opt/panel/scripts/heartbeat.sh > /dev/null 2>&1
+
+# Update WAF Rules (3:00 AM)
+0 3 * * * root /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1
+
+# Auto-Update Engine (4:00 AM)
+0 4 * * * root /usr/bin/php /opt/panel/cli/auto_update.php >> /opt/panel/logs/auto_update.log 2>&1
+EOF
+
+chmod 644 /etc/cron.d/stackrium-core
+systemctl restart cron
 
 echo -e "\e[34m[+] Configuring Sudoers Bridge for Heartbeat Sync...\e[0m"
 echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-heartbeat
 echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/heartbeat.sh' >> /etc/sudoers.d/stackrium-heartbeat
 chmod 440 /etc/sudoers.d/stackrium-heartbeat
-echo -e "\e[34m[+] Performing initial License & Telemetry Sync...\e[0m"
-/bin/bash /opt/panel/scripts/heartbeat.sh
 # Update Engine sudoers
 echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/updater.sh *' | tee /etc/sudoers.d/stackrium-updater
 chmod 440 /etc/sudoers.d/stackrium-updater
@@ -439,8 +455,8 @@ systemctl restart systemd-journald
 # 14. CONFIGURE CLI & SERVER BRANDING
 # ==========================================
 echo -e "\e[34m[14/14] Installing Stackrium CLI and Branding...\e[0m"
-cp /tmp/panel_temp/cli/stackrium /usr/local/bin/stackrium
-chmod +x /usr/local/bin/stackrium
+chmod +x /opt/panel/cli/stackrium
+ln -sf /opt/panel/cli/stackrium /usr/local/bin/stackrium
 
 chmod -x /etc/update-motd.d/* 2>/dev/null || true
 rm -f /etc/motd
@@ -475,6 +491,9 @@ EOF
 
 chmod +x /etc/update-motd.d/01-stackrium
 rm -rf /tmp/panel_temp
+
+echo -e "\e[34m[+] Performing initial Update & Telemetry Sync...\e[0m"
+/bin/bash /opt/panel/scripts/heartbeat.sh
 
 # ==========================================
 # COMPLETE

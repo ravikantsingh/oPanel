@@ -26,7 +26,12 @@
             </div>
             <div>
                 <span class="me-3"><i class="bi bi-hdd-network"></i> Node: <?php echo gethostname(); ?></span>
-                <span class="badge bg-secondary">v1.0.0-Stable</span>
+                <?php 
+                if(!defined('PANEL_VERSION')) {
+                    @include_once '/opt/panel/www/version.php';
+                }
+                ?>
+                <span class="text-muted small">Stackrium Control v<?php echo defined('PANEL_VERSION') ? PANEL_VERSION : 'Unknown'; ?></span>
             </div>
         </footer>
     </main> <!-- End Main Content Window -->

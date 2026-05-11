@@ -85,7 +85,12 @@
                     <h5 class="fw-bold text-dark mt-3">Stackrium is up to date</h5>
                     <p class="text-muted small">You are running the latest stable release.</p>
                     <div class="mt-3">
-                        <span class="badge bg-dark bg-opacity-10 text-dark border me-2">Current: v1.0.0</span>
+                        <?php 
+                            if(!defined('PANEL_VERSION')) {
+                                @include_once '/opt/panel/www/version.php';
+                            }
+                            ?>
+                            <h6 class="fw-bold">Current Version: <span class="badge bg-primary">v<?php echo defined('PANEL_VERSION') ? PANEL_VERSION : 'Unknown'; ?></span></h6>
                     </div>
                     </div>
             </div>

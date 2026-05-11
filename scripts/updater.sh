@@ -57,7 +57,7 @@ sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
 sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
 
 chown -R www-data:www-data /opt/panel/www
-chown -R root:root /opt/panel/scripts /opt/panel/daemon
+chown -R root:root /opt/panel/scripts /opt/panel/daemon /opt/panel/cli
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/*.py
 
@@ -68,6 +68,8 @@ chown www-data:www-data "$STATUS_FILE"
 
 # 7. RESTART EVERYTHING (This will safely kill the script)
 rm -rf "$TEMP_DIR"
+# Run Database Migrations
+/usr/bin/php /opt/panel/cli/migrate.php >> /opt/panel/logs/migration.log 2>&1
 systemctl daemon-reload
 systemctl start panel-daemon
 systemctl restart nginx

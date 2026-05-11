@@ -1,0 +1,44 @@
+name: Build Stackrium Release
+
+# 1. THE TRIGGER: This action only runs when you push a new version tag (e.g., v1.0.5)
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grants the robot permission to publish the release
+
+    steps:
+      # Step A: The robot downloads the exact code from your tag
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Step B: The robot builds the strict "payload" structure your updater needs
+      - name: Prepare Payload Directory
+        run: |
+          mkdir stackrium_build
+          mkdir stackrium_build/payload
+          
+          # Copy all core directories into the payload folder.
+          # We explicitly exclude .git, the .github workflows, and our build folder.
+          rsync -av --exclude='.git' --exclude='.github' --exclude='stackrium_build' ./ stackrium_build/payload/
+
+      # Step C: The robot zips the payload folder perfectly
+      - name: Compress Payload
+        run: |
+          cd stackrium_build
+          # This creates a file like: stackrium-v1.0.5.zip
+          zip -r stackrium-${{ github.ref_name }}.zip payload/
+
+      # Step D: The robot creates the GitHub Release and attaches the ZIP
+      - name: Publish Official Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: stackrium_build/stackrium-${{ github.ref_name }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1079,7 +1079,7 @@ $(document).ready(function() {
                     // Start Polling the JSON status file every 1.5 seconds
                     let pollInterval = setInterval(function() {
                         $.ajax({
-                            url: '/config/update_status.json?t=' + Date.now(), // Cache-buster
+                            url: '/ajax/get_update_status.php?t=' + Date.now(), // Cache-buster
                             dataType: 'json',
                             cache: false,
                             success: function(statusData) {

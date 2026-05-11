@@ -1,19 +1,17 @@
 #!/bin/bash
 # /opt/panel/scripts/updater.sh
-# Usage: ./updater.sh "https://stackrium.com/downloads/file.zip" "stable"
 
 DOWNLOAD_URL=$1
 CHANNEL=$2
 STATUS_FILE="/opt/panel/www/config/update_status.json"
 TEMP_DIR="/tmp/stackrium_update"
 
-# Helper function to update the UI Progress Bar
 set_progress() {
     echo "{\"progress\": $1, \"step\": \"$2\", \"status\": \"running\"}" > "$STATUS_FILE"
     chown www-data:www-data "$STATUS_FILE"
 }
 
-# 1. INITIALIZE (0%)
+# 1. INITIALIZE (10%)
 set_progress 10 "Initializing Update Engine..."
 mkdir -p "$TEMP_DIR"
 rm -rf "${TEMP_DIR:?}/"*
@@ -36,27 +34,37 @@ fi
 set_progress 60 "Extracting payload..."
 unzip -q -o "$TEMP_DIR/update.zip" -d "$TEMP_DIR/extracted"
 
-# 4. PRE-FLIGHT (Stop Services)
+# Ensure the zip actually contained a payload folder!
+if [ ! -d "$TEMP_DIR/extracted/payload" ]; then
+    echo "{\"progress\": 60, \"step\": \"Invalid Zip Structure (No payload folder)!\", \"status\": \"error\"}" > "$STATUS_FILE"
+    exit 1
+fi
+
 systemctl stop panel-daemon
 
-# 5. THE RSYNC SWAP (80%)
-# This safely mirrors the new files, deletes orphaned files, but EXCLUDES configs and logs!
+# 4. THE RSYNC SWAP (80%)
 set_progress 80 "Applying new core files..."
 rsync -av --delete --exclude 'config/' --exclude 'logs/' --exclude 'backups/' --exclude 'license.key' "$TEMP_DIR/extracted/payload/" "/opt/panel/" > /dev/null 2>&1
 
-# 6. POST-FLIGHT (Permissions & Migrations)
-set_progress 90 "Configuring permissions and restarting services..."
+# 5. RESTORE PASSWORDS & PERMISSIONS (90%)
+set_progress 90 "Configuring permissions & credentials..."
+
+# Dynamically pull the password from the protected config file
+DB_PASS=$(grep "'DB_PASS'" /opt/panel/www/config/database.php | cut -d"'" -f4)
+
+# Inject the password back into the fresh Python daemons
+sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
+sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
+
 chown -R www-data:www-data /opt/panel/www
 chown -R root:root /opt/panel/scripts /opt/panel/daemon
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/*.py
 
-# Restart everything
+# 6. RESTART EVERYTHING
 systemctl restart nginx
 systemctl restart php8.3-fpm
 systemctl start panel-daemon
-
-# Clean up
 rm -rf "$TEMP_DIR"
 
 # 7. FINISH (100%)

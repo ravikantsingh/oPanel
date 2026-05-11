@@ -68,6 +68,7 @@ chown www-data:www-data "$STATUS_FILE"
 
 # 7. RESTART EVERYTHING (This will safely kill the script)
 rm -rf "$TEMP_DIR"
+systemctl daemon-reload
 systemctl start panel-daemon
 systemctl restart nginx
 systemctl restart php8.3-fpm

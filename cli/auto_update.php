@@ -2,7 +2,7 @@
 // /opt/panel/scripts/auto_update.php
 // This script is designed to be run by a root cron job at 3:00 AM
 
-require_once '/opt/panel/www/config/version.php';
+require_once '/opt/panel/www/version.php';
 
 // 1. Check if the user even WANTS auto-updates
 $settings_file = '/opt/panel/www/config/settings.json';

@@ -17,7 +17,7 @@ if [ "$COMMAND" == "login" ]; then
     TOKEN=$(openssl rand -hex 32)
     mysql -e "INSERT INTO panel_core.admin_tokens (token) VALUES ('$TOKEN');"
 
-    # ---> NEW: Fetch Master Domain or Fallback to IP <---
+    # Fetch Master Domain or Fallback to IP
     PANEL_DOMAIN=$(mysql -N -s -e "SELECT setting_value FROM panel_core.settings WHERE setting_key='panel_domain';" 2>/dev/null)
     
     if [ -z "$PANEL_DOMAIN" ]; then
@@ -29,6 +29,12 @@ if [ "$COMMAND" == "login" ]; then
     echo -e "\e[32mSuccess! Use the following link to log in securely (Valid for 5 minutes):\e[0m"
     echo -e "\e[1mhttps://${URL_HOST}:7443/autologin.php?token=${TOKEN}\e[0m"
     echo ""
+    # The Update Engine Trigger
+elif [ "$COMMAND" == "update" ]; then
+    echo -e "\e[36mInitializing Stackrium Update Engine...\e[0m"
+    # Execute the PHP script natively
+    /usr/bin/php /opt/panel/cli/auto_update.php
+
 else
     echo "Usage: stackrium login"
 fi

@@ -1,11 +1,11 @@
-<!-- /opt/panel/www/views/components/tab-docs.php -->
 <div class="tab-pane fade" id="docs" role="tabpanel">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h4 class="mb-0 fw-bold text-dark"><i class="bi bi-book text-primary me-2"></i> Stackrium Official User Manual</h4>
-        <span class="badge bg-secondary fs-6">v1.1.0</span>
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <h4 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Documentation & Guide</h4>
+            <p class="text-muted mt-1">Learn how to manage domains, deploy apps, configure firewalls, schedule backups, and use Stackrium effectively.</p>
+        </div>
     </div>
 
-    <!-- The Core Workflow Warning -->
     <div class="alert alert-warning shadow-sm border-warning border-start-0 border-end-0 border-bottom-0 border-3 rounded-0 mb-4 pb-3 pt-3">
         <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Critical Cloud Prerequisite: Port Opening</h6>
         <p class="small mb-0 text-dark">Stackrium strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group / Network Firewall:</p>
@@ -18,254 +18,468 @@
         </ul>
     </div>
 
-    <!-- The Accordion Manual -->
-    <div class="accordion shadow-sm border-0" id="manualAccordion">
-        
-        <!-- SECTION 1: Core Workflow -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingWorkflow">
-                <button class="accordion-button fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWorkflow">
-                    <i class="bi bi-diagram-3-fill me-2 text-primary"></i> 1. The Core Workflow (Order of Operations)
-                </button>
-            </h2>
-            <div id="collapseWorkflow" class="accordion-collapse collapse show" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Stackrium utilizes a strict permission and isolation architecture. To successfully get a website or app online, you must follow this exact order of operations:</p>
-                    <ol class="mb-0 list-group list-group-numbered list-group-flush">
-                        <li class="list-group-item border-0 pb-1"><strong>Create a System User:</strong> Go to the <em>Users & DBs</em> tab and create a Linux user. This isolates your website's files from other users on the server.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Add the Domain:</strong> Go to the <em>Web & Git</em> tab, click "New Domain", and assign it to the user you just created. This generates the Nginx vHost and PHP pool.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Point Your DNS:</strong> Before proceeding, ensure your domain (or subdomain) has an A-Record pointing to this server's public IP address globally.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Install SSL (HTTPS):</strong> Go to the <em>Security & DNS</em> tab and issue a Let's Encrypt certificate. <em>(This will fail if Step 3 is incomplete).</em></li>
-                        <li class="list-group-item border-0"><strong>Deploy Code:</strong> Return to <em>Web & Git</em> to deploy Laravel, Python, Node.js, clone a Git repo, or upload files via the File Manager.</li>
-                    </ol>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 position-sticky" style="top: 20px;">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush rounded" id="docs-list" role="tablist">
+                        <a class="list-group-item list-group-item-action active fw-bold py-3" data-bs-toggle="list" href="#doc-domains" role="tab">
+                            <i class="bi bi-globe me-2 text-primary"></i> 1. Domains & Subdomains
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-ftp" role="tab">
+                            <i class="bi bi-folder2-open me-2 text-warning"></i> 2. FTP & File Access
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-db-backups" role="tab">
+                            <i class="bi bi-database me-2 text-success"></i> 3. Databases & Backups
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-dns" role="tab">
+                            <i class="bi bi-diagram-2 me-2 text-info"></i> 4. DNS Configuration
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-git" role="tab">
+                            <i class="bi bi-git me-2 text-danger"></i> 5. Git Deployment
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-pm2" role="tab">
+                            <i class="bi bi-cpu me-2 text-success"></i> 6. Node.js & PM2
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-security" role="tab">
+                            <i class="bi bi-shield-lock me-2 text-dark"></i> 7. Security & WAF
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-mail" role="tab">
+                            <i class="bi bi-envelope me-2 text-primary"></i> 8. Mail Server
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cron" role="tab">
+                            <i class="bi bi-clock-history me-2 text-secondary"></i> 9. Cron Jobs
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-updates" role="tab">
+                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 10. System Updates
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-faq" role="tab">
+                            <i class="bi bi-question-circle me-2 text-secondary"></i> 11. Common FAQ
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-license" role="tab">
+                            <i class="bi bi-award me-2 text-primary"></i> 12. Commercial License
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 2: Web, App Engines & Deployment -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingWeb">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWeb">
-                    <i class="bi bi-cpu-fill me-2 text-success"></i> 2. Domains, App Engines & Deployment
-                </button>
-            </h2>
-            <div id="collapseWeb" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p>The <strong>Web & Git</strong> tab is the core engine for hosting applications. Stackrium automatically configures Nginx, FastCGI Process Managers, and PM2 background workers behind the scenes.</p>
-                    
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Framework-Specific Deployments</h6>
-                    <ul class="text-muted small mb-3">
-                        <li class="mb-2"><strong>Laravel Environment:</strong> When you click "Deploy Laravel", Stackrium automatically reconfigures Nginx to point the document root to the <code>/public</code> directory. It also installs Composer dependencies. <em>Note: Laravel 11 requires SQLite. Ensure <code>php8.3-sqlite3</code> and <code>php8.3-xml</code> are installed via the Software Center.</em></li>
-                        <li class="mb-2"><strong>Python (WSGI/ASGI):</strong> Python apps run in isolated virtual environments (<code>venv</code>). Stackrium uses PM2 to keep the process running forever. Nginx is reconfigured as a <strong>Reverse Proxy</strong>, securely forwarding external port 80/443 traffic to your internal Python app.</li>
-                        <li class="mb-2"><strong>Node.js (NPM):</strong> Deployed natively via PM2. You can specify your entry file (e.g., <code>server.js</code>) and internal port. PM2 ensures the app restarts automatically if it crashes or if the server reboots.</li>
-                        <li class="mb-2"><strong>1-Click WordPress:</strong> Auto-generates the database and installs the CMS. <em>Requires an empty <code>public_html</code> folder.</em></li>
-                    </ul>
+        <div class="col-md-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <div class="tab-content" id="nav-tabContent">
+                        
+                        <div class="tab-pane fade show active" id="doc-domains" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Domains, Subdomains & Status</h2>
+                            <p class="fs-6 mb-4">Stackrium automatically handles Nginx configurations, permissions, and DNS zone creation when you deploy a new environment.</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="bi bi-plus-circle text-primary me-2"></i> Adding a Root Domain</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Websites</b> tab and click "New Domain".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter your domain (e.g., <code>example.com</code>). Select the PHP version and assign it to a Linux User.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium generates the Nginx vHost, dedicated PHP-FPM pool, and a primary BIND9 DNS Zone for the domain.</li>
+                            </ol>
 
-                    <h6 class="fw-bold text-dark border-bottom pb-1">The "Revert to PHP" Safety Mechanism</h6>
-                    <p class="text-muted small mb-3">If you want to uninstall Laravel, Python, or Node.js and go back to a standard website, use the <strong>Revert to PHP</strong> tool. This performs a "Scorched Earth" cleanup:</p>
-                    <ul class="text-muted small mb-3">
-                        <li>It securely targets and kills the specific PM2 background worker associated with the domain.</li>
-                        <li>It strips the Reverse Proxy rules from Nginx and restores the standard FastCGI PHP execution blocks.</li>
-                        <li><strong>Safety Net:</strong> If your folder is empty after reverting, Stackrium automatically injects a default <code>index.html</code> template so your website doesn't show a blank "Invalid Response" error.</li>
-                    </ul>
+                            <h5 class="fw-bold mt-4"><i class="bi bi-diagram-3 text-primary me-2"></i> Creating Subdomains</h5>
+                            <p>Subdomains are not just aliases; they are fully isolated environments with their own dedicated <code>public_html</code> directories and PHP pools.</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "New Domain" and check the <b>"Is Subdomain"</b> box.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the prefix (e.g., <code>api</code>) and select the Parent Domain from the dropdown.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium automatically injects the new A-Records directly into the parent domain's BIND9 zone file and increments the DNS serial safely.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><strong>Security Note:</strong> The backend strictly verifies that your Linux user actually owns the parent domain before allowing the subdomain to be provisioned.</li>
+                            </ol>
 
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Git Repository Auto-Deployment</h6>
-                    <ul class="text-muted small mb-4">
-                        <li>Stackrium enforces a <strong class="text-dark">"One User, One Identity"</strong> rule. Each system user gets one unique SSH Deploy Key. If deploying different private repos to different domains, create a new System User for each project.</li>
-                        <li><strong>Webhooks:</strong> Once cloned, Stackrium provides a unique Webhook URL. Add this to your GitHub/GitLab repository settings (Content type: <code>application/json</code>). Every code push will automatically trigger Stackrium to pull the latest changes!</li>
-                    </ul>
+                            <h5 class="fw-bold mt-4"><i class="bi bi-pause-circle text-warning me-2"></i> Suspending Domains</h5>
+                            <p>If a domain is consuming too many resources or payment is overdue, you can instantly suspend it.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Go to <b>Websites</b> and click the Status toggle next to the domain.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Stackrium intercepts the Nginx traffic and redirects all visitors to a 503 "Service Unavailable" page.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> It is completely non-destructive (files and DBs remain intact) and can be unsuspended instantly.</li>
+                            </ul>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-filetype-php text-info me-2"></i> Changing PHP Versions (Hot-Swap)</h5>
+                            <p>You can hot-swap the PHP version of any domain without taking the server offline.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Click <b>Change PHP</b> in the Websites tab.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Select the new version. Stackrium safely rewrites the Nginx FastCGI pass and reloads the worker pool.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Need older versions? Click <b>Software Center</b> to globally install legacy engines like PHP 7.4 or 8.1.</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-ftp" role="tabpanel">
+                            <h2 class="fw-bold mb-4">FTP & File Management</h2>
+                            <p class="fs-6 mb-4">Stackrium uses Pure-FTPd for secure, isolated file access. Every domain gets its own FTP account.</p>
+
+                            <h5 class="fw-bold"><i class="bi bi-hdd-network text-warning me-2"></i> Connection Details</h5>
+                            <div class="bg-light p-3 rounded mb-4 border">
+                                <p class="mb-1"><b>Host:</b> Your server IP or Domain Name</p>
+                                <p class="mb-1"><b>Port:</b> 21</p>
+                                <p class="mb-1"><b>Encryption:</b> Require explicit FTP over TLS (Recommended)</p>
+                            </div>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-key text-warning me-2"></i> Creating/Resetting Passwords</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to <b>Websites > Manage (Gear Icon)</b> for your domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Navigate to the <b>FTP Access</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Type a new secure password and click "Update FTP Password".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">The username is displayed on that screen (format: <code>user_domain_com</code>).</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-db-backups" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Databases & Backups</h2>
+                            <p class="fs-6 mb-4">Manage your MySQL databases and configure automated backup schedules to protect your data.</p>
+
+                            <h5 class="fw-bold text-success"><i class="bi bi-database me-2"></i> MySQL Management</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Databases</b> tab to create new databases and assign users.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">To manage tables and data, click the <b>phpMyAdmin</b> button in the top navigation bar.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium utilizes SSO (Single Sign-On), meaning you securely log in as root without typing passwords.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-success mt-4"><i class="bi bi-cloud-arrow-up me-2"></i> Automated Backups</h5>
+                            <p>Stackrium can automatically back up your website files and databases safely in the background.</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Go to the <b>Backups</b> tab.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Select whether to backup Web Files or a Database.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Choose the frequency (Daily, Weekly, Monthly) and your desired retention policy.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Backups are stored securely on the server at <code>/opt/panel/backups/</code>.</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-dns" role="tabpanel">
+                            <h2 class="fw-bold mb-4">DNS Configuration (BIND9)</h2>
+                            <p class="fs-6 mb-4">If you want this server to act as its own Nameserver (e.g., <code>ns1.yourdomain.com</code>), use the DNS tab.</p>
+
+                            <h5 class="fw-bold text-info"><i class="bi bi-cloud-plus me-2"></i> Creating a DNS Zone</h5>
+                            <p>To start managing DNS records, you must create a Master Zone:</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>DNS Management</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add DNS Zone".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the domain. BIND9 will automatically generate standard A, CNAME, and MX records pointing to this server.</li>
+                            </ol>
+
+                            <div class="alert alert-warning shadow-sm border-warning border-start border-4">
+                                <strong>Glue Records:</strong> For custom nameservers to work globally, you must log into your Domain Registrar (Godaddy, Namecheap, etc.) and create "Glue Records" pointing <code>ns1</code> and <code>ns2</code> to this server's IP address.
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-git" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Git Deployment</h2>
+                            <p class="fs-6 mb-4">Deploy code directly from GitHub, GitLab, or Bitbucket without using FTP.</p>
+
+                            <h5 class="fw-bold text-danger"><i class="bi bi-github me-2"></i> How to Deploy</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Ensure your repository is <b>Public</b>, or provide a URL with a Personal Access Token (PAT).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to <b>Websites > Deploy Git Repo</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Paste the HTTPS clone URL (e.g., <code>https://github.com/user/repo.git</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the branch name (usually <code>main</code> or <code>master</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click Pull Repository.</li>
+                            </ol>
+
+                            <div class="alert alert-secondary shadow-sm">
+                                <i class="bi bi-lightning-fill text-warning me-2"></i>
+                                <strong>Automatic Webhooks:</strong> After cloning, Stackrium provides a Webhook URL. Paste this into GitHub's webhook settings to trigger automatic deployments every time you push code!
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-pm2" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Node.js & PM2 Management</h2>
+                            <p class="fs-6 mb-4">Stackrium includes global PM2 installation to keep Node.js, Python, or background workers running permanently.</p>
+
+                            <h5 class="fw-bold text-success"><i class="bi bi-play-circle me-2"></i> Adding a Process</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Node.js & PM2</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the full absolute path to the script (e.g., <code>/home/user/web/domain.com/server.js</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Start Process". PM2 will launch it and add it to the startup script.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-success mt-4"><i class="bi bi-globe me-2"></i> Nginx Reverse Proxy for Node.js</h5>
+                            <p>If your Node app runs on a specific port (e.g., 3000) and you want it accessible via a domain name (e.g., example.com):</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Add the domain in the <b>Websites</b> tab. Select <b>Node.js</b> as the App Type.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Enter the port number your app is using.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Nginx will automatically proxy all traffic from port 80/443 to your local app port!</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-security" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Security, WAF & Firewalls</h2>
+                            <p class="fs-6 mb-4">Stackrium is built with defense-in-depth architecture.</p>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded h-100 bg-light">
+                                        <h5 class="fw-bold"><i class="bi bi-shield-check text-success me-2"></i> UFW Firewall</h5>
+                                        <p class="small text-muted mb-0">Manages open ports. By default, SSH (22), HTTP (80), HTTPS (443), FTP (21, 40000-50000), DNS (53), and Panel (7443) are open. Add custom ports via the Firewall tab.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded h-100 bg-light">
+                                        <h5 class="fw-bold"><i class="bi bi-shield-slash text-danger me-2"></i> Fail2Ban</h5>
+                                        <p class="small text-muted mb-0">Monitors logs. If an IP fails SSH, FTP, or Panel login 5 times in 10 minutes, Fail2Ban automatically blocks the IP in the UFW firewall for 1 hour.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="fw-bold"><i class="bi bi-shield-lock text-dark me-2"></i> ModSecurity WAF</h5>
+                            <p>The Web Application Firewall protects PHP apps from SQL Injection, XSS, and botnets. You can toggle it per-domain in the <b>Websites > SSL & Security</b> settings.</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="bi bi-braces text-dark me-2"></i> Custom WAF Rules & Dry-Runs</h5>
+                            <p class="text-muted">You can write custom ModSecurity rules directly from the dashboard to whitelist IPs or block specific payloads.</p>
+                            <div class="alert alert-success border-0 shadow-sm">
+                                <strong>The Safety Mechanism:</strong> When you submit a custom rule, Stackrium creates a backup and performs a strict <code>nginx -t</code> syntax dry-run in the background. If your custom rule contains a typo, the system instantly aborts the save and restores the backup to prevent your server from crashing!
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="doc-mail" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Mail Server (Postfix/Dovecot)</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a full-featured Mail Transfer Agent (MTA) allowing you to host your own domain email (e.g., hello@yourdomain.com).</p>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-envelope-plus me-2"></i> Setting up a Mail Domain</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Mail Server</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add Mail Domain" and enter your domain name.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium will configure Postfix & Dovecot for this domain automatically.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-person-badge me-2"></i> Creating Email Accounts</h5>
+                            <p>Once a domain is added, click the <b>Accounts</b> button next to the domain name. You can create mailboxes (e.g., admin@yourdomain.com) and set storage quotas.</p>
+
+                            <div class="alert alert-warning border-0 shadow-sm d-flex mt-4">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                                <div>
+                                    <strong>Crucial DNS Requirements for Mail Delivery:</strong>
+                                    <p class="mb-1 mt-2 small">To prevent your emails from going to Spam, you <b>must</b> configure these DNS records for your domain:</p>
+                                    <ul class="mb-0 small pl-3">
+                                        <li><b>MX Record:</b> Pointing to `mail.yourdomain.com`</li>
+                                        <li><b>A Record:</b> `mail.yourdomain.com` pointing to this server's IP.</li>
+                                        <li><b>TXT (SPF):</b> `v=spf1 mx a ip4:YOUR_SERVER_IP ~all`</li>
+                                        <li><b>TXT (DMARC):</b> `v=DMARC1; p=quarantine;`</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                             <h5 class="fw-bold text-primary mt-4"><i class="bi bi-pc-display me-2"></i> Email Client Settings</h5>
+                             <div class="bg-light p-3 rounded border">
+                                 <p class="mb-1"><b>Incoming Server (IMAP):</b> mail.yourdomain.com (Port 993, SSL/TLS)</p>
+                                 <p class="mb-1"><b>Incoming Server (POP3):</b> mail.yourdomain.com (Port 995, SSL/TLS)</p>
+                                 <p class="mb-1"><b>Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 465, SSL/TLS) - <i>Requires Authentication</i></p>
+                                 <p class="mb-0"><b>Username:</b> Your full email address.</p>
+                             </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-cron" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Scheduled Tasks (Cron Jobs)</h2>
+                            <p class="fs-6 mb-4">Automate repetitive server tasks by scheduling scripts to run at specific intervals without manual intervention.</p>
+
+                            <h5 class="fw-bold text-secondary"><i class="bi bi-clock-history me-2"></i> Creating a Cron Job</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Navigate to the <b>Cron Jobs</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Define the schedule using standard Cron syntax (Minute, Hour, Day, Month, Weekday).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the full command or absolute path to your script (e.g., <code>/usr/bin/php /home/user/web/domain.com/public_html/artisan schedule:run</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Select the executing user (to ensure proper permissions) and save.</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-updates" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Stackrium Updates & Migrations</h2>
+                            <p class="fs-6 mb-4">Stackrium features a self-healing, enterprise-grade Auto-Update Engine to keep your server secure and up-to-date with zero downtime.</p>
+
+                            <h5 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-2"></i> Autonomous Nightly Updates</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>The 4:00 AM Cron:</b> Every day at 4:00 AM server time, Stackrium autonomously pings the central API for new releases.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Staggered Rollouts:</b> To ensure maximum stability and prevent global server crashes, automatic updates are strictly staggered. Your server may safely wait 1-3 days after a global release before pulling the trigger.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Safe Database Migrations:</b> When an update requires a schema change, Stackrium automatically runs the pending SQL migrations during the background Rsync process.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Toggle Updates:</b> You can disable auto-updates in the <b>Settings</b> tab if you prefer to manage version control manually.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-info mt-4"><i class="bi bi-cloud-download me-2"></i> Manual Override</h5>
+                            <p>You can force a check for the latest version and bypass the staggered rollout at any time:</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>License & Updates</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click <b>"Fetch Updates"</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">If an update is available, you will see an "Install Now" button with a live progress bar tracking the bash executor.</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-faq" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Frequently Asked Questions</h2>
+                            
+                            <div class="accordion accordion-flush" id="faqAccordion">
+                                <div class="accordion-item bg-transparent">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                            Where are my website files located?
+                                        </button>
+                                    </h2>
+                                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            All websites are stored securely within the user's home directory. The exact document root is <code>/home/{username}/web/{domain.com}/public_html</code>.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                            Do subdomains share FTP accounts with the main domain?
+                                        </button>
+                                    </h2>
+                                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Yes! Because subdomains are assigned to a specific Linux User during creation, that user's main FTP credentials will have access to the subdomain's directory as well.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mime">
+                                            When I visit my domain, it downloads an "octet-stream" file.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mime" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Nginx has lost its MIME types mapping. Go to <strong>Advanced Web Settings</strong> and add a MIME type, or ensure your master Nginx template includes the <code>include /etc/nginx/mime.types;</code> directive.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_dns_err">
+                                            I created a domain, but it says "Site cannot be reached."
+                                        </button>
+                                    </h2>
+                                    <div id="faq_dns_err" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This is almost always a DNS or Firewall issue. First, verify in your domain registrar (e.g., GoDaddy) that the A-Record points to your Stackrium server IP. Second, ensure Port 80 and Port 443 are open in your cloud provider's network security group.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_ssl">
+                                            Why is my Let's Encrypt SSL failing?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_ssl" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Let's Encrypt must verify that you own the domain. If your DNS hasn't fully propagated globally, or if Cloudflare Proxy (the orange cloud) is turned ON during installation, Let's Encrypt cannot verify the IP and will fail. Ensure DNS is fully propagated and proxying is disabled before retrying.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_pm2">
+                                            My PM2 App (Python/Node) deployment shows "Errored" in Live Tasks.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_pm2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This usually means the port your application is trying to use is already bound to another process, or your code has a fatal syntax error. Use the File Manager to check your application's internal logs, and verify the correct port is set in your Node <code>server.js</code> or Python <code>app.py</code>.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_git">
+                                            Can I use multiple Git repositories for a single user?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_git" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            For strict isolation, Stackrium enforces a <strong>"One User, One Identity"</strong> rule. Each system user is assigned exactly one unique SSH Deploy Key. If you are managing multiple domains that require different Git repositories, you must provision a new User in the <strong>Users</strong> tab. This ensures that if one website is compromised, the attacker cannot access your other repositories.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_db_large">
+                                            I get a "File too large" error when importing in phpMyAdmin.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_db_large" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            By default, PHP limits uploads. You can increase the global Max Upload Size to 512MB in System Settings. However, for massive SQL files (over 512MB), do not use phpMyAdmin. Upload the <code>.sql</code> file via File Manager and use the terminal: <br><code>mysql -u db_user -p database_name < database.sql</code>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_php_err">
+                                            I changed the PHP settings, but the site isn't updating.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_php_err" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Whenever you change advanced PHP settings (like <code>memory_limit</code>), Stackrium automatically tests syntax and restarts the PHP-FPM worker for that domain. If it didn't reflect, check the <strong>Live Task Log</strong>. If you entered invalid syntax, the server blocked the reload to keep your site online!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                            How do I restart PHP or Nginx manually?
+                                        </button>
+                                    </h2>
+                                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Go to the <b>Dashboard</b> tab, scroll down to System Services, and click the restart icon next to Nginx or PHP-FPM.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_2fa">
+                                            I enabled 2FA but lost my phone. How do I get back in?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_2fa" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            You will need SSH access to the server. Log in to your terminal and simply run the command: <code>sudo stackrium login</code>. The Stackrium CLI will instantly generate a secure, one-time access link. Copy and paste that link into your browser to bypass the login screen. Once inside, go to <strong>System Settings</strong> to reset or disable your 2FA.
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-license" role="tabpanel">
+                            <h2 class="fw-bold mb-4 text-success">Commercial Licensing & Billing</h2>
+                            
+                            <div class="text-center my-5">
+                                <i class="bi bi-wallet2 display-1 text-muted opacity-50 mb-3 d-block"></i>
+                                <h3 class="fw-bold">Ah, the dreaded "Commercial License" section.</h3>
+                                <p class="lead text-muted mt-3">
+                                    Our billing department has rigorously audited your account, consulted with top-tier accountants, and concluded that you currently owe us exactly...
+                                </p>
+                                <h1 class="display-2 fw-bold text-success my-4">$0.00</h1>
+                            </div>
+
+                            <div class="alert alert-light border shadow-sm p-4">
+                                <h5 class="fw-bold"><i class="bi bi-info-circle-fill text-primary me-2"></i> The Reality Check</h5>
+                                <p class="text-muted mb-3">Stackrium is 100% free to use. Seriously.</p>
+                                <p class="text-muted mb-3">
+                                    The <code>license.key</code> generated during your server's installation is simply a cryptographic handshake. It allows your server to securely authenticate with Stackrium Central so it can pull down core updates and manage staggered rollouts without getting rate-limited by our API.
+                                </p>
+                                <p class="text-muted mb-0">
+                                    Your "license" is automatically valid for the next 10 years (or until the heat death of the universe, whichever comes first). Keep your wallet in your pocket, close this tab, and go enjoy building something awesome!
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- SECTION 3: Advanced Web Settings & Performance -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingAdvanced">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
-                    <i class="bi bi-rocket-takeoff-fill me-2 text-danger"></i> 3. Advanced Web Settings & Redis
-                </button>
-            </h2>
-            <div id="collapseAdvanced" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Optimize how Nginx handles traffic and accelerate database queries using In-Memory caching.</p>
-                    
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Nginx Routing Rules</h6>
-                    <ul class="text-muted small mb-3">
-                        <li class="mb-2"><strong>URL Redirects:</strong> Route old links to new destinations. Use <strong>301 (Permanent)</strong> to tell Google to update its search index, or <strong>302 (Temporary)</strong> if you are just doing maintenance. <em>Example: Redirect <code>/old-store</code> to <code>https://shop.domain.com</code>.</em></li>
-                        <li class="mb-2"><strong>MIME Types:</strong> Nginx needs a dictionary to understand file types. If your users are trying to view an image or app file but it forces a "Download" instead, you need to add a MIME type. <em>Example: Ext: <code>apk</code>, MIME: <code>application/vnd.android.package-archive</code>.</em></li>
-                        <li class="mb-2"><strong>Hotlink Protection:</strong> Stop other websites from stealing your bandwidth. When enabled, Nginx checks the <code>Referer</code> header. If another website embeds your images or videos, Nginx blocks them with a <code>403 Forbidden</code> error.</li>
-                    </ul>
-
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Redis In-Memory Caching</h6>
-                    <p class="text-muted small mb-3">Redis stores frequently accessed database queries directly in your server's RAM. Because RAM is 100x faster than SSD storage, this drastically speeds up dynamic applications.</p>
-                    <ul class="text-muted small mb-0">
-                        <li><strong>Guardrails:</strong> Stackrium hard-caps Redis at <strong>128MB</strong> of RAM and uses an LRU (Least Recently Used) eviction policy. This prevents Redis from causing an Out-Of-Memory (OOM) server crash.</li>
-                        <li><strong>WordPress:</strong> Use the 1-Click "Enable Redis" button to automatically install the Redis Object Cache plugin and inject the secure credentials into your <code>wp-config.php</code>.</li>
-                        <li><strong>Custom Apps:</strong> Click "Developer Guide" in the Redis tab to reveal the auto-generated secure password and get boilerplate connection code for PHP, Node, and Python.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 4: Domain Suspension & Lifecycle -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingLifecycle">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLifecycle">
-                    <i class="bi bi-pause-circle-fill me-2 text-warning"></i> 4. Domain Suspension & Lifecycle
-                </button>
-            </h2>
-            <div id="collapseLifecycle" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Administrators can temporarily pause web traffic to a domain without destroying its underlying data.</p>
-                    <ul class="text-muted small">
-                        <li class="mb-2"><strong>How Suspension Works:</strong> Clicking "Suspend" modifies the Nginx vHost configuration to intercept all incoming requests and instantly return a <code>503 Service Unavailable</code> header.</li>
-                        <li class="mb-2"><strong>Non-Destructive:</strong> Suspension does NOT delete files, databases, or SSL certificates. The domain remains perfectly intact on the hard drive for a 1-click unsuspend later.</li>
-                        <li class="mb-2"><strong>Custom Branding:</strong> While suspended, visitors are shown the <code>stackrium_suspended.html</code> template. You can customize this file located in <code>/var/www/stackrium_errors/</code> to match your organization's branding.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 5: Users & Databases -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingDb">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDb">
-                    <i class="bi bi-people me-2 text-info"></i> 5. System Users & Databases
-                </button>
-            </h2>
-            <div id="collapseDb" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Manage Linux system users and MariaDB/MySQL databases with granular access control.</p>
-                    <ul class="text-muted small">
-                        <li><strong>System Users:</strong> Linux users are jailed to their <code>/home/user/web/</code> directories. <em>Warning: Deleting a user destroys their entire home directory. You must delete their domains from the Web tab first.</em></li>
-                        <li><strong>Databases:</strong> When provisioning a database, use <strong>Access Control</strong> to define security. Select <em>Localhost Only</em> for maximum security, or input a specific IP if you are connecting remotely from another server.</li>
-                        <li><strong>phpMyAdmin:</strong> Click the green <i class="bi bi-database-fill-gear"></i> icon next to any database to securely launch phpMyAdmin. Stackrium uses SSO, meaning you never have to type your database password.</li>
-                        <li><strong>Role-Based Access:</strong> When building custom apps, you can restrict database users to specific permissions (e.g., <code>SELECT</code>, <code>INSERT</code> only) using the Custom Role option for added security.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 6: Security, WAF & DNS -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingSecurity">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecurity">
-                    <i class="bi bi-shield-check me-2 text-dark"></i> 6. Security, WAF & DNS
-                </button>
-            </h2>
-            <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Protect your server and route traffic using the built-in BIND9 and UFW engines.</p>
-                    <ul class="text-muted small">
-                        <li class="mb-2"><strong>WAF (ModSecurity):</strong> Toggle the Web Application Firewall on/off per domain. This protects against SQL injections, Cross-Site Scripting (XSS), and malicious bots by inspecting every incoming packet against the OWASP Core Rule Set.</li>
-                        <li class="mb-2"><strong>Install SSL:</strong> Secure domains with Let's Encrypt. The script automatically solves the ACME challenge and reloads Nginx. Ensure DNS is fully propagated before attempting.</li>
-                        <li class="mb-2"><strong>Initialize New Zone:</strong> If you want Stackrium to act as your Master DNS server, click this to generate the baseline BIND9 records (A, MX, TXT) automatically. <em>(Note: You must set ns1/ns2 at your registrar).</em></li>
-                        <li class="mb-2"><strong>Manage DNS:</strong> Add custom CNAME, TXT, or A records directly into your active BIND9 zones.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 7: Backups -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingBackups">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBackups">
-                    <i class="bi bi-archive me-2 text-primary"></i> 7. Backups & Automation
-                </button>
-            </h2>
-            <div id="collapseBackups" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Never lose your data. Stackrium handles automated compression and SQL dumping via Python daemon workers.</p>
-                    <ul class="text-muted small">
-                        <li><strong>Manual Backups:</strong> Generate instant <code>.tar.gz</code> website file archives or <code>.sql.gz</code> database dumps.</li>
-                        <li><strong>Auto-Schedule:</strong> Set up Daily, Weekly, or Monthly automated backups. Set a "Retention Limit" (e.g., 3 days) and Stackrium will automatically delete older backups to prevent your disk from filling up.</li>
-                        <li><strong>1-Click Restore:</strong> Click the red restore button next to an archive in the vault to instantly overwrite the live site/database with the backup data.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 8: Cron Jobs -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingCron">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCron">
-                    <i class="bi bi-clock-history me-2 text-secondary"></i> 8. Automated Tasks (Cron Jobs)
-                </button>
-            </h2>
-            <div id="collapseCron" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Automate repetitive server tasks like cache clearing, backups, or script execution without manual intervention.</p>
-                    <ul class="text-muted small">
-                        <li><strong>Add Cron Job:</strong> Schedule commands to run as specific system users. Stackrium uses standard cron syntax <code>* * * * *</code> (Minute, Hour, Day, Month, Weekday).</li>
-                        <li><strong>Pro-Tip (Laravel):</strong> To run a Laravel scheduler every minute, set all time fields to <code>*</code> and use the command: <br><code>php /home/user/web/domain.com/public_html/artisan schedule:run</code></li>
-                        <li><strong>System Time:</strong> Remember that cron jobs execute based on the server's Master Time Zone, which you can configure in the Dashboard's System Settings.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 9: Mail Management -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingMail">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMail">
-                    <i class="bi bi-envelope-at me-2 text-info"></i> 9. Mail Server & Routing
-                </button>
-            </h2>
-            <div id="collapseMail" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Stackrium uses a Modular Mail Architecture. By default, the mail engine is completely uninstalled to save your server's RAM and CPU.</p>
-                    <ul class="text-muted small mb-0">
-                        <li><strong>Local Mail Engine:</strong> If you want to host physical emails on the server, click the Mail icon next to any domain and click "Install Mail Engine". This downloads Postfix and Dovecot in the background.</li>
-                        <li><strong>External Routing (Recommended):</strong> If you use Google Workspace or Microsoft 365, do <strong>not</strong> install the local engine. Simply use the "External Provider" tab in the Mail Modal for 1-Click DNS setup.</li>
-                        <li><strong>Webmail:</strong> If hosting locally, you can access your inbox by navigating to <code>https://webmail.yourdomain.com</code>.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 10: FAQ -->
-        <div class="accordion-item border-0">
-            <h2 class="accordion-header" id="headingFaq">
-                <button class="accordion-button collapsed fw-bold bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaq">
-                    <i class="bi bi-question-circle-fill me-2 text-warning"></i> 10. Frequently Asked Questions (FAQ)
-                </button>
-            </h2>
-            <div id="collapseFaq" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-light">
-                    
-                    <h6 class="fw-bold text-dark mt-2">Q: When I visit my domain, it downloads an "octet-stream" file instead of showing the website.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Nginx has lost its MIME types mapping. Go to <strong>Advanced Web Settings</strong> and add a MIME type, or ensure your master Nginx template includes the <code>include /etc/nginx/mime.types;</code> directive.</p>
-
-                    <h6 class="fw-bold text-dark mt-2">Q: I created a domain, but when I visit it in my browser, it says "Site cannot be reached."</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> This is almost always a DNS or Firewall issue. First, verify in your domain registrar (e.g., GoDaddy) that the A-Record points to your Stackrium server IP. Second, ensure Port 80 and Port 443 are open in your cloud provider's network security group.</p>
-
-                    <h6 class="fw-bold text-dark">Q: My Let's Encrypt SSL installation failed! Why?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Let's Encrypt must verify that you own the domain. If your DNS hasn't fully propagated globally, or if Cloudflare Proxy (the orange cloud) is turned on during installation, Let's Encrypt cannot verify the IP and will fail. Ensure DNS is propagated and proxying is disabled before retrying.</p>
-
-                    <h6 class="fw-bold text-dark">Q: My PM2 App (Python/Node) deployment shows "Errored" in Live Tasks.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> This usually means the port your application is trying to use is already bound to another process, or your code has a fatal syntax error. Use the File Manager to check your application's internal logs, and verify the correct port is set in your Node <code>server.js</code> or Python <code>app.py</code>.</p>
-
-                    <h6 class="fw-bold text-dark">Q: Can I use multiple Git repositories or generate multiple SSH Deploy Keys for a single user?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> For strict isolation, Stackrium enforces a <strong>"One User, One Identity"</strong> rule. Each system user is assigned exactly one unique ED25519 SSH Deploy Key. If you are managing multiple domains that require different Git repositories, you must provision a new User in the <strong>Users</strong> tab. This ensures that if one website is compromised, the attacker cannot use that user's SSH key to access your other repositories.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I get a "File too large" error when importing a database in phpMyAdmin.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> By default, PHP limits uploads. You can increase the global Max Upload Size to 512MB in System Settings. However, for massive SQL files (over 512MB), do not use phpMyAdmin. Upload the `.sql` file via File Manager and use the terminal: <br><code>mysql -u db_user -p database_name < database.sql</code></p>
-
-                    <h6 class="fw-bold text-dark">Q: How do I completely remove the Mail Engine to get my RAM back?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Open the Mail Modal for any domain. Scroll to the bottom of the "Host Locally" tab and click the red "Uninstall Engine" button. <em>Warning: This permanently deletes all local emails and removes Postfix/Dovecot from the system.</em></p>
-
-                    <h6 class="fw-bold text-dark">Q: I changed the PHP settings for a domain, but the site isn't updating.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Whenever you change advanced PHP settings (like <code>memory_limit</code>), Stackrium automatically tests syntax and restarts the PHP-FPM worker for that domain. If it didn't reflect, check the <strong>Live Task Log</strong>. If you entered invalid syntax, the server will block the reload to keep your site online.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I need an older version of PHP for a legacy application. How do I get it?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Go to the <strong>Web & Git</strong> tab and click the <strong>Software Center</strong>. Install older engines (like PHP 7.4) there. Once installed, click <strong>PHP Config</strong> on your domain to instantly assign the legacy engine. All other domains will remain on their modern versions.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I enabled 2FA but lost my phone. How do I get back in?</h6>
-                    <p class="text-muted mb-0"><strong>A:</strong> You will need SSH access to the server. Log in to your terminal and simply run the command: <code>sudo stackrium login</code>. The Stackrium CLI will instantly generate a secure, one-time access link. Copy and paste that link into your browser to bypass the login screen. Once inside, go to <strong>System Settings</strong> to reset or disable your 2FA.</p>
-                    
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>

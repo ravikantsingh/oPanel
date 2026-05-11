@@ -1125,4 +1125,12 @@ $(document).ready(function() {
     window.fetchCronJobs();
     window.fetchServices();
     window.fetchComponents();
+    
+    // Force the active tab to load its data on a hard page refresh
+    setTimeout(function() {
+        let activeTab = $('.nav-link.active');
+        if (activeTab.length > 0) {
+            activeTab.trigger('click').trigger('shown.bs.tab'); 
+        }
+    }, 100); // 100ms delay guarantees all other scripts have finished loading
 });

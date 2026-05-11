@@ -333,6 +333,9 @@ systemctl start panel-daemon
 
 # The Telemetry Heartbeat Cron (Runs once a day at 2 AM)
 (crontab -l 2>/dev/null; echo "0 2 * * * /bin/bash /opt/panel/scripts/heartbeat.sh > /dev/null 2>&1") | crontab -
+# Automatic Stackrium Control Update Cron (Runs once a day at 4 AM)
+(crontab -l 2>/dev/null; echo "0 3 * * * /usr/bin/php /opt/panel/scripts/auto_update.php >> /opt/panel/logs/auto_update.log 2>&1") | crontab -
+
 echo -e "\e[34m[+] Configuring Sudoers Bridge for Heartbeat Sync...\e[0m"
 echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-heartbeat
 echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/heartbeat.sh' >> /etc/sudoers.d/stackrium-heartbeat

@@ -44,7 +44,7 @@ systemctl stop panel-daemon
 
 # 4. THE RSYNC SWAP (80%)
 set_progress 80 "Applying new core files..."
-rsync -av --delete --exclude 'config/' --exclude 'logs/' --exclude 'backups/' --exclude 'license.key' "$TEMP_DIR/extracted/payload/" "/opt/panel/" > /dev/null 2>&1
+rsync -av --delete --exclude 'config/' --exclude 'logs/' --exclude 'backups/' --exclude 'license.key' --exclude 'www/assets/custom/' "$TEMP_DIR/extracted/payload/" "/opt/panel/" > /dev/null 2>&1
 
 # 5. RESTORE PASSWORDS & PERMISSIONS (90%)
 set_progress 90 "Configuring permissions & credentials..."
@@ -61,11 +61,13 @@ chown -R root:root /opt/panel/scripts /opt/panel/daemon
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/*.py
 
-# 6. RESTART EVERYTHING
+# 6. FINISH (100%)
+# We MUST write the success message before restarting PHP!
+echo "{\"progress\": 100, \"step\": \"Update Complete! Rebooting panel...\", \"status\": \"complete\"}" > "$STATUS_FILE"
+chown www-data:www-data "$STATUS_FILE"
+
+# 7. RESTART EVERYTHING (This will safely kill the script)
+rm -rf "$TEMP_DIR"
+systemctl start panel-daemon
 systemctl restart nginx
 systemctl restart php8.3-fpm
-systemctl start panel-daemon
-rm -rf "$TEMP_DIR"
-
-# 7. FINISH (100%)
-echo "{\"progress\": 100, \"step\": \"Update Complete! Rebooting panel...\", \"status\": \"complete\"}" > "$STATUS_FILE"

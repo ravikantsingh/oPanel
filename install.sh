@@ -72,13 +72,37 @@ EOF
 systemctl restart nginx
 
 # ==========================================
-# 2. LICENSE REGISTRATION HANDSHAKE
+# 2. CLONE PANEL FILES
 # ==========================================
-echo -e "\e[34m[2/14] Registering server with Stackrium Central...\e[0m"
-# Create the panel directory so we can store the key
-mkdir -p /opt/panel
+echo -e "\e[34m[2/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"
+git clone -b "$BRANCH" "$GITHUB_REPO" /tmp/panel_temp
+mkdir -p /opt/panel/config
 
-RESPONSE=$(curl -s -X POST https://stackrium.com/api/register.php -d "email=$USER_EMAIL")
+# Extract the public key immediately so we can use it to register
+cp /tmp/panel_temp/config/public_key.pem /opt/panel/config/public_key.pem 2>/dev/null || true
+
+cp -r /tmp/panel_temp/daemon /opt/panel/
+cp -r /tmp/panel_temp/scripts /opt/panel/
+cp -r /tmp/panel_temp/www /opt/panel/
+cp -r /tmp/panel_temp/templates /opt/panel/
+cp -r /tmp/panel_temp/cli /opt/panel/
+
+# ==========================================
+# 3. SECURE LICENSE REGISTRATION
+# ==========================================
+echo -e "\e[34m[3/14] Registering server with Stackrium Central...\e[0m"
+
+if [ ! -f "/opt/panel/config/public_key.pem" ]; then
+    echo -e "\e[31mError: public_key.pem not found in repository. Cannot encrypt registration.\e[0m"
+    exit 1
+fi
+
+# Encrypt the email payload using the public key
+JSON_PAYLOAD="{\"email\":\"$USER_EMAIL\"}"
+ENCRYPTED_PAYLOAD=$(echo -n "$JSON_PAYLOAD" | openssl pkeyutl -encrypt -pubin -inkey "/opt/panel/config/public_key.pem" | base64 -w 0)
+
+# Send via secure URL-encoded cURL
+RESPONSE=$(curl -s -X POST https://stackrium.com/api/register.php --data-urlencode "payload=$ENCRYPTED_PAYLOAD")
 LICENSE_KEY=$(echo "$RESPONSE" | jq -r '.license_key')
 
 if [ "$LICENSE_KEY" == "null" ] || [ -z "$LICENSE_KEY" ]; then
@@ -91,17 +115,6 @@ echo -e "\e[32mLicense activated successfully: $LICENSE_KEY\e[0m"
 echo "$LICENSE_KEY" > /opt/panel/license.key
 chown root:www-data /opt/panel/license.key
 chmod 640 /opt/panel/license.key
-
-# ==========================================
-# 3. CLONE PANEL FILES
-# ==========================================
-echo -e "\e[34m[3/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"
-git clone -b "$BRANCH" "$GITHUB_REPO" /tmp/panel_temp
-cp -r /tmp/panel_temp/daemon /opt/panel/
-cp -r /tmp/panel_temp/scripts /opt/panel/
-cp -r /tmp/panel_temp/www /opt/panel/
-cp -r /tmp/panel_temp/templates /opt/panel/
-cp -r /tmp/panel_temp/cli /opt/panel/
 
 # ==========================================
 # 4. SET STRICT PERMISSIONS

@@ -75,12 +75,18 @@ systemctl restart nginx
 # 2. CLONE PANEL FILES
 # ==========================================
 echo -e "\e[34m[2/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"
+
+# 1. Clone the repository into a temporary folder
 git clone -b "$BRANCH" "$GITHUB_REPO" /tmp/panel_temp
+
+# 2. Create the destination config directory on the VPS
 mkdir -p /opt/panel/config
 
-# Extract the public key immediately so we can use it to register
+# 3. Copy the public key from the cloned repo to the VPS config folder
+# We use 2>/dev/null so the script doesn't crash if the file is missing for some reason
 cp /tmp/panel_temp/config/public_key.pem /opt/panel/config/public_key.pem 2>/dev/null || true
 
+# 4. Copy the rest of the core panel files
 cp -r /tmp/panel_temp/daemon /opt/panel/
 cp -r /tmp/panel_temp/scripts /opt/panel/
 cp -r /tmp/panel_temp/www /opt/panel/

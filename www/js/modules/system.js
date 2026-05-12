@@ -363,6 +363,103 @@ window.renderSoftwareCenter = function() {
         }
     });
 };
+
+// ==========================================
+// FAIL2BAN GLOBAL SETTINGS LOGIC
+// ==========================================
+
+// 1. Fetch current settings when the tab is clicked
+window.fetchFail2BanSettings = function() {
+    // Briefly disable inputs while loading
+    $('#f2b_bantime_val, #f2b_findtime_val, #f2b_maxretry').prop('disabled', true);
+    
+    $.ajax({
+        url: '/ajax/get_f2b_settings.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Populate the inputs with the data from the server
+                $('#f2b_bantime_val').val(response.bantime_val);
+                $('#f2b_bantime_unit').val(response.bantime_unit);
+                
+                $('#f2b_findtime_val').val(response.findtime_val);
+                $('#f2b_findtime_unit').val(response.findtime_unit);
+                
+                $('#f2b_maxretry').val(response.maxretry);
+            } else {
+                alert('Error loading Fail2ban settings: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Network error while fetching Fail2ban settings.');
+        },
+        complete: function() {
+            // Re-enable inputs
+            $('#f2b_bantime_val, #f2b_findtime_val, #f2b_maxretry').prop('disabled', false);
+        }
+    });
+};
+
+// 2. Save new settings to the Task Queue
+window.saveFail2BanSettings = function() {
+    const bantimeVal = $('#f2b_bantime_val').val();
+    const bantimeUnit = $('#f2b_bantime_unit').val();
+    
+    const findtimeVal = $('#f2b_findtime_val').val();
+    const findtimeUnit = $('#f2b_findtime_unit').val();
+    
+    const maxretry = $('#f2b_maxretry').val();
+
+    if (!bantimeVal || !findtimeVal || !maxretry) {
+        alert("Please fill in all numerical fields.");
+        return;
+    }
+
+    // Combine values and units (e.g., "1" + "h" = "1h")
+    const bantime = bantimeVal + bantimeUnit;
+    const findtime = findtimeVal + findtimeUnit;
+
+    const btn = $('#formF2bSettings button');
+    const originalText = btn.html();
+    
+    // Show loading spinner on button
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+    $.ajax({
+        url: '/ajax/update_f2b_settings.php',
+        type: 'POST',
+        data: {
+            bantime: bantime,
+            findtime: findtime,
+            maxretry: maxretry
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                // Close the modal
+                $('#fail2banStatusModal').modal('hide');
+                
+                // Extract Task ID and trigger the global live-polling UI
+                const taskIdMatch = response.message.match(/Task ID: (\d+)/);
+                if (taskIdMatch && typeof pollTaskStatus === 'function') {
+                    pollTaskStatus(taskIdMatch[1]);
+                } else {
+                    alert("Settings saved! Fail2ban is restarting.");
+                }
+            } else {
+                alert('Error: ' + response.error);
+            }
+        },
+        error: function() {
+            alert('Network error while saving settings.');
+        },
+        complete: function() {
+            // Restore button state
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+};
     // ==========================================
     // LICENSE & UPDATES LOGIC
     // ==========================================

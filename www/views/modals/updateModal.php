@@ -6,7 +6,7 @@
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-cloud-arrow-down-fill me-2 text-primary"></i> Stackrium Updates
                 </h5>
-                <button type=\"button\" class=\"btn-close btn-close-white\" data-bs-dismiss=\"modal\" id=\"closeUpdateModalBtn\"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeUpdateModalBtn"></button>
             </div>
             
             <div class="modal-body bg-light p-0">

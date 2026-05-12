@@ -49,15 +49,20 @@ rsync -av --delete --exclude 'config/' --exclude 'logs/' --exclude 'backups/' --
 # 5. RESTORE PASSWORDS & PERMISSIONS (90%)
 set_progress 90 "Configuring permissions & credentials..."
 
-# Dynamically pull the password from the protected config file
 DB_PASS=$(grep "'DB_PASS'" /opt/panel/www/config/database.php | cut -d"'" -f4)
-
-# Inject the password back into the fresh Python daemons
 sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
 sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
 
 chown -R www-data:www-data /opt/panel/www
 chown -R root:root /opt/panel/scripts /opt/panel/daemon /opt/panel/cli
+
+# ---> NEW: The Auto-Sanitizer Failsafe <---
+# This instantly scrubs Windows characters from ALL downloaded scripts
+sed -i -e 's/\r$//' /opt/panel/scripts/*.sh
+sed -i -e 's/\r$//' /opt/panel/daemon/*.py
+sed -i -e 's/\r$//' /opt/panel/cli/*.php
+
+# Make executable
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/*.py
 

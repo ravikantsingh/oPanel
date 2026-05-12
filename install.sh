@@ -138,6 +138,11 @@ chown www-data:www-data /opt/panel/www/version.php
 chown -R www-data:www-data /opt/panel/www
 chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates /opt/panel/cli
 
+# This instantly scrubs Windows characters from ALL cloned scripts
+sed -i -e 's/\r$//' /opt/panel/scripts/*.sh
+sed -i -e 's/\r$//' /opt/panel/daemon/*.py
+sed -i -e 's/\r$//' /opt/panel/cli/*.php
+
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/worker.py
 chmod +x /opt/panel/daemon/scheduler.py 

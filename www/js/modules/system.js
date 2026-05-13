@@ -6,6 +6,40 @@
 window.currentTaskPage = 1;
 window.taskLimit = 5;
 window.logInterval = null;
+// The Human-Readable Task Translation Dictionary
+const taskDictionary = {
+    'update_waf': { icon: 'bi-shield-check text-primary', title: 'WAF Security Update', desc: 'Rebuilding Nginx security rules' },
+    'create_vhost': { icon: 'bi-globe text-success', title: 'Provision Domain', desc: 'Setting up Nginx & PHP environment' },
+    'delete_domain': { icon: 'bi-trash text-danger', title: 'Destroy Domain', desc: 'Removing web files & configurations' },
+    'manage_fm': { icon: 'bi-folder2-open text-warning', title: 'Deploy File Manager', desc: 'Provisioning TinyFM application' },
+    'rotate_fm': { icon: 'bi-key text-secondary', title: 'Rotate FM Password', desc: 'Updating File Manager credentials' },
+    'deploy_laravel': { icon: 'bi-box-seam text-danger', title: 'Deploy Laravel', desc: 'Building composer framework' },
+    'deploy_python': { icon: 'bi-filetype-py text-info', title: 'Deploy Python', desc: 'Setting up WSGI/Gunicorn environment' },
+    'deploy_node': { icon: 'bi-hexagon-fill text-success', title: 'Deploy Node.js', desc: 'Configuring PM2 process manager' },
+    'install_ssl': { icon: 'bi-lock-fill text-success', title: 'Install SSL Certificate', desc: 'Provisioning Let\'s Encrypt SSL' },
+    'create_db': { icon: 'bi-database-add text-primary', title: 'Provision Database', desc: 'Creating MariaDB instance' },
+    'git_pull': { icon: 'bi-git text-dark', title: 'Git Pull', desc: 'Pulling latest repository code' },
+    'manage_php': { icon: 'bi-sliders text-info', title: 'Reconfigure PHP', desc: 'Applying custom FPM settings' },
+    'manage_firewall': { icon: 'bi-bricks text-danger', title: 'Modify Firewall', desc: 'Updating UFW port rules' },
+    'manage_backup': { icon: 'bi-archive text-primary', title: 'Generate Backup', desc: 'Archiving system data to vault' },
+    'restore_backup': { icon: 'bi-arrow-counterclockwise text-warning', title: 'Restore Backup', desc: 'Overwriting live data from vault' },
+    'install_wp': { icon: 'bi-wordpress text-primary', title: 'Install WordPress', desc: 'Deploying CMS and Database' },
+    'default': { icon: 'bi-gear text-secondary', title: 'System Task', desc: 'Executing backend process' }
+};
+
+// Helper to make dates look like "Today, 3:32 PM"
+function formatTaskTime(dateString) {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    if (date.toDateString() === today.toDateString()) return `Today, ${timeStr}`;
+    if (date.toDateString() === yesterday.toDateString()) return `Yesterday, ${timeStr}`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${timeStr}`;
+}
 
 window.fetchSystemStats = function() {
     $.ajax({
@@ -42,49 +76,69 @@ window.fetchRecentTasks = function() {
         dataType: 'json',
         success: function(response) {
             if(response.success) {
-                let tbody = $('#dynamicTasksTable');
-                tbody.empty(); 
+                let container = $('#dynamicTasksTable');
+                container.empty(); 
                 
                 if(response.tasks.length === 0) {
-                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">No system tasks found.</td></tr>');
+                    container.html('<div class="list-group-item text-center text-muted py-5 border-0">No system tasks found.</div>');
                     $('#taskPaginationContainer').empty();
                     return;
                 }
 
                 response.tasks.forEach(function(task) {
-                    let badgeClass = 'bg-secondary';
-                    let actionButtons = '';
-
+                    let map = taskDictionary[task.action] || taskDictionary['default'];
+                    // Fallback to raw action name if not in dictionary
+                    let displayTitle = (map === taskDictionary['default']) ? task.action : map.title;
+                    
+                    let statusBadge = '';
+                    let btnClass = 'btn-outline-secondary';
+                    let btnText = 'View Log';
+                    
                     if(task.status === 'completed') {
-                        badgeClass = 'bg-success';
-                        actionButtons = `<button class="btn btn-sm btn-outline-secondary p-1 px-2 view-task-log" data-id="${task.id}" title="View Output Log"><i class="bi bi-terminal-fill"></i></button>`;
+                        statusBadge = '<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>';
+                        btnClass = 'btn-outline-success';
+                    } else if(task.status === 'failed') {
+                        statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-x-circle-fill me-1"></i>Failed</span>';
+                        btnClass = 'btn-outline-danger';
+                        btnText = 'View Error';
+                    } else {
+                        statusBadge = '<span class="badge bg-warning bg-opacity-10 text-warning border border-warning"><i class="spinner-border spinner-border-sm me-1" style="width:10px;height:10px;"></i>Running</span>';
+                        btnClass = 'btn-outline-warning disabled';
+                        btnText = 'Processing...';
                     }
-                    if(task.status === 'failed') {
-                        badgeClass = 'bg-danger';
-                        actionButtons = `<button class="btn btn-sm btn-outline-danger p-1 px-2 view-task-log" data-id="${task.id}" title="View Error Log"><i class="bi bi-terminal-fill"></i></button>`;
-                    }
-                    if(task.status === 'pending' || task.status === 'processing') {
-                        badgeClass = 'bg-warning text-dark';
-                        actionButtons = `<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>`;
-                    }
-
-                    let target = 'System Command';
-                    try {
-                        let data = JSON.parse(task.payload);
-                        target = data.domain || data.username || data.port || 'Data Object';
-                    } catch(e) {}
-
+                    // Build the new Flexbox Card row (Thinner version)
                     let row = `
-                        <tr>
-                            <td class="fw-bold text-muted">#${task.id}</td>
-                            <td><code class="text-dark">${task.action}</code></td>
-                            <td>${target}</td>
-                            <td><span class="badge ${badgeClass}">${task.status.toUpperCase()}</span></td>
-                            <td class="small text-muted">${task.created_at}</td>
-                            <td class="text-end">${actionButtons}</td> 
-                        </tr>
+                        <div class="list-group-item py-2 px-3 border-0 border-bottom bg-white">
+                            <div class="row align-items-center">
+                                
+                                <div class="col-12 col-md-5 d-flex align-items-center mb-1 mb-md-0">
+                                    <div class="me-3 fs-5 bg-light rounded border shadow-sm d-flex justify-content-center align-items-center" style="width: 36px; height: 36px;">
+                                        <i class="bi ${map.icon}"></i>
+                                    </div>
+                                    <div class="lh-sm">
+                                        <h6 class="mb-0 fw-bold text-dark" style="font-size:0.85rem;">${displayTitle} <span class="text-muted ms-1 fw-normal" style="font-size: 0.65rem;">#${task.id}</span></h6>
+                                        <small class="text-muted" style="font-size:0.7rem;">${map.desc}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-6 col-md-4 text-start text-md-center border-start-md">
+                                    <div class="fw-bold text-dark small lh-sm mb-1" style="font-size:0.8rem;"><i class="bi bi-hdd-network text-muted me-1"></i>${task.target_name}</div>
+                                    <div style="font-size:0.75rem;">${statusBadge}</div>
+                                </div>
+                                
+                                <div class="col-6 col-md-3 text-end">
+                                    <div class="text-muted mb-1" style="font-size:0.7rem;">
+                                        <i class="bi bi-calendar-event me-1"></i>${formatTaskTime(task.created_at)}
+                                    </div>
+                                    <button class="btn btn-sm ${btnClass} view-task-log shadow-sm py-1 px-2" data-id="${task.id}" style="font-size:0.75rem;">
+                                        <i class="bi bi-terminal"></i> ${btnText}
+                                    </button>
+                                </div>
+                                
+                            </div>
+                        </div>
                     `;
-                    tbody.append(row);
+                    container.append(row);
                 });
 
                 window.renderTaskPagination(response.pagination);
@@ -96,7 +150,8 @@ window.fetchRecentTasks = function() {
 window.renderTaskPagination = function(p) {
     let container = $('#taskPaginationContainer');
     if (container.length === 0) {
-        $('#dynamicTasksTable').closest('.table-responsive').after(`
+        // Changed to attach to our new .tasks-wrapper div
+        $('#dynamicTasksTable').closest('.tasks-wrapper').after(`
             <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" id="taskPaginationContainer"></div>
         `);
         container = $('#taskPaginationContainer');
@@ -126,18 +181,26 @@ window.renderTaskPagination = function(p) {
     container.html(pageHtml);
 };
 
-window.fetchLogs = function() {
-    let type = $('#logType').val();
-    let domain = $('#logDomain').val(); 
-    let user = $('#logUser').val();
+window.fetchLogs = function(isManualFetch = false) {
+    let logType = $('#logTypeSelect').val();
+    let targetDomain = $('#logDomainSelect').val(); 
+    let targetUser = $('#logUserSelect').val();
+    let terminal = $('#logTerminal');
+    let btn = $('#fetchLogBtn');
+
+    // Only show the "Streaming logs..." warning if the user clicked the button manually. 
+    // We don't want it flashing every 2 seconds during the background poll.
+    if (isManualFetch) {
+        terminal.html('<span class="text-warning">Streaming logs...</span>');
+        btn.prop('disabled', true);
+    }
 
     $.ajax({
         url: '/ajax/get_logs.php',
         type: 'POST',
-        data: { type: type, domain: domain, username: user },
+        data: { type: logType, domain: targetDomain, username: targetUser },
         dataType: 'json',
         success: function(response) {
-            let terminal = $('#logTerminal');
             let isAtBottom = terminal[0].scrollHeight - terminal.scrollTop() === terminal.outerHeight();
 
             if(response.success) {
@@ -149,7 +212,16 @@ window.fetchLogs = function() {
             } else {
                 terminal.html('<span class="text-danger">' + response.error + '</span>');
             }
+            
+            // Auto-scroll logic
             if(isAtBottom) terminal.scrollTop(terminal[0].scrollHeight);
+            if(isManualFetch) btn.prop('disabled', false);
+        },
+        error: function() {
+            if(isManualFetch) {
+                terminal.html('<span class="text-danger">Critical Network Error.</span>');
+                btn.prop('disabled', false);
+            }
         }
     });
 };
@@ -579,8 +651,9 @@ $(document).ready(function() {
     $('#logModal').on('hide.bs.modal', function () {
         clearInterval(window.logInterval); 
     });
-    $('#logType').on('change', function() {
-        $('#logTerminal').html('Loading...');
+    // Change #logType to #logTypeSelect
+    $('#logTypeSelect').on('change', function() {
+        $('#logTerminal').html('<span class="text-warning">Loading...</span>');
         window.fetchLogs();
     });
 
@@ -1222,7 +1295,33 @@ $(document).ready(function() {
     window.fetchCronJobs();
     window.fetchServices();
     window.fetchComponents();
-    
+
+    // Toggle the visibility of the Domain/User selectors based on log type
+    $(document).on('change', '#logTypeSelect', function() {
+        let type = $(this).val();
+        let isSystemLog = ['daemon', 'fail2ban', 'updater', 'syslog'].includes(type);
+        
+        if (isSystemLog) {
+            // Hide the domain/user dropdowns using a smooth slide
+            $('#logDomainGroup').slideUp('fast');
+        } else {
+            // Show them for website logs
+            $('#logDomainGroup').slideDown('fast');
+        }
+    });
+
+    // Make sure the Overview tab "System Logs" button auto-selects Daemon
+    $(document).on('click', '[data-bs-target="#logModal"]:contains("System Logs")', function() {
+        $('#logTypeSelect').val('daemon').trigger('change');
+        setTimeout(() => { $('#fetchLogBtn').trigger('click'); }, 300);
+    });
+    // =================================================================
+    // THE UNIVERSAL LOG FETCHER
+    // =================================================================
+    $(document).on('click', '#fetchLogBtn', function() {
+        // Pass "true" to trigger the manual loading animations
+        window.fetchLogs(true);
+    });
     // Force the active tab to load its data on a hard page refresh
     setTimeout(function() {
         let activeTab = $('.nav-link.active');

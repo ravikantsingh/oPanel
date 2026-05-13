@@ -10,11 +10,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 1. Capture Pagination Parameters (Defaults: Page 1, 5 items per page)
 $limit = isset($_POST['limit']) ? (int)$_POST['limit'] : 5;
 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
 
-// Safety bounds
 if ($limit < 1 || $limit > 100) $limit = 5;
 if ($page < 1) $page = 1;
 
@@ -23,22 +21,38 @@ $offset = ($page - 1) * $limit;
 try {
     $db = Database::getInstance()->getConnection();
     
-    // 2. Get the Total Count for UI Math
-    $countStmt = $db->query("SELECT COUNT(*) FROM tasks_queue");
+    $countStmt = $db->query("SELECT COUNT(*) FROM `tasks_queue`");
     $totalTasks = $countStmt->fetchColumn();
     
-    // 3. Fetch the specific slice of data using secure PDO bindings
-    $stmt = $db->prepare("SELECT id, action, payload, status, created_at FROM tasks_queue ORDER BY id DESC LIMIT :limit OFFSET :offset");
+    $stmt = $db->prepare("SELECT `id`, `action`, `payload`, `status`, `created_at` FROM `tasks_queue` ORDER BY `id` DESC LIMIT :limit OFFSET :offset");
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // 4. Calculate total pages
+    // Pre-process the JSON payload to extract a human-readable target
+    foreach ($tasks as &$task) {
+        $task['target_name'] = 'Global Server'; // Default fallback
+        
+        if (!empty($task['payload'])) {
+            $payloadObj = json_decode($task['payload'], true);
+            if (is_array($payloadObj)) {
+                if (!empty($payloadObj['domain'])) {
+                    $task['target_name'] = $payloadObj['domain'];
+                } elseif (!empty($payloadObj['db_name'])) {
+                    $task['target_name'] = 'Database: ' . $payloadObj['db_name'];
+                } elseif (!empty($payloadObj['username'])) {
+                    $task['target_name'] = 'User: ' . $payloadObj['username'];
+                } elseif (!empty($payloadObj['port'])) {
+                    $task['target_name'] = 'Port: ' . $payloadObj['port'];
+                }
+            }
+        }
+    }
+    
     $totalPages = ceil($totalTasks / $limit);
 
-    // Return the data AND the pagination metrics
     echo json_encode([
         'success' => true, 
         'tasks' => $tasks,

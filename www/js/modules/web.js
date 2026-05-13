@@ -183,6 +183,7 @@ window.fetchDomains = function() {
                                             <button class="btn btn-sm btn-outline-primary text-start open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}"><i class="bi bi-gear-wide-connected me-2"></i> Web Settings</button>
                                             <button class="btn btn-sm btn-outline-secondary text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts</button>
                                             <button class="btn btn-sm btn-outline-secondary text-start manage-mail" data-domain="${d.domain_name}"><i class="bi bi-envelope-at-fill me-2"></i> Mailboxes</button>
+                                            <button class="btn btn-sm btn-outline-dark text-start view-domain-logs" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-journal-code me-2"></i> Website Logs</button>
                                             <button class="btn btn-sm btn-${suspendColor} text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}"><i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain</button>
                                         </div>
                                     </div>
@@ -1318,5 +1319,36 @@ $(document).ready(function() {
                 btn.prop('disabled', false).html(originalText);
             }
         });
+    });
+    // =================================================================
+    // CONTEXTUAL WEBSITE LOG VIEWER
+    // =================================================================
+    $(document).on('click', '.view-domain-logs', function() {
+        let domain = $(this).data('domain');
+        let user = $(this).data('user');
+
+        // 1. Open the Modal immediately
+        $('#logModal').modal('show');
+
+        // 2. Wait 300ms for the Bootstrap modal animation to finish rendering
+        setTimeout(() => {
+            // Select Nginx Error Log (best default for debugging)
+            $('#logTypeSelect').val('error'); 
+            
+            // Ensure the domain/user selectors are visible (if hidden by System Logs)
+            $('#logDomainGroup').slideDown('fast');
+            
+            // Forcefully select the exact domain and user
+            $('#logDomainSelect').val(domain);
+            
+            // Note: If you dynamically populate the user dropdown based on domain,
+            // you may need to trigger change here or manually set it.
+            // If it's a static list, this will select it:
+            $('#logUserSelect').val(user);
+
+            // Automatically trigger the fetch so logs stream instantly
+            $('#fetchLogBtn').trigger('click'); 
+            
+        }, 300);
     });
 });

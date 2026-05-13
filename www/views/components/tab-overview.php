@@ -5,34 +5,27 @@
         
         <!-- 1. Recent System Tasks (Open by default) -->
         <div class="accordion-item border-0 border-bottom border-secondary border-opacity-25">
-            <h2 class="accordion-header" id="headingTasks">
+            
+            <h2 class="accordion-header position-relative bg-white" id="headingTasks">
                 <button class="accordion-button fw-bold bg-white text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTasks" aria-expanded="true" aria-controls="collapseTasks">
                     <i class="bi bi-activity text-primary me-2"></i> Recent System Tasks
                 </button>
+                
+                <div class="position-absolute" style="right: 55px; top: 11px; z-index: 3;">
+                    <button class="btn btn-sm btn-dark shadow-sm py-1 px-2" style="font-size:0.75rem;" data-bs-toggle="modal" data-bs-target="#logModal">
+                        <i class="bi bi-terminal"></i> View Live Logs
+                    </button>
+                </div>
             </h2>
+            
             <div id="collapseTasks" class="accordion-collapse collapse show" aria-labelledby="headingTasks">
                 <div class="accordion-body p-0">
-                    <!-- Action Bar -->
-                    <div class="bg-light p-2 border-bottom d-flex justify-content-end">
-                        <button class="btn btn-sm btn-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#logModal"><i class="bi bi-terminal"></i> View Live Logs</button>
-                    </div>
-                    <!-- Table -->
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 text-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Action</th>
-                                    <th>Target</th>
-                                    <th>Status</th>
-                                    <th>Time</th>
-                                    <th class="text-end">Logs</th> 
-                                </tr>
-                            </thead>
-                            <tbody id="dynamicTasksTable">
-                                <tr><td colspan="6" class="text-center text-muted py-3">Loading tasks...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="tasks-wrapper">
+                        <div id="dynamicTasksTable" class="list-group list-group-flush rounded-0">
+                            <div class="list-group-item text-center text-muted py-4">
+                                <div class="spinner-border spinner-border-sm me-2"></div> Loading tasks...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1261,4 +1261,62 @@ $(document).ready(function() {
     window.fetchDomains();
     window.loadPhpVersions();
     window.fetchInstalledPhpVersions();
+    
+    // =================================================================
+    // GLOBAL WAF VERSION SETTINGS (JSON UI)
+    // =================================================================
+
+    // 1. Fetch the current setting when the modal opens
+    $('#wafSettingsModal').on('show.bs.modal', function() {
+        $('#wafVersionSelect').prop('disabled', true);
+        
+        $.ajax({
+            url: '/ajax/get_waf_settings.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success && res.branch) {
+                    $('#wafVersionSelect').val(res.branch);
+                } else {
+                    // Fallback default
+                    $('#wafVersionSelect').val('v3.3/master');
+                }
+                $('#wafVersionSelect').prop('disabled', false);
+            },
+            error: function() {
+                $('#wafVersionSelect').prop('disabled', false);
+            }
+        });
+    });
+
+    // 2. Save the selection back to the JSON file
+    $('#wafSettingsForm').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#saveWafSettingsBtn');
+        let alertBox = $('#wafSettingsAlert');
+        let originalText = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+        alertBox.addClass('d-none');
+        
+        $.ajax({
+            url: '/ajax/save_waf_settings.php',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#wafSettingsModal').modal('hide');
+                    showToast("WAF Preferences Saved!");
+                } else {
+                    alertBox.removeClass('d-none').text("Error: " + res.error);
+                }
+                btn.prop('disabled', false).html(originalText);
+            },
+            error: function() {
+                alertBox.removeClass('d-none').text("Network error saving WAF settings.");
+                btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
 });

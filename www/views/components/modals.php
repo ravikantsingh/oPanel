@@ -10,6 +10,7 @@ include 'views/modals/installSslModal.php';
 include 'views/modals/installWpModal.php';
 include 'views/modals/nodeJsModal.php';
 include 'views/modals/advancedWebModal.php';
+include 'views/modals/wafSettingsModal.php';
 
 // 2. Users, Databases & FTP
 include 'views/modals/addUserModal.php';

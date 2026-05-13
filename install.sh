@@ -134,6 +134,10 @@ mkdir -p /opt/panel/cli/migrations
 
 echo "<?php define('PANEL_VERSION', '1.0.0'); ?>" > /opt/panel/www/version.php
 chown www-data:www-data /opt/panel/www/version.php
+# Provision the dynamic WAF settings state
+echo '{"waf_branch": "v3.3/master"}' > /opt/panel/www/config/waf_settings.json
+chown www-data:www-data /opt/panel/www/config/waf_settings.json
+chmod 644 /opt/panel/www/config/waf_settings.json
 
 chown -R www-data:www-data /opt/panel/www
 chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates /opt/panel/cli
@@ -142,6 +146,7 @@ chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/pan
 sed -i -e 's/\r$//' /opt/panel/scripts/*.sh
 sed -i -e 's/\r$//' /opt/panel/daemon/*.py
 sed -i -e 's/\r$//' /opt/panel/cli/*.php
+sed -i -e 's/\r$//' /opt/panel/config/*.pem
 
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/worker.py

@@ -70,6 +70,7 @@ ALLOWED_ACTIONS = {
     'deploy_python': '/opt/panel/scripts/deploy_python.sh',
     'revert_to_php': '/opt/panel/scripts/revert_to_php.sh',
     'restart_app': '/opt/panel/scripts/restart_app.sh',
+    'update_waf': '/opt/panel/scripts/waf_updater.sh',
 }
 
 def get_db_connection():

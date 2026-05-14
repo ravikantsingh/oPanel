@@ -266,27 +266,55 @@ $(document).ready(function() {
         });
     });
 
-    // === SSH & 2FA ===
-    $('#fetchSshBtn').on('click', function() {
-        let btn = $(this);
-        let targetUser = $('#sshUsername').val(); 
-        if(!targetUser) { alert("Error: Username is missing from the UI."); return; }
-        btn.prop('disabled', true).text('Loading...');
-        $.ajax({
-            url: '/ajax/get_ssh_key.php',
-            type: 'POST', 
-            data: { username: targetUser }, 
-            dataType: 'json',
-            success: function(response) {
-                if(response.success) {
-                    $('#sshKeyDisplay').removeClass('d-none').val(response.key);
-                    btn.text('Key Ready');
-                } else {
-                    alert(response.message || response.error);
-                    btn.prop('disabled', false).text('View Key');
+    // === SMART SSH KEY AUTO-POLLER ===
+    $('#sshUsername').on('change', function() {
+        let targetUser = $(this).val();
+        let keyContainer = $('#sshKeyContainer');
+        let keyDisplay = $('#sshKeyDisplay');
+
+        if (!targetUser) {
+            keyContainer.addClass('d-none'); // Hide if they deselect the user
+            return;
+        }
+
+        // Show container and initial loading state
+        keyContainer.removeClass('d-none');
+        keyDisplay.removeClass('text-success').addClass('text-warning').val('Fetching SSH deploy key... Please wait.');
+        
+        let pollCount = 0;
+        let maxPolls = 10; // Max 20 seconds of polling
+        
+        function fetchKey() {
+            $.ajax({
+                url: '/ajax/get_ssh_key.php',
+                type: 'POST',
+                data: { username: targetUser },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        // Key exists! Display it.
+                        keyDisplay.removeClass('text-warning text-danger').addClass('text-success').val(response.key);
+                    } else if (response.message && response.message.includes('Generating')) {
+                        // The PHP API queued the generation. Poll again in 2 seconds.
+                        pollCount++;
+                        if (pollCount < maxPolls) {
+                            keyDisplay.val(`Generating secure ED25519 key... (Attempt ${pollCount}/${maxPolls})\nPlease wait, the Python daemon is working...`);
+                            setTimeout(fetchKey, 2000);
+                        } else {
+                            keyDisplay.removeClass('text-warning').addClass('text-danger').val('Generation timeout. Please check the Live Tasks log.');
+                        }
+                    } else {
+                        keyDisplay.removeClass('text-warning').addClass('text-danger').val('Error: ' + (response.message || response.error));
+                    }
+                },
+                error: function() {
+                    keyDisplay.removeClass('text-warning').addClass('text-danger').val('Network error while communicating with the API.');
                 }
-            }
-        });
+            });
+        }
+        
+        // Initiate the first check
+        fetchKey();
     });
 
     $('#twoFactorToggle').on('change', function() {

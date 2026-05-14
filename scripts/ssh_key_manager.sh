@@ -15,7 +15,7 @@ sudo -u "$USERNAME" chmod 700 "$SSH_DIR"
 # 2. Generate the keypair ONLY if it doesn't already exist
 if [ ! -f "$KEY_FILE" ]; then
     # Generate an ed25519 key with no password (-N "") silently (-q)
-    sudo -u "$USERNAME" ssh-keygen -t ed25519 -C "$USERNAME@panel" -f "$KEY_FILE" -N "" -q
+    sudo -u "$USERNAME" ssh-keygen -t ed25519 -C "$USERNAME@stackrium" -f "$KEY_FILE" -N "" -q
 fi
 
 # 3. Read the public key

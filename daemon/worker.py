@@ -110,10 +110,10 @@ def process_tasks():
         script_path = ALLOWED_ACTIONS[action]
 
         try:
-            # ---> THE MASTER SRE FIX: Write to a physical disk file instead of using Pipes <---
+            # THE MASTER SRE FIX: Write to a physical disk file instead of using Pipes
             with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as temp_log:
                 process = subprocess.Popen(
-                    [script_path, payload_json],
+                    [script_path, payload_json, str(task_id)], 
                     stdout=temp_log,
                     stderr=subprocess.STDOUT, # Merge stderr into stdout
                     start_new_session=True

@@ -72,6 +72,28 @@ EOF
 systemctl restart nginx
 
 # ==========================================
+# 1.5 PROVISION SWAP MEMORY (OOM Protection)
+# ==========================================
+echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
+# Only create swap if it doesn't already exist
+if [ ! -f /swapfile ]; then
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    # Make it permanent across reboots
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    
+    # Optimize swappiness (Tell kernel to prefer physical RAM, use swap only as fallback)
+    sysctl vm.swappiness=10
+    echo 'vm.swappiness=10' >> /etc/sysctl.conf
+    
+    echo -e "\e[32mSwap memory provisioned successfully.\e[0m"
+else
+    echo -e "\e[33mSwap file already exists. Skipping...\e[0m"
+fi
+
+# ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
 echo -e "\e[34m[2/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"

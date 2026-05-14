@@ -3,10 +3,14 @@
 # Purpose: Suspend or Unsuspend a domain using an Nginx 503 Intercept
 
 PAYLOAD=$1
+TASK_ID=$2
 ACTION=$(echo "$PAYLOAD" | jq -r '.action')     # 'suspend' or 'unsuspend'
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 
 VHOST_CONF="/etc/nginx/sites-available/$DOMAIN.conf"
+
+DB_PASS=$(grep DB_PASS /opt/panel/www/config/database.php | cut -d"'" -f4)
+MYSQL_CMD="mysql -upanel_user -p${DB_PASS} panel_core -e"
 
 if [ ! -f "$VHOST_CONF" ]; then
     echo "Error: Nginx configuration for $DOMAIN not found."
@@ -39,5 +43,5 @@ else
 fi
 
 # Reload Nginx to apply the proxy intercept instantly
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 exit 0

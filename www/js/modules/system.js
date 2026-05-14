@@ -6,24 +6,70 @@
 window.currentTaskPage = 1;
 window.taskLimit = 5;
 window.logInterval = null;
+
 // The Human-Readable Task Translation Dictionary
 const taskDictionary = {
-    'update_waf': { icon: 'bi-shield-check text-primary', title: 'WAF Security Update', desc: 'Rebuilding Nginx security rules' },
+    // === Core Web & App Deployment ===
     'create_vhost': { icon: 'bi-globe text-success', title: 'Provision Domain', desc: 'Setting up Nginx & PHP environment' },
     'delete_domain': { icon: 'bi-trash text-danger', title: 'Destroy Domain', desc: 'Removing web files & configurations' },
-    'manage_fm': { icon: 'bi-folder2-open text-warning', title: 'Deploy File Manager', desc: 'Provisioning TinyFM application' },
-    'rotate_fm': { icon: 'bi-key text-secondary', title: 'Rotate FM Password', desc: 'Updating File Manager credentials' },
+    'domain_status': { icon: 'bi-pause-circle text-warning', title: 'Toggle Domain Status', desc: 'Suspending or unsuspending website' },
+    'install_wp': { icon: 'bi-wordpress text-primary', title: 'Install WordPress', desc: 'Deploying CMS and Database' },
     'deploy_laravel': { icon: 'bi-box-seam text-danger', title: 'Deploy Laravel', desc: 'Building composer framework' },
     'deploy_python': { icon: 'bi-filetype-py text-info', title: 'Deploy Python', desc: 'Setting up WSGI/Gunicorn environment' },
     'deploy_node': { icon: 'bi-hexagon-fill text-success', title: 'Deploy Node.js', desc: 'Configuring PM2 process manager' },
+    'node_action': { icon: 'bi-cpu text-warning', title: 'App Process Action', desc: 'Executing PM2 command' },
+    'restart_app': { icon: 'bi-bootstrap-reboot text-success', title: 'Restart Application', desc: 'Reloading backend PM2 process' },
+    'revert_to_php': { icon: 'bi-arrow-return-left text-primary', title: 'Revert App to PHP', desc: 'Restoring standard FastCGI pass' },
+    
+    // === SSL, Routing & Nginx Configuration ===
     'install_ssl': { icon: 'bi-lock-fill text-success', title: 'Install SSL Certificate', desc: 'Provisioning Let\'s Encrypt SSL' },
-    'create_db': { icon: 'bi-database-add text-primary', title: 'Provision Database', desc: 'Creating MariaDB instance' },
-    'git_pull': { icon: 'bi-git text-dark', title: 'Git Pull', desc: 'Pulling latest repository code' },
+    'https_routing_manager': { icon: 'bi-sign-turn-right text-success', title: 'HTTPS Routing', desc: 'Applying Force HTTPS & HSTS rules' },
+    'adv_web_compile': { icon: 'bi-code-square text-dark', title: 'Advanced Web Rules', desc: 'Compiling custom Nginx directives' },
     'manage_php': { icon: 'bi-sliders text-info', title: 'Reconfigure PHP', desc: 'Applying custom FPM settings' },
+    'install_php': { icon: 'bi-filetype-php text-primary', title: 'Install PHP Engine', desc: 'Compiling specific PHP version' },
+
+    // === Database Management ===
+    'create_db': { icon: 'bi-database-add text-primary', title: 'Provision Database', desc: 'Creating MariaDB instance' },
+    'manage_db': { icon: 'bi-database-gear text-info', title: 'Manage Database', desc: 'Updating DB users and privileges' },
+    'delete_db': { icon: 'bi-database-dash text-danger', title: 'Delete Database', desc: 'Dropping MariaDB instance' },
+    'wp_redis_manager': { icon: 'bi-lightning-charge text-danger', title: 'WordPress Redis', desc: 'Configuring object caching connection' },
+
+    // === Security & Firewall ===
+    'update_waf': { icon: 'bi-shield-check text-primary', title: 'WAF Security Update', desc: 'Rebuilding Nginx security rules' },
     'manage_firewall': { icon: 'bi-bricks text-danger', title: 'Modify Firewall', desc: 'Updating UFW port rules' },
+    'manage_fail2ban': { icon: 'bi-shield-slash text-danger', title: 'Manage Fail2ban', desc: 'Updating intrusion prevention jails' },
+    'secure_panel': { icon: 'bi-shield-lock text-success', title: 'Secure Dashboard', desc: 'Applying Let\'s Encrypt to panel' },
+    
+    // === Git & File Management ===
+    'git_clone': { icon: 'bi-git text-primary', title: 'Clone Repository', desc: 'Pulling source code from remote Git' },
+    'git_pull': { icon: 'bi-git text-dark', title: 'Git Pull', desc: 'Pulling latest repository code' },
+    'generate_ssh_key': { icon: 'bi-key text-success', title: 'Generate SSH Key', desc: 'Creating ed25519 deployment key' },
+    'manage_fm': { icon: 'bi-folder2-open text-warning', title: 'Deploy File Manager', desc: 'Provisioning TinyFM application' },
+    'rotate_fm': { icon: 'bi-key text-secondary', title: 'Rotate FM Password', desc: 'Updating File Manager credentials' },
+    'manage_ftp': { icon: 'bi-folder-symlink text-warning', title: 'Manage FTP Account', desc: 'Updating Pure-FTPd credentials' },
+
+    // === Mail Server Operations ===
+    'install_mail_engine': { icon: 'bi-envelope-plus text-success', title: 'Install Mail Engine', desc: 'Provisioning Postfix & Dovecot' },
+    'uninstall_mail_engine': { icon: 'bi-envelope-x text-danger', title: 'Uninstall Mail Engine', desc: 'Removing mail server components' },
+    'manage_mail_dns': { icon: 'bi-envelope-paper text-primary', title: 'Mail DNS Routing', desc: 'Updating MX and SPF records' },
+    'manage_mail_user': { icon: 'bi-person-badge text-info', title: 'Manage Mailbox', desc: 'Updating Postfix/Dovecot accounts' },
+
+    // === DNS & System Level Tasks ===
+    'create_dns': { icon: 'bi-diagram-2 text-info', title: 'Create DNS Zone', desc: 'Generating BIND9 master zone' },
+    'manage_dns_record': { icon: 'bi-card-list text-secondary', title: 'Manage DNS Record', desc: 'Updating BIND9 zone file' },
+    'create_user': { icon: 'bi-person-plus text-primary', title: 'Create System User', desc: 'Provisioning isolated Linux user environment' },
+    'delete_user': { icon: 'bi-person-x text-danger', title: 'Delete System User', desc: 'Removing user and associated data' },
+    'manage_cron': { icon: 'bi-clock-history text-primary', title: 'Manage Cron Job', desc: 'Updating scheduled tasks' },
+    'update_limits': { icon: 'bi-speedometer2 text-danger', title: 'Update Quotas', desc: 'Applying storage and resource limits' },
+    'set_timezone': { icon: 'bi-globe2 text-info', title: 'Set Timezone', desc: 'Updating system clock' },
+    'manage_service': { icon: 'bi-arrow-clockwise text-warning', title: 'Manage Service', desc: 'Restarting system daemon' },
+
+    // === Backups & Restoration ===
     'manage_backup': { icon: 'bi-archive text-primary', title: 'Generate Backup', desc: 'Archiving system data to vault' },
     'restore_backup': { icon: 'bi-arrow-counterclockwise text-warning', title: 'Restore Backup', desc: 'Overwriting live data from vault' },
-    'install_wp': { icon: 'bi-wordpress text-primary', title: 'Install WordPress', desc: 'Deploying CMS and Database' },
+    'delete_backup': { icon: 'bi-archive-x text-danger', title: 'Delete Backup', desc: 'Removing archive from vault' },
+
+    // === The Fallback ===
     'default': { icon: 'bi-gear text-secondary', title: 'System Task', desc: 'Executing backend process' }
 };
 

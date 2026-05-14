@@ -53,11 +53,14 @@
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-updates" role="tab">
                             <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 10. System Updates
                         </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-logs" role="tab">
+                            <i class="bi bi-terminal me-2 text-dark"></i> 11. Logs & Tasks
+                        </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-faq" role="tab">
-                            <i class="bi bi-question-circle me-2 text-secondary"></i> 11. Common FAQ
+                            <i class="bi bi-question-circle me-2 text-secondary"></i> 12. Common FAQ
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-license" role="tab">
-                            <i class="bi bi-award me-2 text-primary"></i> 12. Commercial License
+                            <i class="bi bi-award me-2 text-primary"></i> 13. Commercial License
                         </a>
                     </div>
                 </div>
@@ -227,8 +230,24 @@
                             
                             <h5 class="fw-bold mt-4"><i class="bi bi-braces text-dark me-2"></i> Custom WAF Rules & Dry-Runs</h5>
                             <p class="text-muted">You can write custom ModSecurity rules directly from the dashboard to whitelist IPs or block specific payloads.</p>
-                            <div class="alert alert-success border-0 shadow-sm">
+                            <div class="alert alert-success border-0 shadow-sm mb-4">
                                 <strong>The Safety Mechanism:</strong> When you submit a custom rule, Stackrium creates a backup and performs a strict <code>nginx -t</code> syntax dry-run in the background. If your custom rule contains a typo, the system instantly aborts the save and restores the backup to prevent your server from crashing!
+                            </div>
+
+                            <hr class="my-5">
+                            <h5 class="fw-bold mt-4"><i class="bi bi-file-earmark-lock text-success me-2"></i> SSL & Advanced Routing</h5>
+                            <p class="text-muted">Stackrium syncs directly with live Nginx and Certbot configurations to support automated Let's Encrypt renewals as well as Custom/Cloudflare Origin certificates.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Auto-Renewal:</b> Toggle Let's Encrypt system timers natively.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Force HTTPS:</b> Injects a permanent <code>301 Redirect</code> safely into Port 80.</li>
+                            </ul>
+
+                            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-start border-4 mt-3 mb-1 p-3">
+                                <h6 class="fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> Critical Warning: HSTS (Strict-Transport-Security)</h6>
+                                <p class="mb-0 text-dark" style="font-size: 0.85rem;">
+                                    When you enable HSTS, you command web browsers to <strong>never</strong> load your website over an insecure HTTP connection for the duration of the <code>max-age</code> (up to 2 years). <br><br>
+                                    <strong>Do not enable HSTS unless you are 100% certain you will maintain a valid SSL certificate.</strong> If your SSL expires or is removed while HSTS is cached in a user's browser, they will be permanently locked out of your site with a non-bypassable security error until the cache expires.
+                                </p>
                             </div>
                         </div>
                         
@@ -303,10 +322,25 @@
                             </ol>
                         </div>
 
+                        <div class="tab-pane fade" id="doc-logs" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Logs & Live Tasks</h2>
+                            <p class="fs-6 mb-4">Stackrium utilizes a dual-context architecture to separate global system health from tenant-level website tracking.</p>
+
+                            <h5 class="fw-bold text-dark"><i class="bi bi-terminal me-2"></i> The Universal Log Router</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-cpu text-primary me-2"></i> <b>System Logs (Overview Tab):</b> Streams global OS logs, including the Python Daemon (<code>worker.py</code>), Fail2ban firewall bans, and system updater logs.</li>
+                                <li class="mb-2"><i class="bi bi-journal-code text-info me-2"></i> <b>Website Logs (Domain Tab):</b> Context-aware. Instantly streams Nginx access and error logs specific to that tenant's directory without needing to select paths manually.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-dark mt-4"><i class="bi bi-list-task me-2"></i> Dictionary-Driven Tasks</h5>
+                            <p class="text-muted">The task queue intercepts raw database JSON payloads and translates them into human-readable actions using a UI Dictionary. Raw backend payloads (e.g., <code>update_waf</code>) are never exposed directly to the end-user.</p>
+                        </div>
+
                         <div class="tab-pane fade" id="doc-faq" role="tabpanel">
                             <h2 class="fw-bold mb-4">Frequently Asked Questions</h2>
                             
                             <div class="accordion accordion-flush" id="faqAccordion">
+                                
                                 <div class="accordion-item bg-transparent">
                                     <h2 class="accordion-header">
                                         <button class="accordion-button bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
@@ -446,6 +480,45 @@
                                     <div id="faq_2fa" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body px-0 text-muted">
                                             You will need SSH access to the server. Log in to your terminal and simply run the command: <code>sudo stackrium login</code>. The Stackrium CLI will instantly generate a secure, one-time access link. Copy and paste that link into your browser to bypass the login screen. Once inside, go to <strong>System Settings</strong> to reset or disable your 2FA.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_timeout">
+                                            Why did the server freeze or say ERR_TIMED_OUT when I clicked Apply?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_timeout" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you leave the panel open for a long time, your security session (CSRF Token) expires. Submitting a form triggers a <code>403 Forbidden</code> error. Stackrium's internal <strong>Fail2ban</strong> firewall detects these 403 errors and assumes a bot is attacking the panel. It immediately blocks your IP address to protect the server, causing a timeout. <br><em>Fix: Refresh the page to get a new token before submitting forms after a long idle period.</em>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_custom_ssl">
+                                            What happens if I paste a corrupted Custom SSL Certificate?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_custom_ssl" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Stackrium's backend uses a robust SRE rollback failsafe. Before applying your custom certificate to Nginx, it backs up the configuration and runs <code>nginx -t</code>. If your certificate crashes Nginx, the script instantly aborts, deletes the corrupted file, restores the backup, and reloads Nginx safely so your other domains stay online.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_sys_task">
+                                            Why does the UI show "System Task" instead of the real action?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_sys_task" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you see "System Task", it means a new backend script was added to the Python daemon, but the JavaScript translation dictionary in <code>system.js</code> hasn't been updated with the new icon and title mapping yet.
                                         </div>
                                     </div>
                                 </div>

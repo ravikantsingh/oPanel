@@ -385,9 +385,19 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alert("Routing rules applied successfully!");
+                    showToast("Routing rules queued for Nginx compilation!");
+                    $('#overview-tab').tab('show'); // Jump to tasks so you can see it run!
                 } else {
                     alert("Error: " + response.error);
+                }
+                btn.prop('disabled', false).html(originalText);
+            },
+            // Add this error block so it doesn't fail silently!
+            error: function(xhr) {
+                if (xhr.status === 403) {
+                    alert("Security Token Expired. Please refresh the page and try again.");
+                } else {
+                    alert("Network Error: Could not reach the server.");
                 }
                 btn.prop('disabled', false).html(originalText);
             }
@@ -438,6 +448,23 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
+                    
+                    // ALWAYS Sync Routing UI Toggles first
+                    $('#forceHttpsToggle').prop('checked', response.force_https);
+                    $('#sslAutoRenewToggle').prop('checked', response.auto_renew); // Make sure ID matches your HTML
+
+                    $('#hstsToggle').prop('checked', response.hsts_enabled).trigger('change');
+                    if (response.hsts_enabled) {
+                        $('#hstsSlider').val(response.hsts_max_age).trigger('input');
+                        $('#hstsSubdomains').prop('checked', response.hsts_subdomains);
+                        $('#hstsPreload').prop('checked', response.hsts_preload);
+                    } else {
+                        $('#hstsSlider').val(15552000).trigger('input');
+                        $('#hstsSubdomains').prop('checked', false);
+                        $('#hstsPreload').prop('checked', false);
+                    }
+
+                    // NOW Handle the Certificate Visuals
                     if(response.is_secured) {
                         // Populate Telemetry Data
                         $('#sslIssuerDisplay').text(response.issuer);
@@ -1350,5 +1377,29 @@ $(document).ready(function() {
             $('#fetchLogBtn').trigger('click'); 
             
         }, 300);
+    });
+    // === AUTO-RENEWAL TOGGLE CONTROLLER ===
+    $('#sslAutoRenewToggle').on('change', function() {
+        let isEnabled = $(this).is(':checked');
+        let domain = $('#sslTargetDomain').val();
+        let toggleBtn = $(this);
+        
+        toggleBtn.prop('disabled', true);
+        
+        $.ajax({
+            url: '/ajax/toggle_ssl_renewal.php',
+            type: 'POST',
+            data: { domain: domain, enable: isEnabled },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    showToast(isEnabled ? "Certbot auto-renewal ENABLED." : "Certbot auto-renewal DISABLED.");
+                } else {
+                    alert("Error: " + res.error);
+                    toggleBtn.prop('checked', !isEnabled); // Revert switch on fail
+                }
+                toggleBtn.prop('disabled', false);
+            }
+        });
     });
 });

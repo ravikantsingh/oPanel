@@ -290,7 +290,57 @@ elif [ "$ACTION" == "update_waf" ]; then
         echo "Error: Nginx failed to reload after WAF toggle."
         exit 1
     fi
+# ==========================================
+# ACTION: ADVANCED HTTPS & HSTS ROUTING
+# ==========================================
+elif [ "$ACTION" == "update_routing" ]; then
+    
+    FORCE_HTTPS=$(echo "$PAYLOAD" | jq -r '.force_https')
+    HSTS_ENABLED=$(echo "$PAYLOAD" | jq -r '.hsts_enabled')
+    HSTS_MAX_AGE=$(echo "$PAYLOAD" | jq -r '.hsts_max_age')
+    HSTS_SUBDOMAINS=$(echo "$PAYLOAD" | jq -r '.hsts_subdomains')
+    HSTS_PRELOAD=$(echo "$PAYLOAD" | jq -r '.hsts_preload')
 
+    if [ ! -f "$VHOST_CONF" ]; then
+        echo "Error: Nginx vhost for $DOMAIN not found."
+        exit 1
+    fi
+
+    echo "Applying routing rules for $DOMAIN..."
+    cp "$VHOST_CONF" "$VHOST_CONF.bak"
+
+    # 1. Strip out any old routing rules so we start clean
+    sed -i '/#force_https/d' "$VHOST_CONF"
+    sed -i '/#hsts/d' "$VHOST_CONF"
+
+    # 2. Inject Force HTTPS (Only inside the Port 80 Block)
+    if [ "$FORCE_HTTPS" == "true" ]; then
+        # We use awk to find the 'listen 80' block, and inject the redirect immediately after the 'server_name'
+        awk '/listen 80/ {in_80=1} /listen 443/ {in_80=0} in_80 && /server_name/ && !done_80 { print $0; print "    return 301 https://$host$request_uri; #force_https"; done_80=1; next } 1' "$VHOST_CONF" > "${VHOST_CONF}.tmp" && mv "${VHOST_CONF}.tmp" "$VHOST_CONF"
+    fi
+
+    # 3. Inject HSTS Header (Only inside the Port 443 SSL Block)
+    if [ "$HSTS_ENABLED" == "true" ]; then
+        HSTS_STRING="max-age=$HSTS_MAX_AGE"
+        if [ "$HSTS_SUBDOMAINS" == "true" ]; then HSTS_STRING="$HSTS_STRING; includeSubDomains"; fi
+        if [ "$HSTS_PRELOAD" == "true" ]; then HSTS_STRING="$HSTS_STRING; preload"; fi
+
+        # We use awk to find the 'listen 443' block, and inject the header immediately after the SSL certificate definitions
+        awk -v hsts="$HSTS_STRING" '/listen 443/ {in_443=1} /listen 80/ {in_443=0} in_443 && /ssl_certificate_key/ && !done_443 { print $0; print "    add_header Strict-Transport-Security \"" hsts "\" always; #hsts"; done_443=1; next } 1' "$VHOST_CONF" > "${VHOST_CONF}.tmp" && mv "${VHOST_CONF}.tmp" "$VHOST_CONF"
+    fi
+
+    # 4. Safely test and reload
+    if nginx -t > /dev/null 2>&1; then
+        systemctl reload nginx
+        rm "$VHOST_CONF.bak"
+        echo "Success: Advanced routing and HSTS applied."
+        exit 0
+    else
+        echo "Error: Syntax error generated. Rolling back changes."
+        mv "$VHOST_CONF.bak" "$VHOST_CONF"
+        systemctl reload nginx
+        exit 1
+    fi
 # ==========================================
 # ACTION: UPDATE CUSTOM WAF RULES
 # ==========================================

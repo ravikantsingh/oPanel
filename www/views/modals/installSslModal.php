@@ -43,6 +43,7 @@
                         
                         <form id="issueLetsEncryptForm" class="mt-4 text-start bg-white p-3 rounded border">
                             <input type="hidden" name="domain" class="sync-domain">
+                            <input type="hidden" name="action_type" value="letsencrypt">
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">Admin Email (For Expiry Notices)</label>
                                 <input type="email" class="form-control" name="email" placeholder="admin@example.com" required>
@@ -109,6 +110,7 @@
                 </div>
                 <form id="customSslForm">
                     <input type="hidden" name="domain" class="sync-domain">
+                    <input type="hidden" name="action_type" value="custom">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Private Key (.key)</label>
                         <textarea class="form-control font-monospace text-success bg-dark text-sm" name="private_key" rows="4" placeholder="-----BEGIN PRIVATE KEY-----" required></textarea>

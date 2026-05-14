@@ -41,20 +41,30 @@ elif [ "$ACTION" == "update_settings" ]; then
         echo "Error: Configuration file $JAIL_CONF not found."
         exit 1
     fi
+    
+    cp "$JAIL_CONF" "$JAIL_CONF.bak"
 
-    # Use sed to safely replace the existing values in the [DEFAULT] block
-    sed -i -E "s/^bantime\s*=.*/bantime  = $BANTIME/" "$JAIL_CONF"
-    sed -i -E "s/^findtime\s*=.*/findtime  = $FINDTIME/" "$JAIL_CONF"
-    sed -i -E "s/^maxretry\s*=.*/maxretry = $MAXRETRY/" "$JAIL_CONF"
+    # Use awk to safely replace values ONLY inside the [DEFAULT] block
+    awk -v bt="$BANTIME" -v ft="$FINDTIME" -v mr="$MAXRETRY" '
+        /^\[.*\]/ { in_default = ($0 == "[DEFAULT]") }
+        in_default && /^bantime\s*=/ { print "bantime  = " bt; next }
+        in_default && /^findtime\s*=/ { print "findtime  = " ft; next }
+        in_default && /^maxretry\s*=/ { print "maxretry = " mr; next }
+        { print $0 }
+    ' "$JAIL_CONF.bak" > "$JAIL_CONF"
 
-    # Test the configuration before restarting
-    fail2ban-client -t > /dev/null 2>&1
+    # Test the configuration properly using fail2ban-server
+    fail2ban-server -t > /dev/null 2>&1
+    
     if [ $? -eq 0 ]; then
         systemctl restart fail2ban
+        rm "$JAIL_CONF.bak"
         echo "Success: Fail2ban global settings updated to $BANTIME ban, $FINDTIME find, $MAXRETRY retries."
         exit 0
     else
-        echo "Error: Invalid Fail2ban configuration syntax. Aborting restart to prevent failure."
+        # Rollback if syntax is bad
+        mv "$JAIL_CONF.bak" "$JAIL_CONF"
+        echo "Error: Invalid Fail2ban configuration syntax. Aborting and rolling back."
         exit 1
     fi
 

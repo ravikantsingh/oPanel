@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS `backup_schedules` (
     `backup_type` ENUM('web', 'db') NOT NULL,
     `frequency` ENUM('daily', 'weekly', 'monthly') NOT NULL,
     `run_hour` INT DEFAULT 2, -- Default to 2 AM
-    `retention`_days INT DEFAULT 3, -- How many automated backups to keep
+    `retention_days` INT DEFAULT 3, -- How many automated backups to keep
     `last_run` DATETIME NULL,
     `is_active` BOOLEAN DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP

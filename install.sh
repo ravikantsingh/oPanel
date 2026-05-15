@@ -238,8 +238,16 @@ if [ ! -s /tmp/pma.zip ]; then
 fi
 
 unzip -q /tmp/pma.zip -d /tmp/
-mv /tmp/phpMyAdmin-*-all-languages /opt/panel/www/pma
+
+# Move the contents, not the folder
+mv /tmp/phpMyAdmin-*-all-languages/* /opt/panel/www/pma/
+rm -rf /tmp/phpMyAdmin-*-all-languages
+
 rm /tmp/pma.zip
+
+# Ensure the template cache folder exists
+mkdir -p /opt/panel/www/pma/tmp
+chmod 777 /opt/panel/www/pma/tmp
 
 BLOWFISH=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cp /tmp/panel_temp/www/pma/config.inc.php /opt/panel/www/pma/config.inc.php

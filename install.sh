@@ -30,7 +30,29 @@ echo -e "\n\e[32mStarting Stackrium Control Installation...\e[0m"
 export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
-# 1. INSTALL CORE DEPENDENCIES & NODE.JS
+# 1 PROVISION SWAP MEMORY (OOM Protection)
+# ==========================================
+echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
+# Only create swap if it doesn't already exist
+if [ ! -f /swapfile ]; then
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    # Make it permanent across reboots
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    
+    # Optimize swappiness (Tell kernel to prefer physical RAM, use swap only as fallback)
+    sysctl vm.swappiness=10
+    echo 'vm.swappiness=10' >> /etc/sysctl.conf
+    
+    echo -e "\e[32mSwap memory provisioned successfully.\e[0m"
+else
+    echo -e "\e[33mSwap file already exists. Skipping...\e[0m"
+fi
+
+# ==========================================
+# 1.5 INSTALL CORE DEPENDENCIES & NODE.JS
 # ==========================================
 echo -e "\e[34m[1/14] Installing system dependencies...\e[0m"
 apt-get update && apt-get upgrade -y
@@ -70,28 +92,6 @@ cat <<EOF > /etc/nginx/waf/stackrium-master.conf
 # Stackrium Master WAF Rules & Exceptions
 EOF
 systemctl restart nginx
-
-# ==========================================
-# 1.5 PROVISION SWAP MEMORY (OOM Protection)
-# ==========================================
-echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
-# Only create swap if it doesn't already exist
-if [ ! -f /swapfile ]; then
-    fallocate -l 2G /swapfile
-    chmod 600 /swapfile
-    mkswap /swapfile
-    swapon /swapfile
-    # Make it permanent across reboots
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-    
-    # Optimize swappiness (Tell kernel to prefer physical RAM, use swap only as fallback)
-    sysctl vm.swappiness=10
-    echo 'vm.swappiness=10' >> /etc/sysctl.conf
-    
-    echo -e "\e[32mSwap memory provisioned successfully.\e[0m"
-else
-    echo -e "\e[33mSwap file already exists. Skipping...\e[0m"
-fi
 
 # ==========================================
 # 1.6 MARIADB MEMORY TUNING
@@ -499,6 +499,7 @@ enabled  = true
 port     = 7443
 filter   = Stackrium
 logpath  = /opt/panel/logs/auth.log
+backend  = polling
 maxretry = 5
 EOF
 

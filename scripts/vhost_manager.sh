@@ -107,11 +107,11 @@ listen = /run/php/php$PHP_VERSION-fpm-$USERNAME.sock
 listen.owner = www-data
 listen.group = www-data
 listen.mode = 0660
-pm = dynamic
+; Stackrium Ondemand Architecture
+pm = ondemand
 pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
+pm.process_idle_timeout = 10s
+pm.max_requests = 200
 EOF
         # Test PHP syntax before restarting
         if php-fpm$PHP_VERSION -t > /dev/null 2>&1; then

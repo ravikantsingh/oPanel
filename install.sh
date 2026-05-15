@@ -94,6 +94,24 @@ else
 fi
 
 # ==========================================
+# 1.6 MARIADB MEMORY TUNING
+# ==========================================
+echo -e "\e[34m[+] Tuning MariaDB for micro-instance memory efficiency...\e[0m"
+cat << 'EOF' > /etc/mysql/mariadb.conf.d/99-stackrium.cnf
+[mysqld]
+innodb_buffer_pool_size = 64M
+max_connections = 60
+key_buffer_size = 16M
+thread_cache_size = 4
+host_cache_size = 0
+innodb_ft_cache_size = 1600000
+innodb_ft_total_cache_size = 32000000
+query_cache_type = 0
+query_cache_size = 0
+EOF
+systemctl restart mariadb
+
+# ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
 echo -e "\e[34m[2/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"

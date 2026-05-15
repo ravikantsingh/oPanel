@@ -28,7 +28,7 @@ fi
 
 # Verify Nginx syntax and reload
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success"
     exit 0
 else

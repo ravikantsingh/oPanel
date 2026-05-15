@@ -3,6 +3,7 @@
 # Purpose: Master Compiler for Redirects, MIME Types, and Hotlink Protection
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 VHOST="/etc/nginx/sites-available/$DOMAIN.conf"
 
@@ -60,5 +61,5 @@ if ! grep -q "stackrium/redirects" "$VHOST"; then
 fi
 
 echo "Configuration compiled successfully. Reloading Nginx."
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 exit 0

@@ -3,6 +3,7 @@
 # Purpose: Initialize a Laravel Environment, configure Nginx, and spin up Queue Workers
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 
@@ -20,7 +21,7 @@ echo "Initializing Laravel Environment for $DOMAIN..."
 # This securely hides the .env file and application logic from the public web
 if grep -q "root /home/$USERNAME/web/$DOMAIN/public_html;" "$VHOST"; then
     sed -i "s|root /home/$USERNAME/web/$DOMAIN/public_html;|root /home/$USERNAME/web/$DOMAIN/public_html/public;|g" "$VHOST"
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 fi
 
 # 2. Extract DB Password to update the Stackrium Database

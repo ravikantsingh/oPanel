@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 
 if [ -z "$PAYLOAD" ]; then
     echo "Error: No JSON payload provided."
@@ -67,7 +68,7 @@ elif [ "$ACTION" == "custom" ]; then
 
     # 4. Safely test and reload Nginx
     if nginx -t > /dev/null 2>&1; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         mysql -e "UPDATE panel_core.domains SET has_ssl = 1 WHERE domain_name = '$DOMAIN';"
         rm "${VHOST}.bak"
         echo "Success: Custom SSL applied and Nginx reloaded."
@@ -75,7 +76,7 @@ elif [ "$ACTION" == "custom" ]; then
     else
         echo "Error: Invalid Nginx syntax after applying custom SSL. Rolling back."
         mv "${VHOST}.bak" "$VHOST"
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         exit 1
     fi
 # ==========================================

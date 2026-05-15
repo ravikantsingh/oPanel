@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 FORCE_HTTPS=$(echo "$PAYLOAD" | jq -r '.force_https')
 ENABLE_HSTS=$(echo "$PAYLOAD" | jq -r '.enable_hsts')
@@ -53,7 +54,7 @@ fi
 # 4. SRE SAFETY CHECK & ROLLBACK
 # ==========================================
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     rm -f "${VHOST_CONF}.bak"
     
     # ---> THE FIX: Source of Truth is now actively updated <---
@@ -64,7 +65,7 @@ if nginx -t > /dev/null 2>&1; then
 else
     # ROLLBACK PROTOCOL: If sed corrupted the file, restore the backup immediately to keep the server online
     mv "${VHOST_CONF}.bak" "$VHOST_CONF"
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Critical Error: Nginx syntax check failed. Changes safely rolled back."
     exit 1
 fi

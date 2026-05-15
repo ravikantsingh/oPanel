@@ -3,6 +3,7 @@
 # Swaps the Master Panel SSL certificates based on the UI flag
 
 PAYLOAD=$1
+TASK_ID=$2
 ACTION=$(echo "$PAYLOAD" | jq -r '.sub_action')
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain // empty')
 
@@ -73,7 +74,7 @@ mkdir -p /etc/nginx/waf/
 touch /etc/nginx/waf/stackrium-master.conf
 
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success: Panel Nginx block updated."
     exit 0
 else

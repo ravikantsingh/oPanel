@@ -3,6 +3,7 @@
 # Purpose: Initialize a Python Environment (VirtualEnv, PM2, and Nginx Reverse Proxy)
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 
@@ -86,7 +87,7 @@ sed -i 's/fastcgi_pass unix:/#fastcgi_pass unix:/g' "$VHOST"
 PROXY_LOGIC="proxy_pass http:\/\/127.0.0.1:$APP_PORT;\n        proxy_set_header Host \$host;\n        proxy_set_header X-Real-IP \$remote_addr;\n        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;"
 sed -i "s|try_files \$uri \$uri/ /index.php?\$query_string;|$PROXY_LOGIC|g" "$VHOST"
 
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 
 # 7. Update Database
 $MYSQL_CMD "UPDATE domains SET app_type='python', app_port=$APP_PORT, pm2_process='$WORKER_NAME' WHERE domain_name='$DOMAIN';"

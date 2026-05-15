@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 
 if [ -z "$PAYLOAD" ]; then
     echo "Error: No JSON payload provided."
@@ -209,7 +210,7 @@ EOF
     ln -s "$VHOST_CONF" "$NGINX_ENABLED/"
     
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # ---> SOURCE OF TRUTH TRACKING <---
         mysql -e "INSERT IGNORE INTO panel_core.domains (domain_name, username, php_version) VALUES ('$DOMAIN', '$USERNAME', '$PHP_VERSION');"
 
@@ -238,7 +239,7 @@ elif [ "$ACTION" == "update_php" ]; then
 
     # 2. Test and reload Nginx FIRST
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         
         # 3. ---> MOVED: SOURCE OF TRUTH TRACKING <---
         # Only update the UI database if the server successfully applied the change
@@ -282,7 +283,7 @@ elif [ "$ACTION" == "update_waf" ]; then
     fi
 
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         mysql -e "UPDATE panel_core.domains SET waf_enabled = $DB_VAL WHERE domain_name = '$DOMAIN';"
         echo "Success: ModSecurity WAF for $DOMAIN is now $STATUS."
         exit 0
@@ -331,14 +332,14 @@ elif [ "$ACTION" == "update_routing" ]; then
 
     # 4. Safely test and reload
     if nginx -t > /dev/null 2>&1; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         rm "$VHOST_CONF.bak"
         echo "Success: Advanced routing and HSTS applied."
         exit 0
     else
         echo "Error: Syntax error generated. Rolling back changes."
         mv "$VHOST_CONF.bak" "$VHOST_CONF"
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         exit 1
     fi
 # ==========================================
@@ -360,7 +361,7 @@ elif [ "$ACTION" == "update_waf_rules" ]; then
 
     # Source of Truth: Validate syntax before saving to database
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # Escape single quotes so it doesn't break our MySQL INSERT query
         SAFE_RULES=$(echo "$CUSTOM_RULES" | sed "s/'/''/g")
         mysql -e "UPDATE panel_core.domains SET waf_custom_rules = '$SAFE_RULES' WHERE domain_name = '$DOMAIN';"

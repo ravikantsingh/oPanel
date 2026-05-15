@@ -2,6 +2,7 @@
 # /opt/panel/scripts/toggle_master_waf.sh
 
 STATUS=$1
+TASK_ID=$2
 
 if [ "$STATUS" == "off" ]; then
     # 1. Comment out in the live Nginx config

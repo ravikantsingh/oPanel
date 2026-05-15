@@ -2,6 +2,7 @@
 # /opt/panel/scripts/update_limits.sh
 
 PAYLOAD=$1
+TASK_ID=$2
 UPLOAD_SIZE=$(echo "$PAYLOAD" | jq -r '.upload_size')
 MAX_TIME=$(echo "$PAYLOAD" | jq -r '.max_time')
 
@@ -27,7 +28,7 @@ EOF
 done
 
 # 3. Reload Nginx to apply changes
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 
 echo "Success: Server limits updated to ${UPLOAD_SIZE}MB."
 exit 0

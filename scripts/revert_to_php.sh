@@ -3,6 +3,7 @@
 # Purpose: Destroys Python/Laravel environments and restores FastCGI PHP
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 
@@ -50,7 +51,7 @@ if [ ! -f "/home/$USERNAME/web/$DOMAIN/public_html/index.php" ] && [ ! -f "/home
 fi
 
 # 5. Commit the Changes to Nginx
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 
 # 6. Update Database Source of Truth
 $MYSQL_CMD "UPDATE domains SET app_type='php', document_root='public_html', app_port=NULL, pm2_process=NULL WHERE domain_name='$DOMAIN';"

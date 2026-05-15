@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 APP_ROOT=$(echo "$PAYLOAD" | jq -r '.app_root')
@@ -90,7 +91,7 @@ mysql -e "REPLACE INTO panel_core.node_apps (domain_name, username, app_root, ap
 
 # 7. Reload & Finalize
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success: Node.js App deployed on PM2 and Nginx proxy routed to port $APP_PORT!"
     exit 0
 else

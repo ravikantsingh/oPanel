@@ -270,9 +270,10 @@ ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
 echo 'yes' > /etc/pure-ftpd/conf/ChrootEveryone
 PUBLIC_IP=$(curl -s ifconfig.me)
 echo '40000 50000' > /etc/pure-ftpd/conf/PassivePortRange
-echo '$PUBLIC_IP' > /etc/pure-ftpd/conf/ForcePassiveIP
+echo "$PUBLIC_IP" > /etc/pure-ftpd/conf/ForcePassiveIP
 touch /etc/pure-ftpd/pureftpd.passwd
 pure-pw mkdb
+echo "yes" | sudo tee /etc/pure-ftpd/conf/VerboseLog
 systemctl restart pure-ftpd
 
 mkdir -p /etc/bind/zones
@@ -484,9 +485,9 @@ EOF
 cat << 'EOF' > /etc/fail2ban/jail.local
 [DEFAULT]
 usedns   = no
-bantime  = 1h
-findtime  = 10m
-maxretry = 5
+bantime  = 2h
+findtime  = 15m
+maxretry = 3
 banaction = ufw
 
 [sshd]
@@ -500,7 +501,7 @@ maxretry = 3
 enabled  = true
 port     = ftp
 filter   = pure-ftpd
-logpath  = /var/log/syslog
+logpath  = systemd
 maxretry = 5
 
 [postfix-sasl]

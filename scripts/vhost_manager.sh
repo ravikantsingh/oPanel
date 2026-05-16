@@ -78,7 +78,7 @@ server {
     # Custom Stackrium Error Pages
     include /etc/nginx/snippets/stackrium-errors.conf;
 
-    access_log $LOG_DIR/access.log;
+    access_log $LOG_DIR/access.log json_access;
     error_log $LOG_DIR/error.log;
 
     location / {

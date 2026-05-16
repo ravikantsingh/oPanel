@@ -108,6 +108,10 @@ window.fetchFail2Ban = function() {
                     $('#f2bGlobalJails').text(response.stats.length);
                     response.stats.forEach(function(s) {
                         globalTotalBans += parseInt(s.total_banned);
+                        let curFailedHtml = s.currently_failed > 0 
+                            ? `<span class="badge bg-warning text-dark border border-warning">${s.currently_failed}</span>` 
+                            : `<span class="text-muted border px-2 py-1 rounded small">${s.currently_failed}</span>`;
+
                         let curBannedHtml = s.currently_banned > 0 
                             ? `<span class="badge bg-danger fs-6">${s.currently_banned}</span>` 
                             : `<span class="badge bg-light text-dark border">${s.currently_banned}</span>`;
@@ -115,6 +119,7 @@ window.fetchFail2Ban = function() {
                         let row = `<tr>
                             <td class="fw-bold text-uppercase"><i class="bi bi-lock-fill text-muted me-1"></i> ${s.name}</td>
                             <td><code class="text-muted small">${s.file_list}</code></td>
+                            <td class="text-center">${curFailedHtml}</td>
                             <td class="text-center">${curBannedHtml}</td>
                             <td class="text-center fw-bold text-secondary">${s.total_banned}</td>
                         </tr>`;

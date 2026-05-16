@@ -25,12 +25,20 @@ try {
 
         $status = shell_exec("sudo /usr/bin/fail2ban-client status " . escapeshellarg($jail) . " 2>/dev/null");
         
-        // --- NEW: Parse the rich telemetry using Regex ---
+        // --- MISSING REGEX RESTORED ---
         preg_match('/Currently failed:\s+(\d+)/', $status, $cur_failed);
         preg_match('/Total failed:\s+(\d+)/', $status, $tot_failed);
-        preg_match('/File list:\s+(.*)/', $status, $file_list);
         preg_match('/Currently banned:\s+(\d+)/', $status, $cur_banned);
         preg_match('/Total banned:\s+(\d+)/', $status, $tot_banned);
+        
+        // --- THE BULLETPROOF SYSTEMD JOURNAL FIX ---
+        $monitored_file = 'Unknown';
+        
+        if (preg_match('/File list:\s+([^\n]+)/', $status, $file_list) && trim($file_list[1]) !== '') {
+            $monitored_file = trim($file_list[1]);
+        } elseif (stripos($status, 'journal') !== false) {
+            $monitored_file = '<span class="badge bg-secondary">Systemd Journal</span>';
+        }
         
         $jail_stats[] = [
             'name' => $jail,
@@ -38,7 +46,7 @@ try {
             'total_failed' => $tot_failed[1] ?? 0,
             'currently_banned' => $cur_banned[1] ?? 0,
             'total_banned' => $tot_banned[1] ?? 0,
-            'file_list' => trim($file_list[1] ?? 'Unknown')
+            'file_list' => $monitored_file // FIXED: Now using the correct variable
         ];
         // -----------------------------------------------
 

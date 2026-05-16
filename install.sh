@@ -319,6 +319,21 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 
 sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 
+echo -e "\e[34m[+] Configuring Native JSON Logging for Nginx...\e[0m"
+cat << 'EOF' > /etc/nginx/conf.d/stackrium_logging.conf
+# Stackrium Native JSON Access Logs (Optimized for low-RAM parsing)
+log_format json_access escape=json
+'{'
+  '"time": "$time_iso8601",'
+  '"ip": "$remote_addr",'
+  '"method": "$request_method",'
+  '"uri": "$request_uri",'
+  '"status": "$status",'
+  '"size": "$body_bytes_sent",'
+  '"user_agent": "$http_user_agent"'
+'}';
+EOF
+
 mkdir -p /var/www/stackrium_errors
 cp /tmp/panel_temp/www/errors/*.html /var/www/stackrium_errors/ 2>/dev/null || true
 

@@ -41,12 +41,13 @@
                                 <tr>
                                     <th>Security Jail</th>
                                     <th>Monitored Log File</th>
+                                    <th class="text-center text-warning">Current Strikes</th>
                                     <th class="text-center">Active Bans</th>
                                     <th class="text-center">Total Lifetime</th>
                                 </tr>
                             </thead>
                             <tbody id="dynamicFail2banStatsTable">
-                                <tr><td colspan="4" class="text-center text-muted py-3">Loading telemetry...</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted py-3">Loading telemetry...</td></tr>
                             </tbody>
                         </table>
                     </div>

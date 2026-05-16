@@ -234,12 +234,17 @@ window.fetchLogs = function(isManualFetch = false) {
     let terminal = $('#logTerminal');
     let btn = $('#fetchLogBtn');
 
-    // Only show the "Streaming logs..." warning if the user clicked the button manually. 
-    // We don't want it flashing every 2 seconds during the background poll.
     if (isManualFetch) {
         terminal.html('<span class="text-warning">Streaming logs...</span>');
         btn.prop('disabled', true);
     }
+
+    // Frontend Security: Replaces PHP's htmlspecialchars to prevent XSS attacks
+    const escapeHTML = (str) => {
+        return (str || '').toString().replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+        );
+    };
 
     $.ajax({
         url: '/ajax/get_logs.php',
@@ -251,12 +256,70 @@ window.fetchLogs = function(isManualFetch = false) {
 
             if(response.success) {
                 if(response.logs.trim() !== '') {
-                    terminal.text(response.logs);
+                    const lines = response.logs.split('\n').filter(line => line.trim() !== '').reverse();
+                    terminal.empty(); // Clear terminal
+
+                    lines.forEach(line => {
+                        let formattedHtml = '';
+
+                        try {
+                            // STRATEGY 3: Native JSON Parse (For Nginx Access Logs)
+                            const logObj = JSON.parse(line);
+                            
+                            // Dynamic Badge Colors
+                            let statusBadge = '<span class="badge bg-success" style="width:45px;">' + logObj.status + '</span>';
+                            if(logObj.status >= 400) statusBadge = '<span class="badge bg-warning text-dark" style="width:45px;">' + logObj.status + '</span>';
+                            if(logObj.status >= 500) statusBadge = '<span class="badge bg-danger" style="width:45px;">' + logObj.status + '</span>';
+
+                            // New Flexbox Column Layout
+                            formattedHtml = `
+                                <div class="mb-2 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-start gap-3">
+                                    <div class="text-secondary small text-nowrap font-monospace">[${escapeHTML(logObj.time)}]</div>
+                                    <div class="text-info fw-bold text-nowrap font-monospace" style="width: 120px;">${escapeHTML(logObj.ip)}</div>
+                                    <div>${statusBadge}</div>
+                                    <div class="text-light text-break w-100">${escapeHTML(logObj.method)} ${escapeHTML(logObj.uri)}</div>
+                                </div>`;
+
+                        } catch (e) {
+                            // STRATEGY 2: Regex Fallback (For standard error.log or old access logs)
+                            let badge = '<span class="badge bg-secondary" style="width:45px;">INFO</span>';
+                            let textColor = 'text-light';
+                            let lowerLine = line.toLowerCase();
+
+                            if (lowerLine.includes('error') || lowerLine.includes('fatal') || lowerLine.includes('crit')) {
+                                badge = '<span class="badge bg-danger" style="width:45px;">ERR</span>';
+                                textColor = 'text-danger';
+                            } else if (lowerLine.includes('warn')) {
+                                badge = '<span class="badge bg-warning text-dark" style="width:45px;">WARN</span>';
+                                textColor = 'text-warning';
+                            }
+
+                            let cleanLine = line;
+                            let timestamp = '';
+                            const timeMatch = line.match(/^\[.*?\]|^\w+\s+\d+\s+\d+:\d+:\d+/);
+                            
+                            if (timeMatch) {
+                                // Extract and format timestamp
+                                timestamp = `<div class="text-secondary small text-nowrap font-monospace">[${escapeHTML(timeMatch[0].replace(/[\[\]]/g, ''))}]</div>`;
+                                cleanLine = line.substring(timeMatch[0].length).trim();
+                            }
+
+                            // New Flexbox Column Layout
+                            formattedHtml = `
+                                <div class="mb-2 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-start gap-3">
+                                    ${timestamp} 
+                                    <div>${badge}</div> 
+                                    <div class="${textColor} text-break w-100">${escapeHTML(cleanLine)}</div>
+                                </div>`;
+                        }
+
+                        terminal.append(formattedHtml);
+                    });
                 } else {
                     terminal.html('<span class="text-secondary">Log file is currently empty.</span>');
                 }
             } else {
-                terminal.html('<span class="text-danger">' + response.error + '</span>');
+                terminal.html('<span class="text-danger">' + escapeHTML(response.error) + '</span>');
             }
             
             // Auto-scroll logic

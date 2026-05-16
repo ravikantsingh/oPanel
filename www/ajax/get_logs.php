@@ -56,7 +56,7 @@ if (!file_exists($log_file)) {
 
 // Safely tail the log (increased to 100 lines for better debugging context)
 $safe_path = escapeshellarg($log_file);
-$output = shell_exec("tail -n 100 $safe_path");
+$output = shell_exec("tail -n 50 $safe_path");
 
 if (empty(trim($output))) {
     $output = "File exists, but no logs have been recorded yet.";

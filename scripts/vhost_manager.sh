@@ -61,6 +61,7 @@ if [ "$ACTION" == "create" ]; then
 
     # Fix permissions (User owns their files, www-data can read them)
     chown -R $USERNAME:$USERNAME "/home/$USERNAME/web/$DOMAIN"
+    chown -R www-data:www-data "$LOG_DIR"
     chmod -R 755 "/home/$USERNAME/web/$DOMAIN"
 
     # 2. Generate Nginx Configuration (HEREDOC)
@@ -82,7 +83,7 @@ server {
     error_log $LOG_DIR/error.log;
 
     location / {
-        try_files \$uri \$uri/ =404;
+        try_files \$uri \$uri/ /index.php?\$args;
     }
 
     location ~ \.php$ {

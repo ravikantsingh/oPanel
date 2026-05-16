@@ -11,6 +11,11 @@ if [ "$ACTION" == "bind" ]; then
     echo "Binding Stackrium to ${DOMAIN}..."
     CERT="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
     KEY="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
+    # Automate Pure-FTPd SSL Integration
+    echo "Merging certificates for Pure-FTPd TLS..."
+    cat "$KEY" "$CERT" > /etc/ssl/private/pure-ftpd.pem
+    chmod 600 /etc/ssl/private/pure-ftpd.pem
+    systemctl restart pure-ftpd
 elif [ "$ACTION" == "unbind" ]; then
     echo "Unbinding Stackrium. Reverting to Server IP..."
     CERT="/etc/ssl/certs/mypanel-selfsigned.crt"

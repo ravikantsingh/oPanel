@@ -191,7 +191,7 @@ if (!empty($brand['login_bg_image'])) {
             <div class="badge bg-warning text-dark mb-3 px-3 py-2 rounded-pill"><i class="bi bi-shield-lock"></i> 2FA Setup Required</div>
             <p class="small text-secondary mb-3">Scan this QR code with Google Authenticator or Authy to secure your admin account.</p>
             <div class="bg-white p-2 rounded-3 d-inline-block mb-3">
-                <img src="<?= TOTP::getQRCodeUrl('Stackrium_Admin', $_SESSION['temp_2fa_secret']) ?>" class="img-fluid" alt="QR Code" style="width: 150px;">
+                <img src="<?= TOTP::getQRCodeUrl('Admin Login', $_SESSION['temp_2fa_secret']) ?>" class="img-fluid" alt="QR Code" style="width: 150px;">
             </div>
             <form method="POST">
                 <input type="hidden" name="action" value="verify_2fa">

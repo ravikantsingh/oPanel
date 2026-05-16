@@ -274,6 +274,7 @@ echo "$PUBLIC_IP" > /etc/pure-ftpd/conf/ForcePassiveIP
 touch /etc/pure-ftpd/pureftpd.passwd
 pure-pw mkdb
 echo "yes" | sudo tee /etc/pure-ftpd/conf/VerboseLog
+echo '1' > /etc/pure-ftpd/conf/TLS
 systemctl restart pure-ftpd
 
 mkdir -p /etc/bind/zones
@@ -388,6 +389,23 @@ mkdir -p /etc/nginx/stackrium/hotlink
 chown -R root:root /etc/nginx/stackrium
 chmod -R 755 /etc/nginx/stackrium
 chown -R root:root /etc/nginx/stackrium/hotlink
+
+echo -e "\e[34m[+] Provisioning Certbot FTP SSL Hook...\e[0m"
+mkdir -p /etc/letsencrypt/renewal-hooks/deploy/
+
+cat << 'EOF' > /etc/letsencrypt/renewal-hooks/deploy/update-ftp-ssl.sh
+#!/bin/bash
+# Check if the renewed certificate belongs to the Master Panel
+PANEL_DOMAIN=$(mysql -N -s -e "SELECT setting_value FROM panel_core.settings WHERE setting_key='panel_domain' LIMIT 1;" 2>/dev/null)
+
+if [ "$RENEWED_DOMAINS" == "$PANEL_DOMAIN" ] && [ -n "$PANEL_DOMAIN" ]; then
+    cat /etc/letsencrypt/live/$PANEL_DOMAIN/privkey.pem /etc/letsencrypt/live/$PANEL_DOMAIN/fullchain.pem > /etc/ssl/private/pure-ftpd.pem
+    chmod 600 /etc/ssl/private/pure-ftpd.pem
+    systemctl restart pure-ftpd
+fi
+EOF
+
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-ftp-ssl.sh
 
 systemctl restart nginx
 

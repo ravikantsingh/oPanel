@@ -501,7 +501,7 @@ maxretry = 3
 enabled  = true
 port     = ftp
 filter   = pure-ftpd
-logpath  = systemd
+backend  = systemd
 maxretry = 5
 
 [postfix-sasl]

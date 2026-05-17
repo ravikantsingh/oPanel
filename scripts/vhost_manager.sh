@@ -82,6 +82,9 @@ server {
     # Custom Stackrium Error Pages
     include /etc/nginx/snippets/stackrium-errors.conf;
 
+    # Active Botnet Defense (Layer 7 Drop)
+    include /etc/nginx/snippets/block-bots.conf;
+
     access_log $LOG_DIR/access.log json_access;
     error_log $LOG_DIR/error.log;
 

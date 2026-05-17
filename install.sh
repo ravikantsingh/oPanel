@@ -372,6 +372,15 @@ location @suspended {
 }
 EOF
 
+echo -e "\e[34m[+] Provisioning Layer-7 Botnet Defense...\e[0m"
+cat << 'EOF' > /etc/nginx/snippets/block-bots.conf
+# Stackrium Global Botnet Drop Rules
+# Instantly drops connections for known toxic vulnerability scanners
+location ~* (\.env|phpunit|eval-stdin\.php|wp_filemanager\.php|\.git\/config) {
+    return 444;
+}
+EOF
+
 echo -e "\e[34m[+] Configuring Sudoers Bridge...\e[0m"
 echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-ssl
 echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/stackrium-ssl
@@ -504,6 +513,13 @@ failregex = ^.*Stackrium Auth Failed:.*IP: <HOST>.*$
 ignoreregex =
 EOF
 
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-bots.conf
+[Definition]
+# Matches any IP where Nginx logged a 444 (Connection Closed) via our block-bots snippet
+failregex = ^<HOST> - - \[.*\] ".*" 444 .*$
+ignoreregex =
+EOF
+
 cat << 'EOF' > /etc/fail2ban/jail.local
 [DEFAULT]
 usedns   = no
@@ -547,6 +563,17 @@ filter   = Stackrium
 logpath  = /opt/panel/logs/auth.log
 backend  = polling
 maxretry = 5
+
+[stackrium-bots]
+enabled  = true
+port     = http,https
+filter   = stackrium-bots
+# The Magic: Watch every single tenant's log file simultaneously
+logpath  = /home/*/web/*/logs/access.log
+backend  = polling
+maxretry = 2
+findtime = 10m
+bantime  = 24h
 EOF
 
 touch /opt/panel/logs/auth.log

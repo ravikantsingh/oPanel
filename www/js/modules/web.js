@@ -181,6 +181,7 @@ window.fetchDomains = function() {
                                         <div class="d-grid gap-2">
                                             <button class="btn btn-sm btn-outline-info text-dark text-start show-connection-info" data-domain="${d.domain_name}"><i class="bi bi-info-circle-fill me-2"></i> Connection Info</button>
                                             <button class="btn btn-sm btn-outline-primary text-start open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}"><i class="bi bi-gear-wide-connected me-2"></i> Web Settings</button>
+                                            <button class="btn btn-sm btn-outline-dark text-start manage-proxy-btn" data-domain="${d.domain_name}" title="CDN / Proxy Settings"><i class="bi bi-shield-shaded"></i> Proxy/CDN</button>
                                             <button class="btn btn-sm btn-outline-secondary text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts</button>
                                             <button class="btn btn-sm btn-outline-secondary text-start manage-mail" data-domain="${d.domain_name}"><i class="bi bi-envelope-at-fill me-2"></i> Mailboxes</button>
                                             <button class="btn btn-sm btn-outline-dark text-start view-domain-logs" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-journal-code me-2"></i> Website Logs</button>
@@ -1499,4 +1500,65 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Open the modal (Attach this class to a button in your domain list)
+    $(document).on('click', '.manage-proxy-btn', function() {
+        let domain = $(this).data('domain');
+        $('#proxyDomainTitle').text(domain);
+        $('#proxyDomainInput').val(domain);
+        
+        // Reset form to default
+        $('#proxyTypeSelect').val('direct').trigger('change');
+        $('#proxyCustomIps').val('');
+        $('#proxyCustomHeader').val('X-Forwarded-For');
+        
+        $('#proxyModal').modal('show');
+    });
+
+    // Dynamic form fields
+    $('#proxyTypeSelect').on('change', function() {
+        if ($(this).val() === 'custom') {
+            $('#customProxySettings').removeClass('d-none').hide().slideDown('fast');
+            $('#proxyCustomIps').prop('required', true);
+            $('#proxyCustomHeader').prop('required', true);
+        } else {
+            $('#customProxySettings').slideUp('fast', function() {
+                $(this).addClass('d-none');
+            });
+            $('#proxyCustomIps').prop('required', false);
+            $('#proxyCustomHeader').prop('required', false);
+        }
+    });
+
+    // Submit the logic
+    $('#proxyForm').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#saveProxyBtn');
+        let originalHtml = btn.html();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Applying Rules...');
+
+        $.ajax({
+            url: '/ajax/manage_proxy.php',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#proxyModal').modal('hide');
+                    showToast(res.message); 
+                    // Switch to overview to see the task run
+                    $('#overview-tab').tab('show');
+                } else {
+                    alert("Error: " + res.error);
+                }
+                btn.prop('disabled', false).html(originalHtml);
+            },
+            error: function() {
+                alert("Network Error.");
+                btn.prop('disabled', false).html(originalHtml);
+            }
+        });
+    });
+
 });

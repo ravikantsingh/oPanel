@@ -386,6 +386,7 @@ cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 mkdir -p /etc/nginx/stackrium/redirects
 mkdir -p /etc/nginx/stackrium/mimes
 mkdir -p /etc/nginx/stackrium/hotlink
+mkdir -p /etc/nginx/conf.d/domains
 chown -R root:root /etc/nginx/stackrium
 chmod -R 755 /etc/nginx/stackrium
 chown -R root:root /etc/nginx/stackrium/hotlink
@@ -460,6 +461,9 @@ cat <<EOF > /etc/cron.d/stackrium-core
 
 # Auto-Update Engine (4:00 AM)
 0 4 * * * root /usr/bin/php /opt/panel/cli/auto_update.php >> /opt/panel/logs/auto_update.log 2>&1
+
+# Update Cloudflare Proxy IPs (Sunday at 4:00 AM)
+0 5 * * 0 root /bin/bash /opt/panel/scripts/update_cdn_ips.sh > /dev/null 2>&1
 EOF
 
 chmod 644 /etc/cron.d/stackrium-core

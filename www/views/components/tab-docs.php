@@ -6,61 +6,55 @@
         </div>
     </div>
 
-    <div class="alert alert-warning shadow-sm border-warning border-start-0 border-end-0 border-bottom-0 border-3 rounded-0 mb-4 pb-3 pt-3">
-        <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Critical Cloud Prerequisite: Port Opening</h6>
-        <p class="small mb-0 text-dark">Stackrium strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group / Network Firewall:</p>
-        <ul class="small mb-0 mt-2 text-dark font-monospace">
-            <li><strong>TCP 80 & 443:</strong> Web Traffic (HTTP/HTTPS)</li>
-            <li><strong>TCP 7443:</strong> Stackrium Dashboard Access</li>
-            <li><strong>TCP & UDP 53:</strong> BIND9 DNS Routing</li>
-            <li><strong>TCP 20, 21, & 40000-50000:</strong> Pure-FTPd Access</li>
-            <li><strong>TCP 22:</strong> SSH Server Access</li>
-        </ul>
-    </div>
-
     <div class="row g-4">
         <div class="col-md-3">
             <div class="card shadow-sm border-0 position-sticky" style="top: 20px;">
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush rounded" id="docs-list" role="tablist">
-                        <a class="list-group-item list-group-item-action active fw-bold py-3" data-bs-toggle="list" href="#doc-domains" role="tab">
-                            <i class="bi bi-globe me-2 text-primary"></i> 1. Domains & Subdomains
+                        <a class="list-group-item list-group-item-action active fw-bold py-3" data-bs-toggle="list" href="#doc-prereq" role="tab">
+                            <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> 1. Cloud Prerequisites
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-domains" role="tab">
+                            <i class="bi bi-globe me-2 text-primary"></i> 2. Domains & Subdomains
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-ftp" role="tab">
-                            <i class="bi bi-folder2-open me-2 text-warning"></i> 2. FTP & File Access
+                            <i class="bi bi-folder2-open me-2 text-warning"></i> 3. FTP & File Access
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-db-backups" role="tab">
-                            <i class="bi bi-database me-2 text-success"></i> 3. Databases & Backups
+                            <i class="bi bi-database me-2 text-success"></i> 4. Databases & Backups
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-dns" role="tab">
-                            <i class="bi bi-diagram-2 me-2 text-info"></i> 4. DNS Configuration
+                            <i class="bi bi-diagram-2 me-2 text-info"></i> 5. DNS Configuration
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-git" role="tab">
-                            <i class="bi bi-git me-2 text-danger"></i> 5. Git Deployment
+                            <i class="bi bi-git me-2 text-danger"></i> 6. Git Deployment
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-pm2" role="tab">
-                            <i class="bi bi-cpu me-2 text-success"></i> 6. Node.js & PM2
+                            <i class="bi bi-cpu me-2 text-success"></i> 7. Node.js & PM2
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-security" role="tab">
-                            <i class="bi bi-shield-lock me-2 text-dark"></i> 7. Security & WAF
+                            <i class="bi bi-shield-lock me-2 text-dark"></i> 8. Security & WAF
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cdn" role="tab">
+                            <i class="bi bi-diagram-3 me-2 text-danger"></i> 9. CDN & Proxy Routing
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-mail" role="tab">
-                            <i class="bi bi-envelope me-2 text-primary"></i> 8. Mail Server
+                            <i class="bi bi-envelope me-2 text-primary"></i> 10. Mail Server
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cron" role="tab">
-                            <i class="bi bi-clock-history me-2 text-secondary"></i> 9. Cron Jobs
+                            <i class="bi bi-clock-history me-2 text-secondary"></i> 11. Cron Jobs
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-updates" role="tab">
-                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 10. System Updates
+                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 12. System Updates
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-logs" role="tab">
-                            <i class="bi bi-terminal me-2 text-dark"></i> 11. Logs & Tasks
+                            <i class="bi bi-terminal me-2 text-dark"></i> 13. Logs & Tasks
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-faq" role="tab">
-                            <i class="bi bi-question-circle me-2 text-secondary"></i> 12. Common FAQ
+                            <i class="bi bi-question-circle me-2 text-secondary"></i> 14. Common FAQ
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-license" role="tab">
-                            <i class="bi bi-award me-2 text-primary"></i> 13. Commercial License
+                            <i class="bi bi-award me-2 text-primary"></i> 15. Commercial License
                         </a>
                     </div>
                 </div>
@@ -72,7 +66,23 @@
                 <div class="card-body p-5">
                     <div class="tab-content" id="nav-tabContent">
                         
-                        <div class="tab-pane fade show active" id="doc-domains" role="tabpanel">
+                        <div class="tab-pane fade show active" id="doc-prereq" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Critical Cloud Prerequisite</h2>
+                            <p class="fs-6 mb-4">Stackrium strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group or Network Firewall before proceeding.</p>
+
+                            <div class="alert alert-warning shadow-sm border-warning border-start border-4">
+                                <h5 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Required External Ports</h5>
+                                <ul class="small mb-0 mt-3 text-dark font-monospace">
+                                    <li class="mb-2"><strong>TCP 80 & 443:</strong> Web Traffic (HTTP/HTTPS)</li>
+                                    <li class="mb-2"><strong>TCP 7443:</strong> Stackrium Dashboard Access</li>
+                                    <li class="mb-2"><strong>TCP & UDP 53:</strong> BIND9 DNS Routing</li>
+                                    <li class="mb-2"><strong>TCP 20, 21, & 40000-50000:</strong> Pure-FTPd Access</li>
+                                    <li><strong>TCP 22:</strong> SSH Server Access</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-domains" role="tabpanel">
                             <h2 class="fw-bold mb-4">Domains, Subdomains & Status</h2>
                             <p class="fs-6 mb-4">Stackrium automatically handles Nginx configurations, permissions, and DNS zone creation when you deploy a new environment.</p>
                             
@@ -250,6 +260,36 @@
                                 </p>
                             </div>
                         </div>
+
+                        <div class="tab-pane fade" id="doc-cdn" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Universal CDN & Proxy Manager</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a zero-configuration proxy detection engine. This is a critical security feature if your website uses Cloudflare, Fastly, Sucuri, AWS CloudFront, or any custom load balancer.</p>
+
+                            <h5 class="fw-bold text-danger"><i class="bi bi-diagram-3 me-2"></i> Why is this required? (The "Spoofing" Problem)</h5>
+                            <p class="text-muted mb-4">
+                                When a user visits a site behind a CDN like Cloudflare, the CDN acts as a middleman. The CDN connects to your Stackrium server, not the user. 
+                                By default, Nginx and Fail2ban will only see the CDN's IP address. If a hacker attacks your site through Cloudflare, Fail2ban will block Cloudflare's IP—taking your entire site offline for everyone!
+                            </p>
+
+                            <h5 class="fw-bold"><i class="bi bi-robot text-primary me-2"></i> Automated Global Networks (The "Big Players")</h5>
+                            <p class="text-muted">Stackrium fully automates the IP resolution for major CDN networks.</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Websites</b> tab and click the <b>CDN / Proxy</b> button for your domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Select your network (e.g., <b>Cloudflare</b> or <b>Fastly</b>) from the dropdown and click Apply.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><strong>The Magic:</strong> A background cron job automatically downloads the official, trusted IP ranges from your provider's API every week. Nginx uses this list to safely intercept the correct HTTP header (e.g., <code>CF-Connecting-IP</code> or <code>Fastly-Client-IP</code>) and replaces the proxy IP with the real visitor IP in your access logs.</li>
+                            </ol>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-sliders text-success me-2"></i> Custom Proxies & Private Load Balancers</h5>
+                            <p class="text-muted">If you are using an internal Docker network, HAProxy, or an obscure CDN, use the Custom Proxy option to prevent spoofing.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Trusted Proxy IPs:</b> Enter the specific internal IP address (e.g., <code>10.0.0.5</code>) or CIDR range (e.g., <code>192.168.1.0/24</code>) of the machine forwarding the traffic. Nginx will <em>only</em> trust headers coming from these exact IPs.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Real-IP Header:</b> Enter the header name your proxy uses to pass the real IP (most commonly <code>X-Forwarded-For</code>).</li>
+                            </ul>
+                            
+                            <div class="alert alert-danger shadow-sm border-0 mt-3">
+                                <strong>Security Warning:</strong> Never configure a Custom Proxy with <code>0.0.0.0/0</code> as the Trusted IP. Hackers can easily send fake <code>X-Forwarded-For</code> headers to trick Fail2ban into blocking innocent services like Google or Cloudflare.
+                            </div>
+                        </div>
                         
                         <div class="tab-pane fade" id="doc-mail" role="tabpanel">
                             <h2 class="fw-bold mb-4">Mail Server (Postfix/Dovecot)</h2>
@@ -363,6 +403,20 @@
                                     <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body px-0 text-muted">
                                             Yes! Because subdomains are assigned to a specific Linux User during creation, that user's main FTP credentials will have access to the subdomain's directory as well.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#faq_cdn_ban">
+                                            My entire website went offline after turning on Cloudflare!
+                                        </button>
+                                    </h2>
+                                    <div id="faq_cdn_ban" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            You are likely a victim of <strong>CDN Suicide</strong>. Because you didn't configure the proxy routing in the panel, Fail2ban detected malicious traffic coming from Cloudflare, assumed Cloudflare was the hacker, and blocked Cloudflare's IP in the server firewall. <br><br>
+                                            <strong>The Fix:</strong> Log into the server via SSH, run <code>sudo fail2ban-client unban --all</code>, and immediately go to the Domains tab > CDN / Proxy Settings to configure Cloudflare properly!
                                         </div>
                                     </div>
                                 </div>

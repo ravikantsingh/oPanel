@@ -71,6 +71,7 @@ ALLOWED_ACTIONS = {
     'revert_to_php': '/opt/panel/scripts/revert_to_php.sh',
     'restart_app': '/opt/panel/scripts/restart_app.sh',
     'update_waf': '/opt/panel/scripts/waf_updater.sh',
+    'manage_proxy': '/opt/panel/scripts/proxy_manager.sh',
 }
 
 def get_db_connection():

@@ -69,6 +69,9 @@ if [ "$ACTION" == "create" ]; then
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
+
+    # Load Proxy/CDN Real-IP settings if they exist
+    include /etc/nginx/conf.d/domains/$DOMAIN-proxy*.conf;
     
     # MIME Types safety net to prevent files from downloading
     include /etc/nginx/mime.types;

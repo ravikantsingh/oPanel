@@ -324,6 +324,41 @@ window.fetchInstalledPhpVersions = function() {
     });
 };
 
+// Function to fetch and render the FTP table
+    window.fetchFtpUsers = function(domain) {
+        $('#dynamicFtpTable').html('<tr><td colspan="2" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>');
+        
+        $.ajax({
+            url: '/ajax/get_ftp_users.php',
+            type: 'POST',
+            data: { domain: domain },
+            dataType: 'json',
+            success: function(res) {
+                let tbody = $('#dynamicFtpTable');
+                tbody.empty();
+                if(res.success) {
+                    if(res.users.length === 0) {
+                        tbody.html('<tr><td colspan="2" class="text-center text-muted py-3 small">No FTP accounts found.</td></tr>');
+                    } else {
+                        res.users.forEach(u => {
+                            tbody.append(`
+                                <tr>
+                                    <td class="ps-3 fw-bold small text-dark">${u.ftp_user}</td>
+                                    <td class="text-end pe-3">
+                                        <button class="btn btn-sm btn-outline-primary py-0 edit-ftp-btn" data-user="${u.ftp_user}" title="Change Password"><i class="bi bi-key"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger py-0 delete-ftp-btn" data-user="${u.ftp_user}" data-domain="${domain}" title="Delete User"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                } else {
+                    tbody.html(`<tr><td colspan="2" class="text-center text-danger py-3 small">${res.error}</td></tr>`);
+                }
+            }
+        });
+    };
+
 // =================================================================
 // 2. EVENT LISTENERS
 // =================================================================
@@ -1399,6 +1434,68 @@ $(document).ready(function() {
                     toggleBtn.prop('checked', !isEnabled); // Revert switch on fail
                 }
                 toggleBtn.prop('disabled', false);
+            }
+        });
+    });
+
+    // 1. Hook into your existing manage-ftp open button to load the table
+    $(document).on('click', '.manage-ftp', function() {
+        let domain = $(this).data('domain');
+        window.fetchFtpUsers(domain);
+    });
+
+    // 2. Handle the "Edit Password" Button
+    $(document).on('click', '.edit-ftp-btn', function() {
+        let fullUser = $(this).data('user');
+        
+        // Set UI to Update Mode
+        $('#ftpFormTitle').text("Update Password: " + fullUser).addClass('text-primary');
+        $('#ftpAction').val('update');
+        
+        // Lock the username input and hide the suffix (since fullUser already contains @domain)
+        $('#ftpUserInput').val(fullUser).prop('readonly', true);
+        $('#ftpSuffix').addClass('d-none');
+        
+        $('#ftpPassInput').val(''); // Clear old password field
+        $('#cancelFtpEditBtn').removeClass('d-none');
+        $('#saveFtpBtn').removeClass('w-100').html('<i class="bi bi-key"></i> Update Password');
+    });
+
+    // 3. Handle Cancel Edit
+    $(document).on('click', '#cancelFtpEditBtn', function() {
+        $('#ftpFormTitle').text("Create New Account").removeClass('text-primary');
+        $('#ftpAction').val('create');
+        $('#ftpUserInput').val('').prop('readonly', false);
+        $('#ftpSuffix').removeClass('d-none');
+        $('#ftpPassInput').val('');
+        $(this).addClass('d-none');
+        $('#saveFtpBtn').addClass('w-100').html('<i class="bi bi-save"></i> Save Account');
+    });
+
+    // 4. Handle Delete Button
+    $(document).on('click', '.delete-ftp-btn', function() {
+        let ftpUser = $(this).data('user');
+        let domain = $(this).data('domain');
+        let sysUser = $('#ftpSysUser').val(); // Grab from modal hidden input
+        
+        if(!confirm(`Delete FTP user ${ftpUser}? This cannot be undone.`)) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm"></i>');
+
+        $.ajax({
+            url: '/ajax/manage_ftp.php',
+            type: 'POST',
+            data: { action: 'delete', ftp_user: ftpUser, domain: domain, username: sysUser },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    showToast("FTP Delete Task Queued!");
+                    window.fetchFtpUsers(domain); // Refresh table
+                } else {
+                    alert("Error: " + res.error);
+                    btn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
+                }
             }
         });
     });

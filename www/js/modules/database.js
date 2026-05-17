@@ -23,13 +23,14 @@ window.fetchUsers = function() {
                     if(badges === '') badges = '<span class="text-muted small">None</span>';
 
                     let row = `<tr>
-                            <td class="fw-bold">${u.username}</td>
-                            <td class="small text-muted">${u.email || 'No email'}</td>
-                            <td>${badges}</td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-outline-danger delete-user" data-user="${u.username}" title="Delete User"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>`;
+                                <td class="fw-bold">${u.username}</td>
+                                <td class="small text-muted">${u.email || 'No email'}</td>
+                                <td>${badges}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary change-linux-pass me-1" data-user="${u.username}" title="Change OS Password"><i class="bi bi-key"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger delete-user" data-user="${u.username}" title="Delete User"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>`;
                     tbody.append(row);
                 });
                 
@@ -386,6 +387,38 @@ $(document).ready(function() {
             $('#devPhpBoilerplate').val(boilerplate);
             $('#devRedisPass').val('');
         }
+    });
+
+    $(document).on('click', '.change-linux-pass', function() {
+        let user = $(this).data('user');
+        $('#linuxPassUser').val(user);
+        $('#linuxPassTitle').text(user);
+        $('#linuxPassForm')[0].reset();
+        $('#linuxPassModal').modal('show');
+    });
+
+    $('#linuxPassForm').on('submit', function(e) {
+        e.preventDefault();
+        let btn = $('#linuxPassBtn');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+        $.ajax({
+            url: '/ajax/change_user_password.php', // We will route the update through your existing user API
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#linuxPassModal').modal('hide');
+                    alert("Password update queued to system processor.");
+                    // Switch to overview to see the task run
+                    $('#overview-tab').tab('show'); 
+                } else {
+                    alert("Error: " + res.error);
+                }
+                btn.prop('disabled', false).html('Update Password');
+            }
+        });
     });
 
     window.fetchUsers();

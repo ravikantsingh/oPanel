@@ -17,6 +17,7 @@ include 'views/modals/addUserModal.php';
 include 'views/modals/addDbModal.php';
 include 'views/modals/changeDbPassModal.php';
 include 'views/modals/ftpModal.php';
+include 'views/modals/linuxPassModal.php';
 
 // 3. File Management & Git
 include 'views/modals/fileManagerModal.php';

@@ -74,6 +74,25 @@ if [ "$ACTION" == "create" ]; then
     fi
 
 # ==========================================
+# ACTION: UPDATE PASSWORD
+# ==========================================
+elif [ "$ACTION" == "change_password" ]; then
+    
+    if ! id "$USERNAME" &>/dev/null; then
+        echo "Error: Linux user $USERNAME does not exist."
+        exit 1
+    fi
+
+    # Safely inject the new password
+    if ! echo "$USERNAME:$PASSWORD" | chpasswd; then
+        echo "Error: Failed to update OS password."
+        exit 1
+    fi
+
+    echo "Success: Password updated for system user $USERNAME."
+    exit 0
+
+# ==========================================
 # ACTION: DELETE USER
 # ==========================================
 elif [ "$ACTION" == "delete" ]; then

@@ -6,6 +6,22 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
+                
+                <div class="table-responsive mb-4 bg-white rounded border shadow-sm">
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light text-muted small">
+                            <tr>
+                                <th class="ps-3 py-2">FTP Username</th>
+                                <th class="text-end pe-3 py-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dynamicFtpTable">
+                            <tr><td colspan="2" class="text-center text-muted py-3">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 id="ftpFormTitle" class="mb-3 fw-bold text-dark border-bottom pb-2">Create New Account</h6>
                 <form id="ftpForm">
                     <input type="hidden" name="action" id="ftpAction" value="create">
                     <input type="hidden" name="domain" id="ftpDomain">
@@ -22,17 +38,16 @@
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted d-flex justify-content-between">
                             FTP Password
-                            <a href="#" class="text-decoration-none" id="generateFtpPass"><i class="bi bi-magic"></i> Generate Random</a>
+                            <a href="#" class="text-decoration-none" id="generateFtpPass"><i class="bi bi-magic"></i> Generate</a>
                         </label>
                         <div class="input-group">
                             <input type="text" class="form-control font-monospace" name="ftp_pass" id="ftpPassInput" placeholder="Enter or generate password" required>
-                            <button class="btn btn-outline-secondary copy-btn" type="button" data-target="ftpPassInput"><i class="bi bi-clipboard"></i></button>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-danger d-none" id="deleteFtpBtn"><i class="bi bi-trash"></i> Delete User</button>
-                        <button type="button" class="btn btn-primary w-100 ms-2" id="saveFtpBtn"><i class="bi bi-save"></i> Save FTP Account</button>
+                        <button type="button" class="btn btn-outline-secondary d-none" id="cancelFtpEditBtn">Cancel Edit</button>
+                        <button type="button" class="btn btn-primary w-100" id="saveFtpBtn"><i class="bi bi-save"></i> Save Account</button>
                     </div>
                 </form>
             </div>

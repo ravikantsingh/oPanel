@@ -196,7 +196,7 @@ window.fetchRecentTasks = function() {
 window.renderTaskPagination = function(p) {
     let container = $('#taskPaginationContainer');
     if (container.length === 0) {
-        // Changed to attach to our new .tasks-wrapper div
+        // Attach to our new .tasks-wrapper div
         $('#dynamicTasksTable').closest('.tasks-wrapper').after(`
             <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" id="taskPaginationContainer"></div>
         `);
@@ -212,14 +212,37 @@ window.renderTaskPagination = function(p) {
         </select>
         <ul class="pagination pagination-sm mb-0 shadow-sm">`;
 
+    // 1. Previous Button
     pageHtml += `<li class="page-item ${p.current_page == 1 ? 'disabled' : ''}">
         <a class="page-link task-page-link" href="#" data-page="${p.current_page - 1}">Prev</a></li>`;
 
-    for (let i = 1; i <= p.total_pages; i++) {
+    // 2. SLIDING WINDOW CALCULATION (Show max 3 pages)
+    let startPage = Math.max(1, p.current_page - 1);
+    let endPage = Math.min(p.total_pages, p.current_page + 1);
+    
+    // Edge cases to always show exactly 3 pages if available
+    if (p.current_page === 1 && p.total_pages >= 3) endPage = 3;
+    if (p.current_page === p.total_pages && p.total_pages >= 3) startPage = p.total_pages - 2;
+
+    // Add absolute first page and ellipsis if we are deep in the pagination
+    if (startPage > 1) {
+        pageHtml += `<li class="page-item"><a class="page-link task-page-link" href="#" data-page="1">1</a></li>`;
+        if (startPage > 2) pageHtml += `<li class="page-item disabled"><span class="page-link text-muted border-0 bg-transparent">...</span></li>`;
+    }
+
+    // Render the dynamic 3-button window
+    for (let i = startPage; i <= endPage; i++) {
         pageHtml += `<li class="page-item ${p.current_page == i ? 'active' : ''}">
             <a class="page-link task-page-link" href="#" data-page="${i}">${i}</a></li>`;
     }
 
+    // Add absolute last page and ellipsis if we have many pages left
+    if (endPage < p.total_pages) {
+        if (endPage < p.total_pages - 1) pageHtml += `<li class="page-item disabled"><span class="page-link text-muted border-0 bg-transparent">...</span></li>`;
+        pageHtml += `<li class="page-item"><a class="page-link task-page-link" href="#" data-page="${p.total_pages}">${p.total_pages}</a></li>`;
+    }
+
+    // 3. Next Button
     pageHtml += `<li class="page-item ${p.current_page == p.total_pages ? 'disabled' : ''}">
         <a class="page-link task-page-link" href="#" data-page="${p.current_page + 1}">Next</a></li>`;
 
@@ -252,11 +275,14 @@ window.fetchLogs = function(isManualFetch = false) {
         data: { type: logType, domain: targetDomain, username: targetUser },
         dataType: 'json',
         success: function(response) {
-            let isAtBottom = terminal[0].scrollHeight - terminal.scrollTop() === terminal.outerHeight();
+            // Check if user is already at the bottom BEFORE we add new text
+            // Added a 10px buffer to make the "sticky" bottom more forgiving
+            let isAtBottom = (terminal[0].scrollHeight - terminal.scrollTop()) <= (terminal.outerHeight() + 10);
 
             if(response.success) {
                 if(response.logs.trim() !== '') {
-                    const lines = response.logs.split('\n').filter(line => line.trim() !== '').reverse();
+                    // REMOVED .reverse() -> Now renders chronologically (Newest at bottom)
+                    const lines = response.logs.split('\n').filter(line => line.trim() !== '');
                     terminal.empty(); // Clear terminal
 
                     lines.forEach(line => {
@@ -322,8 +348,11 @@ window.fetchLogs = function(isManualFetch = false) {
                 terminal.html('<span class="text-danger">' + escapeHTML(response.error) + '</span>');
             }
             
-            // Auto-scroll logic
-            if(isAtBottom) terminal.scrollTop(terminal[0].scrollHeight);
+            // Auto-scroll logic: Scroll down if it's a fresh manual click OR if they were already at the bottom
+            if(isManualFetch || isAtBottom) {
+                terminal.scrollTop(terminal[0].scrollHeight);
+            }
+            
             if(isManualFetch) btn.prop('disabled', false);
         },
         error: function() {

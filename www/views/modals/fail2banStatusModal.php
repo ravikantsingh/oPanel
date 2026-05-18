@@ -34,23 +34,19 @@
                     </div>
                 </div>
 
-                <div class="p-3">
-                    <div class="table-responsive border rounded bg-white shadow-sm">
-                        <table class="table table-hover mb-0 text-sm align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Security Jail</th>
-                                    <th>Monitored Log File</th>
-                                    <th class="text-center text-warning">Current Strikes</th>
-                                    <th class="text-center">Active Bans</th>
-                                    <th class="text-center">Total Lifetime</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dynamicFail2banStatsTable">
-                                <tr><td colspan="5" class="text-center text-muted py-3">Loading telemetry...</td></tr>
-                            </tbody>
-                        </table>
+                <div class="p-3 bg-light">
+                    <div class="row px-3 pb-2 text-muted small fw-bold d-none d-md-flex align-items-center border-bottom mb-2">
+                        <div class="col-md-3">Security Jail</div> <div class="col-md-3">Monitored Log File</div> <div class="col-md-2 text-center text-warning">Current Strikes</div>
+                        <div class="col-md-2 text-center">Active Bans</div>
+                        <div class="col-md-2 text-center">Total Lifetime</div>
                     </div>
+                    
+                    <div class="list-group shadow-sm border rounded" id="dynamicFail2banStatsTable">
+                        <div class="list-group-item text-center text-muted py-4 border-0">
+                            <span class="spinner-border spinner-border-sm me-2"></span> Loading telemetry...
+                        </div>
+                    </div>
+                    
                     <div class="mt-3 small text-muted text-center">
                         <i class="bi bi-info-circle"></i> Telemetry is updated in real-time directly from the fail2ban daemon.
                     </div>

@@ -76,6 +76,10 @@ window.fetchFail2Ban = function() {
         dataType: 'json',
         success: function(response) {
             if(response.success) {
+                
+                // ==========================================
+                // 1. Handle the Banned IPs Table
+                // ==========================================
                 let tbody = $('#dynamicFail2banTable');
                 tbody.empty();
                 
@@ -100,34 +104,75 @@ window.fetchFail2Ban = function() {
                     });
                 }
 
+                // ==========================================
+                // 2. Handle the Telemetry Stats
+                // ==========================================
                 let statsBody = $('#dynamicFail2banStatsTable');
                 statsBody.empty();
                 let globalTotalBans = 0;
 
                 if(response.stats && response.stats.length > 0) {
                     $('#f2bGlobalJails').text(response.stats.length);
+                    
                     response.stats.forEach(function(s) {
                         globalTotalBans += parseInt(s.total_banned);
+                        
+                        // FIX: Split by spaces OR commas, and filter out empty strings
+                        let cleanHoverTitle = s.file_list
+                            .replace(/(<([^>]+)>)/gi, "")
+                            .split(/[\s,]+/) 
+                            .filter(path => path.trim() !== '')
+                            .map(path => '📄 ' + path.trim())
+                            .join('&#10;');
+
                         let curFailedHtml = s.currently_failed > 0 
-                            ? `<span class="badge bg-warning text-dark border border-warning">${s.currently_failed}</span>` 
+                            ? `<span class="badge bg-warning text-dark border border-warning shadow-sm">${s.currently_failed}</span>` 
                             : `<span class="text-muted border px-2 py-1 rounded small">${s.currently_failed}</span>`;
 
                         let curBannedHtml = s.currently_banned > 0 
-                            ? `<span class="badge bg-danger fs-6">${s.currently_banned}</span>` 
+                            ? `<span class="badge bg-danger shadow-sm">${s.currently_banned}</span>` 
                             : `<span class="badge bg-light text-dark border">${s.currently_banned}</span>`;
 
-                        let row = `<tr>
-                            <td class="fw-bold text-uppercase"><i class="bi bi-lock-fill text-muted me-1"></i> ${s.name}</td>
-                            <td><code class="text-muted small">${s.file_list}</code></td>
-                            <td class="text-center">${curFailedHtml}</td>
-                            <td class="text-center">${curBannedHtml}</td>
-                            <td class="text-center fw-bold text-secondary">${s.total_banned}</td>
-                        </tr>`;
+                        // The 5-column flexbox mapping
+                        let row = `
+                        <div class="list-group-item py-3 px-3 border-0 border-bottom bg-white list-group-item-action">
+                            <div class="row align-items-center">
+                                
+                                <div class="col-6 col-md-3 mb-2 mb-md-0 fw-bold text-uppercase text-dark text-nowrap">
+                                    <i class="bi bi-lock-fill text-muted me-1"></i> ${s.name}
+                                </div>
+
+                                <div class="col-6 col-md-3 mb-2 mb-md-0" style="min-width: 0;">
+                                    <div class="text-muted font-monospace small text-truncate" title="${cleanHoverTitle}" style="cursor: help;">
+                                        ${s.file_list}
+                                    </div>
+                                </div>
+
+                                <div class="col-4 col-md-2 text-center">
+                                    <div class="d-md-none small text-muted mb-1">Strikes</div>
+                                    ${curFailedHtml}
+                                </div>
+
+                                <div class="col-4 col-md-2 text-center">
+                                    <div class="d-md-none small text-muted mb-1">Bans</div>
+                                    ${curBannedHtml}
+                                </div>
+
+                                <div class="col-4 col-md-2 text-center">
+                                    <div class="d-md-none small text-muted mb-1">Lifetime</div>
+                                    <div class="fw-bold ${s.total_banned > 0 ? 'text-secondary' : 'text-muted'}">${s.total_banned}</div>
+                                </div>
+                                
+                            </div>
+                        </div>`;
+                        
                         statsBody.append(row);
                     });
+                    
                     $('#f2bGlobalTotalBans').text(globalTotalBans);
+                    
                 } else {
-                    statsBody.html('<tr><td colspan="4" class="text-center text-danger py-3">No active jails found. Check daemon.</td></tr>');
+                    statsBody.html('<div class="list-group-item text-center text-danger py-4 border-0"><i class="bi bi-exclamation-octagon me-2"></i> No active jails found. Check daemon.</div>');
                 }
             }
         }

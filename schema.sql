@@ -258,3 +258,38 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `migrations` (`version`) VALUES ('1.0.0');
+
+-- 1. Local Support Tickets
+CREATE TABLE IF NOT EXISTS `support_tickets` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `central_id` INT(11) DEFAULT NULL UNIQUE, 
+  `subject` VARCHAR(255) NOT NULL,
+  `priority` VARCHAR(50) DEFAULT 'Normal',
+  `status` VARCHAR(50) DEFAULT 'Open',
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 2. Local Ticket Replies
+CREATE TABLE IF NOT EXISTS `support_replies` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `central_reply_id` INT(11) DEFAULT NULL UNIQUE,
+  `ticket_id` INT(11) NOT NULL,
+  `sender_type` VARCHAR(50) NOT NULL,
+  `message_body` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 3. Local Ticket Attachments
+CREATE TABLE IF NOT EXISTS `support_attachments` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `ticket_id` INT(11) NOT NULL,
+  `reply_id` INT(11) DEFAULT NULL,
+  `file_name` VARCHAR(255) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `mime_type` VARCHAR(100) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`reply_id`) REFERENCES `support_replies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

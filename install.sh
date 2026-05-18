@@ -171,6 +171,7 @@ mkdir -p /opt/panel/backups/databases
 mkdir -p /opt/panel/backups/websites
 mkdir -p /etc/nginx/waf
 mkdir -p /opt/panel/cli/migrations
+mkdir -p /opt/panel/www/uploads/tickets
 
 echo "<?php define('PANEL_VERSION', '1.0.0'); ?>" > /opt/panel/www/version.php
 chown www-data:www-data /opt/panel/www/version.php
@@ -179,8 +180,10 @@ echo '{"waf_branch": "v3.3/master"}' > /opt/panel/www/config/waf_settings.json
 chown www-data:www-data /opt/panel/www/config/waf_settings.json
 chmod 644 /opt/panel/www/config/waf_settings.json
 
-chown -R www-data:www-data /opt/panel/www
+chown -R www-data:www-data /opt/panel/www /opt/panel/www/uploads
 chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates /opt/panel/cli
+
+chmod -R 750 /opt/panel/www/uploads
 
 # This instantly scrubs Windows characters from ALL cloned scripts
 sed -i -e 's/\r$//' /opt/panel/scripts/*.sh

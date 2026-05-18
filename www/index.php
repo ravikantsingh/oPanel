@@ -71,6 +71,7 @@ if (file_exists($license_file)) {
         include 'views/components/tab-backups.php'; 
         include 'views/components/tab-license.php'; 
         include 'views/components/tab-docs.php';
+        include 'views/components/tab-support.php';
     ?>
 </div>
 

@@ -48,6 +48,7 @@
 <script src="/js/modules/database.js"></script>
 <script src="/js/modules/security.js"></script>
 <script src="/js/modules/mail.js"></script>
+<script src="/js/modules/support.js"></script>
 <!-- <script src="/js/panel.js?v=<?php echo time(); ?>"></script> -->
 
 </body>

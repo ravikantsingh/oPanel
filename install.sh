@@ -509,7 +509,8 @@ ufw --force enable
 echo -e "\e[34m[12/14] Configuring Fail2ban Intrusion Prevention...\e[0m"
 cat << 'EOF' > /etc/fail2ban/filter.d/Stackrium.conf
 [Definition]
-failregex = ^.*Stackrium Auth Failed:.*IP: <HOST>.*$
+# Matches our custom json_access format looking for IP and Status 444
+failregex = "ip":\s*"<HOST>",.*"status":\s*"444"
 ignoreregex =
 EOF
 

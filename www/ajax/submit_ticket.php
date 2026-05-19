@@ -1,5 +1,6 @@
 <?php
 require_once 'security.php';
+require_once '../classes/Database.php';
 header('Content-Type: application/json');
 
 // Stackrium Configuration
@@ -102,11 +103,12 @@ try {
     $central_data = json_decode($response, true);
 
     if ($http_code === 200 && isset($central_data['success']) && $central_data['success']) {
-        // Link the local ticket to the central database ticket ID
+        // Link the local ticket to the central database
         $central_ticket_id = $central_data['central_ticket_id'];
+        $master_ticket_number = $central_data['ticket_number']; // Grab the Master ID
         
-        $updateStmt = $db->prepare("UPDATE support_tickets SET central_id = ? WHERE id = ?");
-        $updateStmt->execute([$central_ticket_id, $local_ticket_id]);
+        $updateStmt = $db->prepare("UPDATE support_tickets SET central_id = ?, ticket_number = ? WHERE id = ?");
+        $updateStmt->execute([$central_ticket_id, $master_ticket_number, $local_ticket_id]);
 
         echo json_encode([
             'success' => true, 

@@ -19,7 +19,10 @@
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
                 <h6 class="mb-0" id="threadTitle">New Support Ticket</h6>
-                <button class="btn btn-sm btn-outline-light border-0" id="btnBackToTickets"><i class="bi bi-arrow-left"></i> Back</button>
+                <div>
+                    <button class="btn btn-sm btn-danger border-0 d-none me-2 fw-bold" id="btnCloseTicket"><i class="bi bi-x-circle-fill"></i> Close Ticket</button>
+                    <button class="btn btn-sm btn-outline-light border-0" id="btnBackToTickets"><i class="bi bi-arrow-left"></i> Back</button>
+                </div>
             </div>
             
             <div class="card-body bg-light p-3 d-none" id="chatHistory" style="max-height: 400px; overflow-y: auto;">

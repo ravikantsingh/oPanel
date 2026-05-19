@@ -262,10 +262,12 @@ INSERT IGNORE INTO `migrations` (`version`) VALUES ('1.0.0');
 -- 1. Local Support Tickets
 CREATE TABLE IF NOT EXISTS `support_tickets` (
   `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `central_id` INT(11) DEFAULT NULL UNIQUE, 
+  `central_id` INT(11) DEFAULT NULL UNIQUE,
+  `ticket_number` VARCHAR(32) NULL UNIQUE, 
   `subject` VARCHAR(255) NOT NULL,
   `priority` VARCHAR(50) DEFAULT 'Normal',
   `status` VARCHAR(50) DEFAULT 'Open',
+  `is_unread` TINYINT(1) DEFAULT 0,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

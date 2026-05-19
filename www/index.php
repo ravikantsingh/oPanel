@@ -30,7 +30,7 @@ include 'views/header.php';
 
 <?php //include 'views/components/stats-bar.php'; ?>
 
-<?php include 'views/components/panel-tabs.php'; ?>
+<?php //    include 'views/components/panel-tabs.php'; ?>
 
 <?php 
 $license_file = '/opt/panel/www/config/license_status.json';

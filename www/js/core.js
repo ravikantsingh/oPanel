@@ -1,5 +1,34 @@
 // /opt/panel/www/js/core.js
 
+// --- STACKRIUM GLOBAL TOAST ENGINE ---
+window.showToast = function(type, title, message) {
+    let icon = type === 'success' ? 'bi-check-circle-fill text-success' : 
+              (type === 'error' ? 'bi-exclamation-triangle-fill text-danger' : 'bi-info-circle-fill text-info');
+    
+    let toastId = 'toast-' + Date.now();
+    let toastHtml = `
+        <div id="${toastId}" class="toast align-items-center border-0 shadow-lg rounded-4 mb-3" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body d-flex p-3 bg-white rounded-4">
+                <i class="bi ${icon} fs-3 me-3 align-self-center"></i>
+                <div>
+                    <h6 class="mb-1 fw-bold text-dark">${title}</h6>
+                    <p class="mb-0 small text-muted">${message}</p>
+                </div>
+                <button type="button" class="btn-close ms-auto align-self-start" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    $('.toast-container').append(toastHtml);
+    let toastEl = new bootstrap.Toast(document.getElementById(toastId), { delay: 4000 });
+    toastEl.show();
+    
+    // Self-cleanup: Remove HTML from DOM after it fades out
+    document.getElementById(toastId).addEventListener('hidden.bs.toast', () => {
+        $('#' + toastId).remove();
+    });
+}
+
 $(document).ready(function() {
     // =================================================================
     // GLOBAL UI INJECTIONS

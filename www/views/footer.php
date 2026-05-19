@@ -50,6 +50,14 @@
 <script src="/js/modules/mail.js"></script>
 <script src="/js/modules/support.js"></script>
 <!-- <script src="/js/panel.js?v=<?php echo time(); ?>"></script> -->
-
+<script>
+document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
+    link.addEventListener('shown.bs.tab', function (event) {
+        // Grab the text of the clicked tab, strip the icon, and update the title
+        let tabText = event.target.innerText.trim();
+        document.getElementById('pageTitle').innerText = tabText;
+    });
+});
+</script>
 </body>
 </html>

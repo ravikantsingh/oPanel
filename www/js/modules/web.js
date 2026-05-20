@@ -15,7 +15,7 @@ window.fetchDomains = function() {
                 container.empty();
                 
                 if(response.domains.length === 0) {
-                    container.html('<div class="text-center text-muted py-5">No domains configured.</div>');
+                    container.html('<div class="text-center text-muted py-5 border-0 bg-transparent">No domains configured.</div>');
                     return;
                 }
 
@@ -43,16 +43,16 @@ window.fetchDomains = function() {
                     let appActions = '';
                     if (isPhp) {
                         appActions = `
-                            <button class="btn btn-sm btn-outline-danger text-start deploy-laravel" data-domain="${d.domain_name}" data-user="${d.username}">
+                            <button class="btn btn-sm btn-outline-danger text-start deploy-laravel shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}">
                                 <i class="bi bi-box-seam me-2"></i> Deploy Laravel
                             </button>
-                            <button class="btn btn-sm btn-outline-warning text-dark text-start deploy-python" data-domain="${d.domain_name}" data-user="${d.username}">
+                            <button class="btn btn-sm btn-outline-warning text-dark text-start deploy-python shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}">
                                 <i class="bi bi-filetype-py me-2"></i> Deploy Python
                             </button>
-                            <button class="btn btn-sm btn-outline-success text-start open-node-modal" data-domain="${d.domain_name}" data-user="${d.username}">
+                            <button class="btn btn-sm btn-outline-success text-start open-node-modal shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}">
                                 <i class="bi bi-hexagon-fill me-2"></i> Deploy Node.js
                             </button>
-                            <button class="btn btn-sm btn-outline-primary text-start open-wp-modal" data-domain="${d.domain_name}" data-user="${d.username}">
+                            <button class="btn btn-sm btn-outline-primary text-start open-wp-modal shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}">
                                 <i class="bi bi-wordpress me-2"></i> WordPress
                             </button>
                         `;
@@ -62,16 +62,16 @@ window.fetchDomains = function() {
                         let restartBtn = '';
                         if (d.app_type === 'python' || d.app_type === 'node') {
                             restartBtn = `
-                            <button class="btn btn-sm btn-outline-dark text-start restart-app" data-domain="${d.domain_name}" data-user="${d.username}">
+                            <button class="btn btn-sm btn-outline-dark text-start restart-app shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}">
                                 <i class="bi bi-arrow-clockwise me-2"></i> Restart Engine
                             </button>`;
                         }
                         appActions = `
-                            <button class="btn btn-sm btn-${color} text-start disabled">
+                            <button class="btn btn-sm btn-${color} text-start disabled shadow-sm border-0">
                                 <i class="bi bi-cpu-fill me-2"></i> ${appLabel} Active
                             </button>
                             ${restartBtn}
-                            <button class="btn btn-sm btn-outline-secondary text-start revert-app" data-domain="${d.domain_name}" data-user="${d.username}" data-type="${d.app_type}">
+                            <button class="btn btn-sm btn-outline-secondary text-start revert-app shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}" data-type="${d.app_type}">
                                 <i class="bi bi-arrow-counterclockwise me-2"></i> Revert to PHP
                             </button>
                         `;
@@ -90,9 +90,9 @@ window.fetchDomains = function() {
                                 commits.forEach(c => {
                                     commitsHtml += `
                                     <div class="col">
-                                        <div class="p-2 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                                        <div class="p-2 border-0 rounded-3 bg-white h-100 shadow-sm d-flex flex-column">
                                             <div class="d-flex align-items-center mb-1">
-                                                <span class="badge bg-success bg-opacity-10 text-success me-2 border border-success p-1"><i class="bi bi-check-lg"></i></span>
+                                                <span class="badge bg-success bg-opacity-10 text-success me-2 border-0 p-1"><i class="bi bi-check-lg"></i></span>
                                                 <span class="text-primary font-monospace fw-bold small">[${c.commit}]</span>
                                             </div>
                                             <div class="text-muted" style="font-size: 0.70rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="${c.message}">
@@ -108,13 +108,13 @@ window.fetchDomains = function() {
                             <div class="d-flex flex-wrap justify-content-between align-items-end">
                                 <div class="flex-grow-1 me-3 mb-2 mb-md-0">
                                     <div class="fw-bold small text-dark mb-1"><i class="bi bi-github me-1"></i> Repository: <span class="text-primary">${d.git_repo}</span> (Branch: ${currentBranch})</div>
-                                    <div class="input-group input-group-sm shadow-sm">
-                                        <span class="input-group-text bg-light px-2"><i class="bi bi-lightning-charge-fill text-warning"></i> Hook</span>
-                                        <input type="text" class="form-control font-monospace text-muted" style="font-size: 0.70rem;" value="${webhookUrl}" readonly onclick="this.select(); document.execCommand('copy'); showToast('Webhook URL copied!');" title="Click to copy Webhook URL">
+                                    <div class="input-group input-group-sm shadow-sm border-0 rounded-3">
+                                        <span class="input-group-text bg-light border-0 px-2"><i class="bi bi-lightning-charge-fill text-warning"></i> Hook</span>
+                                        <input type="text" class="form-control font-monospace text-muted border-0 copy-trigger" style="font-size: 0.70rem; cursor: pointer;" value="${webhookUrl}" readonly title="Click to copy Webhook URL">
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btn-sm btn-dark manual-git-pull shadow-sm" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}">
+                                    <button class="btn btn-sm btn-dark manual-git-pull shadow-sm border-0" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}">
                                         <i class="bi bi-arrow-down-circle me-1"></i> Pull Latest Code
                                     </button>
                                 </div>
@@ -124,16 +124,16 @@ window.fetchDomains = function() {
                     }
 
                     allRowsHtml += `
-                    <div class="accordion-item mb-3 border shadow-sm rounded">
-                        <div class="d-flex align-items-stretch border-bottom bg-white rounded-top">
+                    <div class="accordion-item mb-3 border-0 shadow-sm rounded-3">
+                        <div class="d-flex align-items-stretch border-0 bg-white rounded-top-3">
                             <h2 class="accordion-header flex-grow-1 m-0">
                                 <button class="accordion-button collapsed py-2 rounded-start border-0 shadow-none bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#acc-${d.id}">
                                     <div class="d-flex align-items-center w-100">
                                         <div class="me-2"><i class="bi bi-globe fs-4 text-primary"></i></div>
                                         <div class="lh-sm">
                                             <span class="fw-bold text-dark fs-6">${d.domain_name}</span>
-                                            ${isSuspended ? '<span class="badge bg-danger ms-1" style="font-size:0.65rem;">Suspended</span>' : ''}
-                                            <span class="badge bg-secondary ms-3 async-dns-check" data-domain="${d.domain_name}">
+                                            ${isSuspended ? '<span class="badge bg-danger bg-opacity-10 text-danger border-0 rounded-pill ms-1" style="font-size:0.65rem;">Suspended</span>' : ''}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill ms-3 async-dns-check" data-domain="${d.domain_name}">
                                                 <i class="spinner-border spinner-border-sm" style="width: 10px; height: 10px;"></i> Checking...
                                             </span>
                                             <span class="text-muted small ms-2" style="font-size:0.75rem;">(User: ${d.username} | PHP ${d.php_version})</span>
@@ -141,51 +141,51 @@ window.fetchDomains = function() {
                                     </div>
                                 </button>
                             </h2>
-                            <div class="d-flex align-items-center px-3 border-start bg-light rounded-end">
-                                <a href="${proto}://${d.domain_name}" target="_blank" onclick="event.stopPropagation()" class="btn btn-sm btn-light border shadow-sm me-2 py-1 px-2" title="Visit Site">
+                            <div class="d-flex align-items-center px-3 border-start border-opacity-10 bg-light rounded-end-3">
+                                <a href="${proto}://${d.domain_name}" target="_blank" onclick="event.stopPropagation()" class="btn btn-sm btn-light border-0 shadow-sm me-2 py-1 px-2" title="Visit Site">
                                     <i class="bi bi-box-arrow-up-right text-primary me-1"></i> Visit
                                 </a>
-                                <button class="btn btn-sm btn-outline-primary btn-jump-dns" data-domain="${d.domain_name}"><i class="bi bi-globe"></i> Manage DNS</button>
-                                <button class="btn btn-sm btn-danger shadow-sm delete-domain ms-2 py-1 px-2" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain">
+                                <button class="btn btn-sm btn-outline-primary shadow-sm border-0 btn-jump-dns py-1 px-2" data-domain="${d.domain_name}"><i class="bi bi-globe me-1"></i> Manage DNS</button>
+                                <button class="btn btn-sm btn-danger shadow-sm border-0 delete-domain ms-2 py-1 px-2" data-domain="${d.domain_name}" data-user="${d.username}" title="Delete Domain">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </div>
                         </div>
                         <div id="acc-${d.id}" class="accordion-collapse collapse" data-bs-parent="#dynamicDomainsAccordion">
-                            <div class="accordion-body bg-light p-3">
+                            <div class="accordion-body bg-light rounded-bottom-3 p-3 border-top border-opacity-10">
                                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
                                     <div class="col">
-                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2"><i class="bi bi-cpu me-1"></i> App Engines</h6>
+                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-cpu me-1"></i> App Engines</h6>
                                         <div class="d-grid gap-2">${appActions}</div>
                                     </div>
-                                    <div class="col border-start">
-                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2"><i class="bi bi-shield-check me-1"></i> Security</h6>
+                                    <div class="col border-start border-opacity-10">
+                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-shield-check me-1"></i> Security</h6>
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-sm btn-${wafColor} text-start toggle-waf" data-domain="${d.domain_name}" data-action="${d.waf_enabled == 1 ? 'off' : 'on'}"><i class="bi ${wafIcon} me-2"></i> ${wafText}</button>
-                                            <button class="btn btn-sm btn-outline-dark text-start edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}"><i class="bi bi-shield-lock me-2"></i> WAF Rules</button>
-                                            <button class="btn btn-sm btn-outline-success text-start" data-bs-toggle="modal" data-bs-target="#installSslModal" onclick="$('#sslTargetDomain').val('${d.domain_name}').trigger('change');"><i class="bi bi-shield-lock-fill me-2"></i> Install SSL</button>
+                                            <button class="btn btn-sm btn-${wafColor} shadow-sm border-0 text-start toggle-waf" data-domain="${d.domain_name}" data-action="${d.waf_enabled == 1 ? 'off' : 'on'}"><i class="bi ${wafIcon} me-2"></i> ${wafText}</button>
+                                            <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}"><i class="bi bi-shield-lock me-2"></i> WAF Rules</button>
+                                            <button class="btn btn-sm btn-outline-success shadow-sm border-0 text-start" data-bs-toggle="modal" data-bs-target="#installSslModal" onclick="$('#sslTargetDomain').val('${d.domain_name}').trigger('change');"><i class="bi bi-shield-lock-fill me-2"></i> Install SSL</button>
                                         </div>
                                     </div>
-                                    <div class="col border-start">
-                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2"><i class="bi bi-folder2-open me-1"></i> Files & Cache</h6>
+                                    <div class="col border-start border-opacity-10">
+                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-folder2-open me-1"></i> Files & Cache</h6>
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-sm btn-outline-primary text-start open-fm-sso" data-domain="${d.domain_name}"><i class="bi bi-folder2-open me-2"></i> Open File Manager</button>
-                                            <button class="btn btn-sm btn-outline-warning text-dark text-start deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Deploy File Manager</button>
-                                            <button class="btn btn-sm btn-outline-secondary text-start rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-key me-2"></i> Rotate FM Key</button>
-                                            <button class="btn btn-sm btn-outline-danger text-start enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-memory me-2"></i> Inject Redis Cache</button>
-                                            <button class="btn btn-sm btn-outline-dark text-start edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}'> <i class="bi bi-sliders me-2"></i> PHP Config</button>
+                                            <button class="btn btn-sm btn-outline-primary shadow-sm border-0 text-start open-fm-sso" data-domain="${d.domain_name}"><i class="bi bi-folder2-open me-2"></i> Open File Manager</button>
+                                            <button class="btn btn-sm btn-outline-warning shadow-sm border-0 text-dark text-start deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Deploy File Manager</button>
+                                            <button class="btn btn-sm btn-outline-secondary shadow-sm border-0 text-start rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-key me-2"></i> Rotate FM Key</button>
+                                            <button class="btn btn-sm btn-outline-danger shadow-sm border-0 text-start enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-memory me-2"></i> Inject Redis Cache</button>
+                                            <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}'> <i class="bi bi-sliders me-2"></i> PHP Config</button>
                                         </div>
                                     </div>
-                                    <div class="col border-start">
-                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom pb-2 mb-2"><i class="bi bi-hdd-network me-1"></i> Network & Info</h6>
+                                    <div class="col border-start border-opacity-10">
+                                        <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-hdd-network me-1"></i> Network & Info</h6>
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-sm btn-outline-info text-dark text-start show-connection-info" data-domain="${d.domain_name}"><i class="bi bi-info-circle-fill me-2"></i> Connection Info</button>
-                                            <button class="btn btn-sm btn-outline-primary text-start open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}"><i class="bi bi-gear-wide-connected me-2"></i> Web Settings</button>
-                                            <button class="btn btn-sm btn-outline-dark text-start manage-proxy-btn" data-domain="${d.domain_name}" title="CDN / Proxy Settings"><i class="bi bi-shield-shaded"></i> Proxy/CDN</button>
-                                            <button class="btn btn-sm btn-outline-secondary text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts</button>
-                                            <button class="btn btn-sm btn-outline-secondary text-start manage-mail" data-domain="${d.domain_name}"><i class="bi bi-envelope-at-fill me-2"></i> Mailboxes</button>
-                                            <button class="btn btn-sm btn-outline-dark text-start view-domain-logs" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-journal-code me-2"></i> Website Logs</button>
-                                            <button class="btn btn-sm btn-${suspendColor} text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}"><i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain</button>
+                                            <button class="btn btn-sm btn-outline-info shadow-sm border-0 text-dark text-start show-connection-info" data-domain="${d.domain_name}"><i class="bi bi-info-circle-fill me-2"></i> Connection Info</button>
+                                            <button class="btn btn-sm btn-outline-primary shadow-sm border-0 text-start open-advanced-web" data-domain="${d.domain_name}" data-hotlink="${d.hotlink_protection}"><i class="bi bi-gear-wide-connected me-2"></i> Web Settings</button>
+                                            <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start manage-proxy-btn" data-domain="${d.domain_name}" title="CDN / Proxy Settings"><i class="bi bi-shield-shaded"></i> Proxy/CDN</button>
+                                            <button class="btn btn-sm btn-outline-secondary shadow-sm border-0 text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts</button>
+                                            <button class="btn btn-sm btn-outline-secondary shadow-sm border-0 text-start manage-mail" data-domain="${d.domain_name}"><i class="bi bi-envelope-at-fill me-2"></i> Mailboxes</button>
+                                            <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start view-domain-logs" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-journal-code me-2"></i> Website Logs</button>
+                                            <button class="btn btn-sm btn-${suspendColor} shadow-sm border-0 text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}"><i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain</button>
                                         </div>
                                     </div>
                                 </div>
@@ -227,10 +227,10 @@ window.runAsyncDnsChecks = function() {
                 badge.addClass('checked');
                 if (response.success) {
                     if (response.pointing) {
-                        badge.removeClass('bg-secondary text-dark').addClass('bg-success text-white').html('<i class="bi bi-check-circle"></i> Pointing');
+                        badge.removeClass('bg-secondary bg-opacity-10 text-secondary').addClass('bg-success bg-opacity-10 text-success').html('<i class="bi bi-check-circle"></i> Pointing');
                     } else {
                         let titleText = response.resolved_ip ? `Pointing to: ${response.resolved_ip}` : 'No DNS Record Found';
-                        badge.removeClass('bg-secondary text-dark').addClass('bg-danger text-white').attr('title', titleText).html('<i class="bi bi-x-circle"></i> Not Pointing');
+                        badge.removeClass('bg-secondary bg-opacity-10 text-secondary').addClass('bg-danger bg-opacity-10 text-danger').attr('title', titleText).html('<i class="bi bi-x-circle"></i> Not Pointing');
                     }
                 } else {
                     badge.html('<i class="bi bi-exclamation-triangle"></i> Check Failed');
@@ -253,24 +253,24 @@ window.fetchAdvancedWebData = function(domain) {
             if(res.success) {
                 let rBody = $('#dynamicRedirectsTable');
                 rBody.empty();
-                if(res.redirects.length === 0) rBody.html('<tr><td colspan="4" class="text-center text-muted small">No active redirects.</td></tr>');
+                if(res.redirects.length === 0) rBody.html('<tr><td colspan="4" class="text-center text-muted small border-0">No active redirects.</td></tr>');
                 res.redirects.forEach(r => {
-                    let typeBadge = r.redirect_type == 301 ? '<span class="badge bg-primary">301</span>' : '<span class="badge bg-secondary">302</span>';
+                    let typeBadge = r.redirect_type == 301 ? '<span class="badge bg-primary bg-opacity-10 text-primary border-0 rounded-pill px-2 shadow-sm">301</span>' : '<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill px-2 shadow-sm">302</span>';
                     rBody.append(`<tr>
-                        <td class="font-monospace small">${r.source_path}</td>
-                        <td class="font-monospace small text-truncate" style="max-width:200px;">${r.target_url}</td>
+                        <td class="font-monospace small text-dark">${r.source_path}</td>
+                        <td class="font-monospace small text-truncate text-muted" style="max-width:200px;">${r.target_url}</td>
                         <td>${typeBadge}</td>
-                        <td class="text-end"><button class="btn btn-sm btn-outline-danger del-adv-btn py-0" data-id="${r.id}" data-action="del_redirect" title="Delete"><i class="bi bi-trash"></i></button></td>
+                        <td class="text-end"><button class="btn btn-sm btn-outline-danger shadow-sm border-0 del-adv-btn py-0" data-id="${r.id}" data-action="del_redirect" title="Delete"><i class="bi bi-trash"></i></button></td>
                     </tr>`);
                 });
                 let mBody = $('#dynamicMimesTable');
                 mBody.empty();
-                if(res.mimes.length === 0) mBody.html('<tr><td colspan="3" class="text-center text-muted small">No custom MIME types.</td></tr>');
+                if(res.mimes.length === 0) mBody.html('<tr><td colspan="3" class="text-center text-muted small border-0">No custom MIME types.</td></tr>');
                 res.mimes.forEach(m => {
                     mBody.append(`<tr>
-                        <td class="fw-bold">.${m.extension}</td>
+                        <td class="fw-bold text-dark">.${m.extension}</td>
                         <td class="font-monospace small text-muted">${m.mime_type}</td>
-                        <td class="text-end"><button class="btn btn-sm btn-outline-danger del-adv-btn py-0" data-id="${m.id}" data-action="del_mime" title="Delete"><i class="bi bi-trash"></i></button></td>
+                        <td class="text-end"><button class="btn btn-sm btn-outline-danger shadow-sm border-0 del-adv-btn py-0" data-id="${m.id}" data-action="del_mime" title="Delete"><i class="bi bi-trash"></i></button></td>
                     </tr>`);
                 });
             }
@@ -279,31 +279,28 @@ window.fetchAdvancedWebData = function(domain) {
 };
 
 window.loadPhpVersions = function() {
-        $.ajax({
-            url: '/ajax/get_php_versions.php',
-            type: 'POST',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.versions.length > 0) {
-                    let options = '';
-                    response.versions.forEach(function(version, index) {
-                        // Mark the highest version as the default selected option
-                        let isSelected = (index === 0) ? 'selected' : '';
-                        let defaultText = (index === 0) ? ' (Default)' : '';
-                        options += `<option value="${version}" ${isSelected}>PHP ${version}${defaultText}</option>`;
-                    });
-                    
-                    // Inject into both the Add Domain and Change PHP modals instantly
-                    $('#phpVersion, #newPhpVersion').html(options);
-                } else {
-                    $('#phpVersion, #newPhpVersion').html('<option value="">Error: No PHP versions found</option>');
-                }
-            },
-            error: function() {
-                $('#phpVersion, #newPhpVersion').html('<option value="">Error contacting API</option>');
+    $.ajax({
+        url: '/ajax/get_php_versions.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.versions.length > 0) {
+                let options = '';
+                response.versions.forEach(function(version, index) {
+                    let isSelected = (index === 0) ? 'selected' : '';
+                    let defaultText = (index === 0) ? ' (Default)' : '';
+                    options += `<option value="${version}" ${isSelected}>PHP ${version}${defaultText}</option>`;
+                });
+                $('#phpVersion, #newPhpVersion').html(options);
+            } else {
+                $('#phpVersion, #newPhpVersion').html('<option value="">Error: No PHP versions found</option>');
             }
-        });
-    };
+        },
+        error: function() {
+            $('#phpVersion, #newPhpVersion').html('<option value="">Error contacting API</option>');
+        }
+    });
+};
 
 window.fetchInstalledPhpVersions = function() {
     $.ajax({
@@ -325,41 +322,39 @@ window.fetchInstalledPhpVersions = function() {
     });
 };
 
-// Function to fetch and render the FTP table
-    window.fetchFtpUsers = function(domain) {
-        $('#dynamicFtpTable').html('<tr><td colspan="2" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>');
-        
-        $.ajax({
-            url: '/ajax/get_ftp_users.php',
-            type: 'POST',
-            data: { domain: domain },
-            dataType: 'json',
-            success: function(res) {
-                let tbody = $('#dynamicFtpTable');
-                tbody.empty();
-                if(res.success) {
-                    if(res.users.length === 0) {
-                        tbody.html('<tr><td colspan="2" class="text-center text-muted py-3 small">No FTP accounts found.</td></tr>');
-                    } else {
-                        res.users.forEach(u => {
-                            tbody.append(`
-                                <tr>
-                                    <td class="ps-3 fw-bold small text-dark">${u.ftp_user}</td>
-                                    <td class="text-end pe-3">
-                                        <button class="btn btn-sm btn-outline-primary py-0 edit-ftp-btn" data-user="${u.ftp_user}" title="Change Password"><i class="bi bi-key"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger py-0 delete-ftp-btn" data-user="${u.ftp_user}" data-domain="${domain}" title="Delete User"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
-                            `);
-                        });
-                    }
+window.fetchFtpUsers = function(domain) {
+    $('#dynamicFtpTable').html('<tr><td colspan="2" class="text-center text-muted py-3 border-0"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>');
+    
+    $.ajax({
+        url: '/ajax/get_ftp_users.php',
+        type: 'POST',
+        data: { domain: domain },
+        dataType: 'json',
+        success: function(res) {
+            let tbody = $('#dynamicFtpTable');
+            tbody.empty();
+            if(res.success) {
+                if(res.users.length === 0) {
+                    tbody.html('<tr><td colspan="2" class="text-center text-muted py-3 small border-0">No FTP accounts found.</td></tr>');
                 } else {
-                    tbody.html(`<tr><td colspan="2" class="text-center text-danger py-3 small">${res.error}</td></tr>`);
+                    res.users.forEach(u => {
+                        tbody.append(`
+                            <tr>
+                                <td class="ps-3 fw-bold small text-dark">${u.ftp_user}</td>
+                                <td class="text-end pe-3">
+                                    <button class="btn btn-sm btn-outline-primary py-0 shadow-sm border-0 edit-ftp-btn" data-user="${u.ftp_user}" title="Change Password"><i class="bi bi-key"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger py-0 shadow-sm border-0 delete-ftp-btn ms-1" data-user="${u.ftp_user}" data-domain="${domain}" title="Delete User"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        `);
+                    });
                 }
+            } else {
+                tbody.html(`<tr><td colspan="2" class="text-center text-danger py-3 small border-0">${res.error}</td></tr>`);
             }
-        });
-    };
-
+        }
+    });
+};
 // =================================================================
 // 2. EVENT LISTENERS
 // =================================================================
@@ -383,64 +378,48 @@ $(document).ready(function() {
         }
     });
 
-    // ==========================================
-    // 2. Hybrid Tab Jumping Logic
-    // ==========================================
     $(document).on('click', '.btn-jump-dns', function() {
         let targetDomain = $(this).data('domain');
-        
-        // 1. Switch to the Security Tab natively
         $('#security-tab').tab('show');
-        
-        // 2. Switch to the Inner DNS Pill
         $('#pill-dns-tab').tab('show');
-        
-        // 3. Set the dropdown to the target domain and trigger a change event
-        // (Assuming you have a change event listener on #dnsDomainSelector to fetch records)
         $('#dnsDomainSelector').val(targetDomain).trigger('change');
-        
-        // Optional: Scroll to the top to ensure they see the table
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    // 4. Save Advanced Routing (HSTS/Force HTTPS)
+
     $('#sslRoutingForm').on('submit', function(e) {
         e.preventDefault();
-        
         let btn = $('#btnSaveRouting');
         let domain = $('#sslTargetDomain').val();
         let originalText = btn.html();
 
-        if(!domain) { alert("Select a domain first."); return; }
-        
+        if(!domain) { window.showToast('warning', 'Validation', "Select a domain first."); return; }
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Applying Rules...');
 
         $.ajax({
-            url: '/ajax/manage_https_routing.php', // We will build this next!
+            url: '/ajax/manage_https_routing.php', 
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    showToast("Routing rules queued for Nginx compilation!");
-                    $('#overview-tab').tab('show'); // Jump to tasks so you can see it run!
+                    window.showToast('success', 'Routing Queued', "Routing rules queued for Nginx compilation!");
+                    $('#overview-tab').tab('show'); 
                 } else {
-                    alert("Error: " + response.error);
+                    window.showToast('error', 'Routing Failed', response.error);
                 }
                 btn.prop('disabled', false).html(originalText);
             },
-            // Add this error block so it doesn't fail silently!
             error: function(xhr) {
                 if (xhr.status === 403) {
-                    alert("Security Token Expired. Please refresh the page and try again.");
+                    window.showToast('error', 'Auth Error', "Security Token Expired. Please refresh.");
                 } else {
-                    alert("Network Error: Could not reach the server.");
+                    window.showToast('error', 'Network Error', "Could not reach the server.");
                 }
                 btn.prop('disabled', false).html(originalText);
             }
         });
     });
 
-    // === Auto-Generate File Manager Password ===
     $('#generateFmPass').click(function(e) {
         e.preventDefault();
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
@@ -448,32 +427,22 @@ $(document).ready(function() {
         for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
         $('#fmPassInput').val(pass);
         
-        // Auto-copy to clipboard
         navigator.clipboard.writeText(pass);
         let originalText = $(this).html();
         $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
         setTimeout(() => { $(this).html(originalText); }, 2000);
     });
 
-    // Install SSL Form Submission
-    // === NEW MODULAR SSL CONTROLLER ===
-    // 1. When the master domain dropdown changes, fetch the SSL status
     $('#sslTargetDomain').on('change', function() {
         let domain = $(this).val();
-        
-        // Sync the hidden inputs in all 3 forms so they know which domain to target
         $('.sync-domain').val(domain);
 
         if(!domain) {
-            // Hide everything if no domain is selected
             $('#sslStateUnsecured, #sslStateSecured, .tab-content form').addClass('opacity-50').css('pointer-events', 'none');
             return;
         }
 
-        // Enable forms
         $('#sslStateUnsecured, #sslStateSecured, .tab-content form').removeClass('opacity-50').css('pointer-events', 'auto');
-
-        // Show a loading state briefly
         $('#sslStateSecured').addClass('d-none');
         $('#sslStateUnsecured').addClass('d-none');
 
@@ -484,10 +453,8 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    
-                    // ALWAYS Sync Routing UI Toggles first
                     $('#forceHttpsToggle').prop('checked', response.force_https);
-                    $('#sslAutoRenewToggle').prop('checked', response.auto_renew); // Make sure ID matches your HTML
+                    $('#sslAutoRenewToggle').prop('checked', response.auto_renew); 
 
                     $('#hstsToggle').prop('checked', response.hsts_enabled).trigger('change');
                     if (response.hsts_enabled) {
@@ -500,32 +467,27 @@ $(document).ready(function() {
                         $('#hstsPreload').prop('checked', false);
                     }
 
-                    // NOW Handle the Certificate Visuals
                     if(response.is_secured) {
-                        // Populate Telemetry Data
                         $('#sslIssuerDisplay').text(response.issuer);
                         $('#sslValidFrom').text(response.valid_from);
                         $('#sslValidUntil').text(response.valid_until);
                         $('#sslDaysRemainingText').text(response.days_remaining + ' Days');
                         
-                        // Update Progress Bar
                         let bar = $('#sslDaysBar');
                         bar.css('width', response.percent_remaining + '%');
                         bar.removeClass('bg-success bg-warning bg-danger').addClass('bg-' + response.status_color);
 
-                        // Show Secured View
                         $('#sslStateSecured').removeClass('d-none');
                     } else {
-                        // Show Unsecured (Issue) View
                         $('#sslStateUnsecured').removeClass('d-none');
                     }
                 } else {
-                    alert("Error checking SSL status: " + response.error);
+                    window.showToast('error', 'Status Check Failed', response.error);
                 }
             }
         });
     });
-    // 2. Issue Let's Encrypt Form Submission
+
     $('#issueLetsEncryptForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#btnIssueLe');
@@ -539,19 +501,18 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alert("SSL Installed Successfully! The panel will now refresh.");
+                    window.showToast('success', 'SSL Provisioned', 'SSL Installed Successfully! Refreshing...');
                     $('#installSslModal').modal('hide');
-                    setTimeout(window.fetchDomains, 1000);
+                    setTimeout(window.fetchDomains, 1500);
                 } else {
-                    alert("Error: " + response.error);
+                    window.showToast('error', 'Provisioning Failed', response.error);
                     btn.prop('disabled', false).html(originalText);
                 }
             },
-            error: function() { alert("A server error occurred."); btn.prop('disabled', false).html(originalText); }
+            error: function() { window.showToast('error', 'Server Error', "A server error occurred."); btn.prop('disabled', false).html(originalText); }
         });
     });
 
-    // 3. HSTS Slider Sync Logic
     $('#hstsToggle').on('change', function() {
         if($(this).is(':checked')) {
             $('.hsts-controls').removeClass('opacity-50').css('pointer-events', 'auto');
@@ -568,26 +529,16 @@ $(document).ready(function() {
         if(months === 24) labelText = '2 Years (Recommended)';
         $('#hstsDurationLabel').text(labelText);
     });
-    // ==========================================
-    // DNS Table Filtering Logic
-    // ==========================================
+
     $(document).on('change', '#dnsDomainSelector', function() {
         let selectedDomain = $(this).val();
-        
-        // Loop through every row in the DNS table
         $('#dynamicDnsTable tr').each(function() {
-            // Assuming the Domain name is in the first column (td:eq(0))
-            // Adjust 'td:eq(0)' to 'td:eq(1)' if your domain name is in the second column
             let rowDomain = $(this).find('td:eq(0)').text().trim(); 
-            
             if (selectedDomain === 'all' || selectedDomain === '') {
-                $(this).show(); // Show all if "All Domains" is selected
+                $(this).show(); 
             } else {
-                if (rowDomain === selectedDomain) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+                if (rowDomain === selectedDomain) { $(this).show(); } 
+                else { $(this).hide(); }
             }
         });
     });
@@ -608,17 +559,16 @@ $(document).ready(function() {
                     $('#addDomainModal').modal('hide');
                     $('#addDomainForm')[0].reset();
                     $('#isSubdomainToggle').prop('checked', false).trigger('change');
-                    showToast(response.message);
+                    window.showToast('success', 'Domain Added', response.message);
                     setTimeout(window.fetchDomains, 1500); 
                 } else {
-                    alert("Error: " + response.error);
+                    window.showToast('error', 'Provisioning Failed', response.error);
                 }
             },
             complete: function() { submitBtn.html(originalText).prop('disabled', false); }
         });
     });
 
-    // === DOMAIN LIFECYCLE (Delete & Suspend) ===
     $(document).on('click', '.delete-domain', function() {
         let domain = $(this).data('domain');
         let user = $(this).data('user');
@@ -641,13 +591,14 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     if (isMasterDomain) {
-                        alert("Master domain deleted. Reverting to IP address...");
-                        window.location.href = "https://" + (response.server_ip || window.location.hostname) + ":7443";
+                        window.showToast('warning', 'Master Deleted', "Master domain deleted. Reverting to IP address...");
+                        setTimeout(() => { window.location.href = "https://" + (response.server_ip || window.location.hostname) + ":7443"; }, 2000);
                     } else {
-                        setTimeout(window.fetchDomains, 3000); 
+                        window.showToast('success', 'Domain Deleted', "Site removed from infrastructure.");
+                        setTimeout(window.fetchDomains, 1500); 
                     }
                 } else {
-                    alert("Error: " + response.error);
+                    window.showToast('error', 'Deletion Failed', response.error);
                     btn.prop('disabled', false).html('<i class="bi bi-trash"></i> Delete');
                 }
             }
@@ -673,11 +624,11 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) { setTimeout(window.fetchDomains, 2000); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false); }
+                else { window.showToast('error', 'Status Update Failed', response.error); btn.prop('disabled', false); }
             }
         });
     });
-    // 1. Open FTP Modal
+
     $(document).on('click', '.manage-ftp', function() {
         let domain = $(this).data('domain');
         let user = $(this).data('user');
@@ -687,45 +638,36 @@ $(document).ready(function() {
         $('#ftpSysUser').val(user);
         $('#ftpSuffix').text('@' + domain);
         
-        // Reset form to "Create" mode
         $('#ftpForm')[0].reset();
         $('#ftpAction').val('create');
         $('#ftpUserInput').prop('readonly', false);
         $('#deleteFtpBtn').addClass('d-none');
-        $('#saveFtpBtn').removeClass('w-100'); // Make room for delete button if needed later
+        $('#saveFtpBtn').removeClass('w-100'); 
         
         $('#ftpModal').modal('show');
     });
 
-    // 2. Auto Password Generator
     $('#generateFtpPass').click(function(e) {
         e.preventDefault();
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
         let pass = "";
-        for (let i = 0; i < 16; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
+        for (let i = 0; i < 16; i++) { pass += chars.charAt(Math.floor(Math.random() * chars.length)); }
         $('#ftpPassInput').val(pass);
         
-        // Auto-copy to clipboard
         navigator.clipboard.writeText(pass);
         let originalText = $(this).html();
         $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
         setTimeout(() => { $(this).html(originalText); }, 2000);
     });
 
-    // 3. Save / Update FTP User
     $('#saveFtpBtn').click(function() {
         let btn = $(this);
         let form = $('#ftpForm');
         
         if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
         
-        // Append domain to username to ensure global server uniqueness (e.g., user@domain.com)
         let rawUser = $('#ftpUserInput').val();
-        if (!rawUser.includes('@')) {
-            $('#ftpUserInput').val(rawUser + $('#ftpSuffix').text());
-        }
+        if (!rawUser.includes('@')) { $('#ftpUserInput').val(rawUser + $('#ftpSuffix').text()); }
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
 
@@ -737,15 +679,15 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#ftpModal').modal('hide');
-                    alert("FTP Account saved successfully.");
+                    window.showToast('success', 'FTP Saved', "FTP Account saved successfully.");
                 } else {
-                    alert("Error: " + response.error);
+                    window.showToast('error', 'FTP Error', response.error);
                 }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Save FTP Account');
             }
         });
     });
-    // === APP DEPLOYMENTS (Laravel, Node, Python, WP) ===
+
     $(document).on('click', '.deploy-laravel', function() {
         let domain = $(this).data('domain');
         let user = $(this).data('user');
@@ -761,10 +703,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast("Laravel build queued! Switching to Live Tasks...");
+                    window.showToast('success', 'Queued', "Laravel build queued! Switching to Live Tasks...");
                     $('#overview-tab').tab('show'); 
                     setTimeout(window.fetchDomains, 1500); 
-                } else { alert("Error: " + res.error); btn.prop('disabled', false).html(originalIcon); }
+                } else { window.showToast('error', 'Error', res.error); btn.prop('disabled', false).html(originalIcon); }
             }
         });
     });
@@ -784,10 +726,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast("Python build queued! Switching to Live Tasks...");
+                    window.showToast('success', 'Queued', "Python build queued! Switching to Live Tasks...");
                     $('#overview-tab').tab('show'); 
                     setTimeout(window.fetchDomains, 1500); 
-                } else { alert("Error: " + res.error); btn.prop('disabled', false).html(originalIcon); }
+                } else { window.showToast('error', 'Error', res.error); btn.prop('disabled', false).html(originalIcon); }
             }
         });
     });
@@ -799,38 +741,21 @@ $(document).ready(function() {
         $('#nodeJsModal').modal('show');
     });
 
-    // =================================================================
-    // MASTER WAF TOGGLE CONTROLLER & SYNC
-    // =================================================================
-
-    // 1. Sync state when the System Settings modal opens
     $('#systemSettingsModal').on('show.bs.modal', function () {
         $('#masterWafToggle').prop('disabled', true);
-        //console.log("[WAF] Checking live Nginx configuration...");
-
         $.ajax({
             url: '/ajax/get_master_waf_status.php',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
-                //console.log("[WAF] Server Status:", response);
-                if (response.success) {
-                    // Update the toggle to match the live server state
-                    $('#masterWafToggle').prop('checked', response.status === 'on');
-                }
+                if (response.success) { $('#masterWafToggle').prop('checked', response.status === 'on'); }
                 $('#masterWafToggle').prop('disabled', false);
             },
-            error: function() {
-                //console.error("[WAF] Failed to check status.");
-                $('#masterWafToggle').prop('disabled', false);
-            }
+            error: function() { $('#masterWafToggle').prop('disabled', false); }
         });
     });
 
-    // 2. Handle the toggle switch click
     $(document).on('change', '#masterWafToggle', function() {
-        //console.log("[WAF] Toggle clicked!");
-
         let isChecked = $(this).is(':checked');
         let action = isChecked ? 'on' : 'off';
         let toggleBtn = $(this);
@@ -839,14 +764,7 @@ $(document).ready(function() {
             ? "Enabling the Master WAF will secure the panel against SQLi and XSS attacks." 
             : "WARNING: Disabling the Master WAF reduces panel security. Only do this if you are experiencing 403 blocks.";
             
-        // Show confirmation dialogue
-        if(!confirm(warning)) {
-            //console.log("[WAF] User cancelled action.");
-            toggleBtn.prop('checked', !isChecked); // Revert UI
-            return;
-        }
-
-        //console.log("[WAF] Firing AJAX to toggle WAF:", action);
+        if(!confirm(warning)) { toggleBtn.prop('checked', !isChecked); return; }
         toggleBtn.prop('disabled', true); 
 
         $.ajax({
@@ -855,21 +773,11 @@ $(document).ready(function() {
             data: { status: action },
             dataType: 'json',
             success: function(response) {
-                //console.log("[WAF] Toggle Response:", response);
-                if (response.success) {
-                    showToast("Master WAF is now " + action.toUpperCase() + ".");
-                } else {
-                    alert("Error: " + response.error);
-                    toggleBtn.prop('checked', !isChecked); // Revert UI on error
-                }
+                if (response.success) { window.showToast('success', 'WAF Update', "Master WAF is now " + action.toUpperCase() + "."); } 
+                else { window.showToast('error', 'WAF Update', response.error); toggleBtn.prop('checked', !isChecked); }
                 toggleBtn.prop('disabled', false); 
             },
-            error: function(xhr, status, error) {
-                //console.error("[WAF] AJAX Error:", xhr.responseText);
-                alert("Network Error. Check browser console.");
-                toggleBtn.prop('checked', !isChecked); // Revert UI on error
-                toggleBtn.prop('disabled', false);
-            }
+            error: function() { window.showToast('error', 'Network', 'Network Error'); toggleBtn.prop('checked', !isChecked); toggleBtn.prop('disabled', false); }
         });
     });
 
@@ -887,9 +795,9 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#nodeJsModal').modal('hide');
-                    alert("Node.js Deployment Queued!");
+                    window.showToast('success', 'Queued', "Node.js Deployment Queued!");
                     $('#overview-tab').tab('show');
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Deploy Failed', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-rocket-takeoff"></i> Launch App via PM2');
             }
         });
@@ -912,9 +820,9 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#nodeJsModal').modal('hide');
-                    alert("Command Sent!");
+                    window.showToast('success', 'Command Sent', "Node action queued.");
                     $('#overview-tab').tab('show');
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Action Failed', res.error); }
                 btn.prop('disabled', false).html(originalText);
             }
         });
@@ -957,15 +865,14 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#installWpModal').modal('hide');
-                    alert("WordPress installation queued!");
+                    window.showToast('success', 'Queued', "WordPress installation queued!");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Install Failed', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-down"></i> Install WordPress');
             }
         });
     });
 
-    // === LIFECYCLE (Revert & Restart) ===
     $(document).on('click', '.revert-app', function() {
         let domain = $(this).data('domain');
         let btn = $(this);
@@ -980,10 +887,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast("Revert initiated!");
+                    window.showToast('success', 'Reverting', "Revert initiated!");
                     $('#overview-tab').tab('show'); 
                     setTimeout(window.fetchDomains, 1500); 
-                } else { alert("Error: " + res.error); btn.prop('disabled', false).html(orig); }
+                } else { window.showToast('error', 'Revert Failed', res.error); btn.prop('disabled', false).html(orig); }
             }
         });
     });
@@ -1000,14 +907,13 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast("Engine Restart queued.");
+                    window.showToast('success', 'Restarting', "Engine Restart queued.");
                     setTimeout(() => { btn.prop('disabled', false).html(orig); }, 2500);
-                } else { alert("Error: " + res.error); btn.prop('disabled', false).html(orig); }
+                } else { window.showToast('error', 'Restart Failed', res.error); btn.prop('disabled', false).html(orig); }
             }
         });
     });
 
-    // === GIT DEPLOYMENTS ===
     $('#gitForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#submitGitBtn');
@@ -1039,14 +945,13 @@ $(document).ready(function() {
             data: { domain: btn.data('domain'), username: btn.data('user'), branch: btn.data('branch') },
             dataType: 'json',
             success: function(res) {
-                if(res.success) { alert("Git Pull Queued! Check Live Tasks."); } 
-                else { alert("Error: " + res.error); }
+                if(res.success) { window.showToast('success', 'Git', "Git Pull Queued! Check Live Tasks."); } 
+                else { window.showToast('error', 'Git Error', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-arrow-down-circle"></i> Pull Now');
             }
         });
     });
 
-    // === PHP SETTINGS & VERSIONS ===
     $('#changePhpForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#submitPhpBtn');
@@ -1113,14 +1018,14 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#phpSettingsModal').modal('hide');
+                    window.showToast('success', 'PHP Configured', "FPM restart queued.");
                     setTimeout(window.fetchDomains, 1000); 
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Config Failed', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Save & Restart FPM');
             }
         });
     });
 
-    // === ADVANCED WEB (Redirects, MIME, Hotlink) ===
     $(document).on('click', '.open-advanced-web', function() {
         let domain = $(this).data('domain');
         let hotlinkActive = $(this).data('hotlink') == 1;
@@ -1128,8 +1033,8 @@ $(document).ready(function() {
         $('.adv-domain-input').val(domain);
         $('#hotlinkToggle').prop('checked', hotlinkActive);
         $('#hotlinkStatusText').text(hotlinkActive ? 'Active and protecting assets.' : 'Currently disabled.');
-        $('#dynamicRedirectsTable').html('<tr><td colspan="4" class="text-center text-muted small">Loading...</td></tr>');
-        $('#dynamicMimesTable').html('<tr><td colspan="3" class="text-center text-muted small">Loading...</td></tr>');
+        $('#dynamicRedirectsTable').html('<tr><td colspan="4" class="text-center text-muted small border-0">Loading...</td></tr>');
+        $('#dynamicMimesTable').html('<tr><td colspan="3" class="text-center text-muted small border-0">Loading...</td></tr>');
         window.fetchAdvancedWebData(domain);
         $('#advancedWebModal').modal('show');
     });
@@ -1149,9 +1054,9 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     form[0].reset();
-                    showToast("Applied! Rebuilding Nginx...");
+                    window.showToast('success', 'Applied', "Rebuilding Nginx...");
                     setTimeout(() => window.fetchAdvancedWebData(domain), 1500); 
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Error', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-plus-lg"></i> Add');
             }
         });
@@ -1190,7 +1095,7 @@ $(document).ready(function() {
                     textEl.text(isChecked ? 'Active and protecting assets.' : 'Currently disabled.');
                     $(`.open-advanced-web[data-domain="${domain}"]`).data('hotlink', isChecked ? 1 : 0);
                 } else {
-                    alert("Error: " + res.error);
+                    window.showToast('error', 'Update Failed', res.error);
                     $('#hotlinkToggle').prop('checked', !isChecked); 
                 }
                 $('#hotlinkToggle').prop('disabled', false);
@@ -1198,7 +1103,6 @@ $(document).ready(function() {
         });
     });
 
-    // === CONNECTION INFO ===
     $(document).on('click', '.show-connection-info', function() {
         let domain = $(this).data('domain');
         let btn = $(this);
@@ -1223,12 +1127,11 @@ $(document).ready(function() {
                     $('#infoPhpSock').text(d.php_socket);
                     $('#infoDbHost').text(d.db_host);
                     $('#connectionInfoModal').modal('show');
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Error', res.error); }
             }
         });
     });
 
-    // === FILE MANAGER LOGIC ===
     $(document).on('click', '.open-fm-sso', function() {
         let domain = $(this).data('domain');
         let btn = $(this);
@@ -1242,7 +1145,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) { window.open(res.url, '_blank'); } 
-                else { alert("Error: " + res.error); }
+                else { window.showToast('error', 'SSO Failed', res.error); }
                 btn.prop('disabled', false).html(originalIcon);
             }
         });
@@ -1271,8 +1174,8 @@ $(document).ready(function() {
                 if(res.success) {
                     $('#fileManagerModal').modal('hide');
                     form[0].reset();
-                    alert("Deployment Queued. It will be available at " + $('#fmDomain').val() + "/filemanager shortly.");
-                } else { alert("Error: " + res.error); }
+                    window.showToast('success', 'Deployed', "Available at " + $('#fmDomain').val() + "/filemanager shortly.");
+                } else { window.showToast('error', 'Deploy Failed', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up"></i> Deploy TFM');
             }
         });
@@ -1286,13 +1189,12 @@ $(document).ready(function() {
         $('#rotateFmPassModal').modal('show');
     });
 
-    $('#generateFmPass, #generateRotateFmPass').click(function(e) {
+    $('#generateRotateFmPass').click(function(e) {
         e.preventDefault();
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
         let pass = "";
         for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-        let target = $(this).attr('id') === 'generateFmPass' ? '#fmPassInput' : '#rotateFmPassInput';
-        $(target).val(pass);
+        $('#rotateFmPassInput').val(pass);
         navigator.clipboard.writeText(pass);
         let orig = $(this).html();
         $(this).html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
@@ -1312,8 +1214,8 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#rotateFmPassModal').modal('hide');
-                    alert("File Manager password updated!");
-                } else { alert("Error: " + res.error); }
+                    window.showToast('success', 'Key Rotated', "File Manager password updated!");
+                } else { window.showToast('error', 'Error', res.error); }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Update Key');
             }
         });
@@ -1326,34 +1228,21 @@ $(document).ready(function() {
     window.loadPhpVersions();
     window.fetchInstalledPhpVersions();
     
-    // =================================================================
-    // GLOBAL WAF VERSION SETTINGS (JSON UI)
-    // =================================================================
-
-    // 1. Fetch the current setting when the modal opens
     $('#wafSettingsModal').on('show.bs.modal', function() {
         $('#wafVersionSelect').prop('disabled', true);
-        
         $.ajax({
             url: '/ajax/get_waf_settings.php',
             type: 'GET',
             dataType: 'json',
             success: function(res) {
-                if(res.success && res.branch) {
-                    $('#wafVersionSelect').val(res.branch);
-                } else {
-                    // Fallback default
-                    $('#wafVersionSelect').val('v3.3/master');
-                }
+                if(res.success && res.branch) { $('#wafVersionSelect').val(res.branch); } 
+                else { $('#wafVersionSelect').val('v3.3/master'); }
                 $('#wafVersionSelect').prop('disabled', false);
             },
-            error: function() {
-                $('#wafVersionSelect').prop('disabled', false);
-            }
+            error: function() { $('#wafVersionSelect').prop('disabled', false); }
         });
     });
 
-    // 2. Save the selection back to the JSON file
     $('#wafSettingsForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#saveWafSettingsBtn');
@@ -1371,10 +1260,8 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#wafSettingsModal').modal('hide');
-                    showToast("WAF Preferences Saved!");
-                } else {
-                    alertBox.removeClass('d-none').text("Error: " + res.error);
-                }
+                    window.showToast('success', 'Saved', "WAF Preferences Saved!");
+                } else { alertBox.removeClass('d-none').text("Error: " + res.error); }
                 btn.prop('disabled', false).html(originalText);
             },
             error: function() {
@@ -1383,38 +1270,22 @@ $(document).ready(function() {
             }
         });
     });
-    // =================================================================
-    // CONTEXTUAL WEBSITE LOG VIEWER
-    // =================================================================
+
     $(document).on('click', '.view-domain-logs', function() {
         let domain = $(this).data('domain');
         let user = $(this).data('user');
 
-        // 1. Open the Modal immediately
         $('#logModal').modal('show');
 
-        // 2. Wait 300ms for the Bootstrap modal animation to finish rendering
         setTimeout(() => {
-            // Select Nginx Error Log (best default for debugging)
             $('#logTypeSelect').val('error'); 
-            
-            // Ensure the domain/user selectors are visible (if hidden by System Logs)
             $('#logDomainGroup').slideDown('fast');
-            
-            // Forcefully select the exact domain and user
             $('#logDomainSelect').val(domain);
-            
-            // Note: If you dynamically populate the user dropdown based on domain,
-            // you may need to trigger change here or manually set it.
-            // If it's a static list, this will select it:
             $('#logUserSelect').val(user);
-
-            // Automatically trigger the fetch so logs stream instantly
             $('#fetchLogBtn').trigger('click'); 
-            
         }, 300);
     });
-    // === AUTO-RENEWAL TOGGLE CONTROLLER ===
+
     $('#sslAutoRenewToggle').on('change', function() {
         let isEnabled = $(this).is(':checked');
         let domain = $('#sslTargetDomain').val();
@@ -1429,40 +1300,35 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast(isEnabled ? "Certbot auto-renewal ENABLED." : "Certbot auto-renewal DISABLED.");
+                    window.showToast('info', 'Auto-Renew', isEnabled ? "Certbot auto-renewal ENABLED." : "Certbot auto-renewal DISABLED.");
                 } else {
-                    alert("Error: " + res.error);
-                    toggleBtn.prop('checked', !isEnabled); // Revert switch on fail
+                    window.showToast('error', 'Error', res.error);
+                    toggleBtn.prop('checked', !isEnabled); 
                 }
                 toggleBtn.prop('disabled', false);
             }
         });
     });
 
-    // 1. Hook into your existing manage-ftp open button to load the table
     $(document).on('click', '.manage-ftp', function() {
         let domain = $(this).data('domain');
         window.fetchFtpUsers(domain);
     });
 
-    // 2. Handle the "Edit Password" Button
     $(document).on('click', '.edit-ftp-btn', function() {
         let fullUser = $(this).data('user');
         
-        // Set UI to Update Mode
         $('#ftpFormTitle').text("Update Password: " + fullUser).addClass('text-primary');
         $('#ftpAction').val('update');
         
-        // Lock the username input and hide the suffix (since fullUser already contains @domain)
         $('#ftpUserInput').val(fullUser).prop('readonly', true);
         $('#ftpSuffix').addClass('d-none');
         
-        $('#ftpPassInput').val(''); // Clear old password field
+        $('#ftpPassInput').val(''); 
         $('#cancelFtpEditBtn').removeClass('d-none');
         $('#saveFtpBtn').removeClass('w-100').html('<i class="bi bi-key"></i> Update Password');
     });
 
-    // 3. Handle Cancel Edit
     $(document).on('click', '#cancelFtpEditBtn', function() {
         $('#ftpFormTitle').text("Create New Account").removeClass('text-primary');
         $('#ftpAction').val('create');
@@ -1473,11 +1339,10 @@ $(document).ready(function() {
         $('#saveFtpBtn').addClass('w-100').html('<i class="bi bi-save"></i> Save Account');
     });
 
-    // 4. Handle Delete Button
     $(document).on('click', '.delete-ftp-btn', function() {
         let ftpUser = $(this).data('user');
         let domain = $(this).data('domain');
-        let sysUser = $('#ftpSysUser').val(); // Grab from modal hidden input
+        let sysUser = $('#ftpSysUser').val(); 
         
         if(!confirm(`Delete FTP user ${ftpUser}? This cannot be undone.`)) return;
         
@@ -1491,23 +1356,21 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast("FTP Delete Task Queued!");
-                    window.fetchFtpUsers(domain); // Refresh table
+                    window.showToast('success', 'Queued', "FTP Delete Task Queued!");
+                    window.fetchFtpUsers(domain); 
                 } else {
-                    alert("Error: " + res.error);
+                    window.showToast('error', 'Error', res.error);
                     btn.prop('disabled', false).html('<i class="bi bi-trash"></i>');
                 }
             }
         });
     });
 
-    // Open the modal (Attach this class to a button in your domain list)
     $(document).on('click', '.manage-proxy-btn', function() {
         let domain = $(this).data('domain');
         $('#proxyDomainTitle').text(domain);
         $('#proxyDomainInput').val(domain);
         
-        // Reset form to default
         $('#proxyTypeSelect').val('direct').trigger('change');
         $('#proxyCustomIps').val('');
         $('#proxyCustomHeader').val('X-Forwarded-For');
@@ -1515,22 +1378,18 @@ $(document).ready(function() {
         $('#proxyModal').modal('show');
     });
 
-    // Dynamic form fields
     $('#proxyTypeSelect').on('change', function() {
         if ($(this).val() === 'custom') {
             $('#customProxySettings').removeClass('d-none').hide().slideDown('fast');
             $('#proxyCustomIps').prop('required', true);
             $('#proxyCustomHeader').prop('required', true);
         } else {
-            $('#customProxySettings').slideUp('fast', function() {
-                $(this).addClass('d-none');
-            });
+            $('#customProxySettings').slideUp('fast', function() { $(this).addClass('d-none'); });
             $('#proxyCustomIps').prop('required', false);
             $('#proxyCustomHeader').prop('required', false);
         }
     });
 
-    // Submit the logic
     $('#proxyForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#saveProxyBtn');
@@ -1546,19 +1405,15 @@ $(document).ready(function() {
             success: function(res) {
                 if(res.success) {
                     $('#proxyModal').modal('hide');
-                    showToast(res.message); 
-                    // Switch to overview to see the task run
+                    window.showToast('success', 'Applied', res.message); 
                     $('#overview-tab').tab('show');
-                } else {
-                    alert("Error: " + res.error);
-                }
+                } else { window.showToast('error', 'Error', res.error); }
                 btn.prop('disabled', false).html(originalHtml);
             },
             error: function() {
-                alert("Network Error.");
+                window.showToast('error', 'Network Error', "Communication failed.");
                 btn.prop('disabled', false).html(originalHtml);
             }
         });
     });
-
 });

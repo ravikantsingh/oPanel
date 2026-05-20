@@ -18,11 +18,11 @@ window.fetchMailboxes = function(domain) {
                 }
                 response.emails.forEach(function(m) {
                     let row = `<tr>
-                        <td class="fw-bold text-dark"><i class="bi bi-person-badge text-muted me-1"></i> ${m.email}</td>
-                        <td><span class="badge bg-light text-dark border">${m.quota} MB</span></td>
+                        <td class="fw-bold text-dark"><i class="bi bi-person-badge text-muted me-2"></i> ${m.email}</td>
+                        <td><span class="badge bg-light text-dark border-0 shadow-sm rounded-pill px-3 py-1">${m.quota} MB</span></td>
                         <td class="text-end">
-                            <a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>
-                            <button class="btn btn-sm btn-danger delete-mail" data-email="${m.email}" data-domain="${domain}" title="Delete Mailbox"><i class="bi bi-trash"></i></button>
+                            <a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-light border-0 text-primary shadow-sm me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>
+                            <button class="btn btn-sm btn-light border-0 text-danger shadow-sm delete-mail" data-email="${m.email}" data-domain="${domain}" title="Delete Mailbox"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;
                     tbody.append(row);
@@ -73,10 +73,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check the Live Tasks log to watch the installation.");
+                    window.showToast('success', 'Installation Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
-                btn.prop('disabled', false).html('<i class="bi bi-download"></i> Install Mail Engine');
+                } else { window.showToast('error', 'Install Failed', response.error); }
             }
         });
     });
@@ -94,10 +93,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check Live Tasks for completion, then reopen this modal to see the Offline state.");
+                    window.showToast('success', 'Purge Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
-                btn.prop('disabled', false).text('Uninstall Engine');
+                } else { window.showToast('error', 'Purge Failed', response.error); }
             }
         });
     });
@@ -130,10 +128,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
+                    window.showToast('success', 'Mailbox Created', response.message);
                     $('#createMailForm')[0].reset();
                     setTimeout(() => window.fetchMailboxes(domain), 2500);
-                } else { alertBox.addClass('alert-danger').text(response.error).removeClass('d-none'); }
+                } else { window.showToast('error', 'Provisioning Failed', response.error); }
             },
             complete: function() { btn.prop('disabled', false).html('<i class="bi bi-save"></i> Provision Mailbox'); }
         });
@@ -153,8 +151,13 @@ $(document).ready(function() {
             data: { action: 'delete', email: email, domain: domain },
             dataType: 'json',
             success: function(response) {
-                if(response.success) { setTimeout(() => window.fetchMailboxes(domain), 2000); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); }
+                if(response.success) { 
+                    window.showToast('success', 'Mailbox Deleted', 'Account has been removed.');
+                    setTimeout(() => window.fetchMailboxes(domain), 2000); 
+                } else { 
+                    window.showToast('error', 'Deletion Failed', response.error); 
+                    btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); 
+                }
             }
         });
     });
@@ -177,10 +180,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check the Live Tasks log to verify propagation.");
+                    window.showToast('success', 'DNS Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
-                btn.prop('disabled', false).html(originalText);
+                } else { window.showToast('error', 'Routing Failed', response.error); }
             }
         });
     });

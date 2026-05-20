@@ -2,20 +2,20 @@
 // /opt/panel/www/views/footer.php
 ?>
 <?php require_once __DIR__ . '/../classes/Branding.php'; $brand = Branding::getSettings(); ?>
-        <!--  NEW: True Sidebar Sticky Footer CSS  -->
         <style>
             .main-content {
                 display: flex;
                 flex-direction: column;
                 min-height: 100vh;
-                padding-bottom: 0 !important; /* Removes the 30px padding pushing the footer down */
+                padding-bottom: 0 !important; 
             }
-            body {
-                overflow-x: hidden;
-            }
+            body { overflow-x: hidden; }
+            .markdown-body pre { background-color: #212529; color: #f8f9fa; padding: 12px; border-radius: 6px; font-family: monospace; overflow-x: auto; }
+            .markdown-body code { font-family: monospace; color: #d63384; }
+            .markdown-body pre code { color: #f8f9fa; }
+            .markdown-body p:last-child { margin-bottom: 0; }
         </style>
 
-        <!-- Stackrium Footer -->
         <footer class="py-3 mt-auto border-top text-muted small d-flex justify-content-between align-items-center">
             <div>
                 <?php if (!$brand['hide_footer']): ?>
@@ -34,14 +34,23 @@
                 <span class="text-muted small">Stackrium Control v<?php echo defined('PANEL_VERSION') ? PANEL_VERSION : 'Unknown'; ?></span>
             </div>
         </footer>
-    </main> <!-- End Main Content Window -->
-  </div> <!-- End Row -->
-</div> <!-- End Container -->
+    </main> </div> </div> <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1100;"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- Load the new external JS file with a cache-buster version -->
+
+<script>
+// Make the page title change dynamically when clicking the sidebar
+document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
+    link.addEventListener('shown.bs.tab', function (event) {
+        let tabText = event.target.innerText.trim();
+        let titleEl = document.getElementById('pageTitle');
+        if(titleEl) titleEl.innerText = tabText;
+    });
+});
+</script>
+
 <script src="/js/core.js?v=<?php echo time(); ?>"></script>
 <script src="/js/modules/web.js"></script>
 <script src="/js/modules/system.js"></script>
@@ -49,15 +58,6 @@
 <script src="/js/modules/security.js"></script>
 <script src="/js/modules/mail.js"></script>
 <script src="/js/modules/support.js"></script>
-<!-- <script src="/js/panel.js?v=<?php echo time(); ?>"></script> -->
-<script>
-document.querySelectorAll('#sidebarNav .nav-link').forEach(link => {
-    link.addEventListener('shown.bs.tab', function (event) {
-        // Grab the text of the clicked tab, strip the icon, and update the title
-        let tabText = event.target.innerText.trim();
-        document.getElementById('pageTitle').innerText = tabText;
-    });
-});
-</script>
+
 </body>
 </html>

@@ -26,23 +26,15 @@ $brand = Branding::getSettings();
             --bs-primary-rgb: <?= implode(',', sscanf($brand['theme_color'], "#%02x%02x%02x")) ?>;
         }
         body { background-color: #f4f6f9; }
-        .sidebar { min-height: 100vh; background-color: <?= $brand['sidebar_color'] ?>; padding-top: 20px;}
-        .sidebar a { color: #8b8b9e; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; transition: all 0.2s; }
-        .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
-        .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); border-left: 3px solid #0d6efd; }
         .main-content { padding: 30px; }
-        .nav-tabs .nav-link { color: #6c757d; }
-
+        
         /* --- Stackrium Premium SaaS UI Overrides --- */
-        /* 1. Soft Cards */
         .card {
             border: none !important;
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.04);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-
-        /* 2. Soft Modals */
         .modal-content {
             border: none;
             border-radius: 16px;
@@ -54,8 +46,6 @@ $brand = Branding::getSettings();
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
         }
-
-        /* 3. Modern Table Aesthetics */
         .table-light th {
             background-color: #f8f9fa;
             border-bottom: none;
@@ -67,22 +57,14 @@ $brand = Branding::getSettings();
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
-        .table-hover tbody tr {
-            transition: background-color 0.2s ease;
-        }
-
-        /* 4. Rounded, Premium Buttons */
+        .table-hover tbody tr { transition: background-color 0.2s ease; }
         .btn {
             border-radius: 8px;
             font-weight: 600;
             letter-spacing: 0.2px;
             transition: all 0.2s;
         }
-        .btn:active {
-            transform: scale(0.97);
-        }
-
-        /* 5. Inputs & Forms */
+        .btn:active { transform: scale(0.97); }
         .form-control, .form-select {
             border-radius: 8px;
             border: 1px solid #dee2e6;
@@ -94,22 +76,32 @@ $brand = Branding::getSettings();
             border-color: var(--bs-primary);
             box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.1) !important;
         }
-
-        /* 6. Sidebar Polish */
-        .sidebar {
+        
+        /* --- Sidebar Polish --- */
+        .sidebar { 
+            min-height: 100vh; 
+            background-color: <?= $brand['sidebar_color'] ?>; 
+            padding-top: 20px;
             box-shadow: 4px 0 24px rgba(0,0,0,0.02);
             z-index: 10;
         }
-        .sidebar a {
+        .sidebar a { 
+            color: #8b8b9e; 
+            text-decoration: none; 
+            padding: 12px 20px; 
+            display: block; 
+            border-left: 3px solid transparent; 
+            transition: all 0.2s; 
             border-radius: 8px;
             margin: 0 10px;
         }
+        .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
+        .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="row">
-        <!-- Make Sidebar a flex-column to push the admin menu to the bottom -->
         <nav class="col-md-3 col-lg-2 d-md-flex flex-column sidebar collapse">
             <a href="<?= htmlspecialchars($brand['logo_url']) ?>" class="text-center d-block mb-4 text-decoration-none">
                 <?php if (!empty($brand['logo'])): ?>
@@ -118,6 +110,7 @@ $brand = Branding::getSettings();
                     <h4 class="text-white"><i class="bi bi-hexagon-fill text-primary"></i> <?= htmlspecialchars($brand['title']) ?></h4>
                 <?php endif; ?>
             </a>
+            
             <ul class="nav flex-column mb-auto" id="sidebarNav" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" href="#overview" role="tab"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
@@ -151,7 +144,6 @@ $brand = Branding::getSettings();
                 </li>
             </ul>
 
-            <!-- Admin Profile Bottom Menu -->
             <hr class="border-secondary mt-4 mb-3">
             <div class="dropdown px-3 mb-4">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">

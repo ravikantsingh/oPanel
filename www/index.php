@@ -1,6 +1,6 @@
 <?php
 // /opt/panel/www/index.php
-// ---> NEW: FORCE SECURE COOKIES <---
+
 session_name('PANEL_SESSION');
 session_set_cookie_params([
     'secure' => true,      // Only transmit over HTTPS

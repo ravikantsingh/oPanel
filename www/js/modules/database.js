@@ -13,22 +13,22 @@ window.fetchUsers = function() {
                 let tbody = $('#dynamicUsersTable');
                 tbody.empty();
                 if(response.users.length === 0) {
-                    tbody.html('<tr><td colspan="3" class="text-center text-muted py-3">No users found.</td></tr>');
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted py-4 border-0">No users found.</td></tr>');
                     return;
                 }
                 response.users.forEach(function(u) {
                     let badges = '';
-                    if(u.has_ssh == 1) badges += '<span class="badge bg-dark me-1" title="SSH Key Generated"><i class="bi bi-key"></i></span>';
-                    if(u.has_webhook == 1) badges += '<span class="badge bg-success" title="Webhook Active"><i class="bi bi-lightning-charge"></i></span>';
+                    if(u.has_ssh == 1) badges += '<span class="badge bg-light text-dark border-0 shadow-sm rounded-pill me-2 px-3" title="SSH Key Generated"><i class="bi bi-key text-primary me-1"></i> SSH</span>';
+                    if(u.has_webhook == 1) badges += '<span class="badge bg-success bg-opacity-10 text-success border-0 shadow-sm rounded-pill px-3" title="Webhook Active"><i class="bi bi-lightning-charge-fill me-1"></i> Webhook</span>';
                     if(badges === '') badges = '<span class="text-muted small">None</span>';
 
                     let row = `<tr>
-                                <td class="fw-bold">${u.username}</td>
+                                <td class="fw-bold text-dark">${u.username}</td>
                                 <td class="small text-muted">${u.email || 'No email'}</td>
                                 <td>${badges}</td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-primary change-linux-pass me-1" data-user="${u.username}" title="Change OS Password"><i class="bi bi-key"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger delete-user" data-user="${u.username}" title="Delete User"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-primary change-linux-pass me-1" data-user="${u.username}" title="Change OS Password"><i class="bi bi-key"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-danger delete-user" data-user="${u.username}" title="Delete User"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>`;
                     tbody.append(row);
@@ -54,7 +54,7 @@ window.fetchDatabases = function() {
                 let tbody = $('#dynamicDbTable');
                 tbody.empty();
                 if(response.databases.length === 0) {
-                    tbody.html('<tr><td colspan="3" class="text-center text-muted py-3">No databases provisioned.</td></tr>');
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted py-4 border-0">No databases provisioned.</td></tr>');
                     $('.db-dropdown').empty().append('<option value="">No databases available</option>');
                     return;
                 }
@@ -62,11 +62,11 @@ window.fetchDatabases = function() {
                     let row = `<tr>
                             <td class="fw-bold text-primary">${db.db_name}</td>
                             <td><code>${db.db_user}</code></td>
-                            <td><i class="bi bi-person text-muted"></i> ${db.owner_username}</td>
+                            <td><i class="bi bi-person text-muted me-1"></i> ${db.owner_username}</td>
                             <td class="text-end">
-                                <a href="/pma/index.php?db=${db.db_name}" target="_blank" class="btn btn-sm btn-success" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></a>
-                                <button class="btn btn-sm btn-outline-secondary change-db-pass ms-1" data-db="${db.db_name}" data-user="${db.db_user}" title="Change Password"><i class="bi bi-key"></i></button>
-                                <button class="btn btn-sm btn-outline-danger delete-db ms-1" data-db="${db.db_name}" title="Delete Database"><i class="bi bi-trash"></i></button>
+                                <a href="/pma/index.php?db=${db.db_name}" target="_blank" class="btn btn-sm btn-success shadow-sm" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></a>
+                                <button class="btn btn-sm btn-light shadow-sm text-dark change-db-pass ms-1" data-db="${db.db_name}" data-user="${db.db_user}" title="Change Password"><i class="bi bi-key"></i></button>
+                                <button class="btn btn-sm btn-light shadow-sm text-danger delete-db ms-1" data-db="${db.db_name}" title="Delete Database"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>`;
                     tbody.append(row);
@@ -85,7 +85,7 @@ window.fetchDatabases = function() {
 window.fetchRedisStats = function() {
     $.getJSON('/ajax/redis_stats.php', function(data) {
         if (data.success) {
-            $('#redisStatusBadge').removeClass('bg-secondary bg-danger').addClass('bg-success').text('Online');
+            $('#redisStatusBadge').removeClass('bg-secondary bg-danger').addClass('bg-success bg-opacity-10 text-success border-0 rounded-pill shadow-sm px-3').html('<i class="bi bi-check-circle-fill me-1"></i> Online');
             $('#redisClients').text(data.clients);
             $('#redisHitRate').text(data.hit_rate);
             $('#redisUptime').text(data.uptime_days);
@@ -97,7 +97,7 @@ window.fetchRedisStats = function() {
                 .removeClass('bg-secondary bg-primary bg-success bg-warning bg-danger')
                 .addClass('bg-' + data.memory_color);
         } else {
-            $('#redisStatusBadge').removeClass('bg-secondary bg-success').addClass('bg-danger').text('Offline');
+            $('#redisStatusBadge').removeClass('bg-secondary bg-success').addClass('bg-danger bg-opacity-10 text-danger border-0 rounded-pill shadow-sm px-3').html('<i class="bi bi-x-circle-fill me-1"></i> Offline');
             $('#redisMemBar').css('width', '0%').text('0%').removeClass().addClass('progress-bar bg-danger');
         }
     });
@@ -123,11 +123,17 @@ $(document).ready(function() {
                 if(response.success) {
                     $('#addUserModal').modal('hide');
                     $('#addUserForm')[0].reset();
+                    window.showToast('success', 'User Created', 'System user has been successfully provisioned.');
                     window.fetchUsers();
-                } else { alert("Error: " + response.error); }
+                } else { 
+                    window.showToast('error', 'Provisioning Failed', response.error); 
+                }
                 btn.prop('disabled', false).html(originalText);
             },
-            error: function() { alert('A server error occurred.'); btn.prop('disabled', false).html(originalText); }
+            error: function() { 
+                window.showToast('error', 'Server Error', 'A server error occurred.'); 
+                btn.prop('disabled', false).html(originalText); 
+            }
         });
     });
 
@@ -185,7 +191,10 @@ $(document).ready(function() {
         if ($('#dbRole').val() === 'custom') {
             let privs = [];
             $('.db-priv-chk:checked').each(function() { privs.push($(this).val()); });
-            if(privs.length === 0) { alert("You must select at least one privilege for a custom role."); return; }
+            if(privs.length === 0) { 
+                window.showToast('warning', 'Validation Error', 'You must select at least one privilege for a custom role.'); 
+                return; 
+            }
             $('#customPrivString').val(privs.join(', '));
         }
 
@@ -204,13 +213,17 @@ $(document).ready(function() {
                     $('#dbPrefixLabel').text('prefix_');
                     $('#dbCustomIp').addClass('d-none');
                     $('#customPrivilegesGrid').addClass('d-none');
+                    window.showToast('success', 'Database Created', 'Instance provisioned successfully.');
                     setTimeout(window.fetchDatabases, 1500); 
                 } else {
                     alertBox.addClass('alert-danger').text(response.error).removeClass('d-none');
                 }
                 btn.prop('disabled', false).html(originalText);
             },
-            error: function() { alertBox.addClass('alert-danger').text('A server error occurred.').removeClass('d-none'); btn.prop('disabled', false).html(originalText); }
+            error: function() { 
+                alertBox.addClass('alert-danger').text('A server error occurred.').removeClass('d-none'); 
+                btn.prop('disabled', false).html(originalText); 
+            }
         });
     });
 
@@ -263,8 +276,10 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#changeDbPassModal').modal('hide');
-                    alert("Password rotated successfully! Don't forget to update your application config files.");
-                } else { alert("Error: " + response.error); }
+                    window.showToast('success', 'Password Rotated', "Don't forget to update your application config files.");
+                } else { 
+                    window.showToast('error', 'Update Failed', response.error); 
+                }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Save New Password');
             }
         });
@@ -282,8 +297,14 @@ $(document).ready(function() {
             data: { db_name: dbName },
             dataType: 'json',
             success: function(response) {
-                if(response.success) { setTimeout(window.fetchDatabases, 2500); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); }
+                if(response.success) { 
+                    window.showToast('success', 'Database Deleted', 'Instance removed successfully.');
+                    setTimeout(window.fetchDatabases, 2500); 
+                } 
+                else { 
+                    window.showToast('error', 'Delete Failed', response.error); 
+                    btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); 
+                }
             }
         });
     });
@@ -303,8 +324,10 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#pmaSettingsModal').modal('hide');
-                    alert("Success! Nginx and PHP limits have been increased globally.");
-                } else { alert("Error: " + response.error); }
+                    window.showToast('success', 'Limits Applied', 'Nginx and PHP limits have been increased globally.');
+                } else { 
+                    window.showToast('error', 'Error Applying Limits', response.error); 
+                }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Apply Globally');
             }
         });
@@ -325,9 +348,11 @@ $(document).ready(function() {
         if (!confirm('Are you sure you want to ' + actionType + ' the Redis cache?')) return;
         $.post('/ajax/redis_action.php', { action: actionType, csrf_token: document.querySelector('meta[name="csrf-token"]').content }, function(res) {
             if(res.success) {
-                alert(res.message);
+                window.showToast('success', 'Redis Action', res.message);
                 window.fetchRedisStats();
-            } else { alert("Error: " + res.error); }
+            } else { 
+                window.showToast('error', 'Action Failed', res.error); 
+            }
         }, 'json');
     };
 
@@ -347,12 +372,17 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alert(response.message);
+                    window.showToast('success', 'Redis Injected', response.message);
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
+                } else { 
+                    window.showToast('error', 'Injection Failed', response.error); 
+                }
                 btn.prop('disabled', false).html(originalIcon);
             },
-            error: function() { alert("Network Error."); btn.prop('disabled', false).html(originalIcon); }
+            error: function() { 
+                window.showToast('error', 'Network Error', 'Could not communicate with the server.'); 
+                btn.prop('disabled', false).html(originalIcon); 
+            }
         });
     });
 
@@ -372,10 +402,15 @@ $(document).ready(function() {
                     boilerplate = boilerplate.replace('PASSWORD_WILL_LOAD_HERE', res.password);
                     $('#devPhpBoilerplate').val(boilerplate);
                     $('#devRedisModal').modal('show');
-                } else { alert("Error fetching credentials: " + res.error); }
+                } else { 
+                    window.showToast('error', 'Fetch Error', "Could not load vault: " + res.error); 
+                }
                 btn.prop('disabled', false).html(originalHtml);
             },
-            error: function() { alert("Network error."); btn.prop('disabled', false).html(originalHtml); }
+            error: function() { 
+                window.showToast('error', 'Network Error', 'Could not reach server.'); 
+                btn.prop('disabled', false).html(originalHtml); 
+            }
         });
     });
 
@@ -403,18 +438,17 @@ $(document).ready(function() {
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
 
         $.ajax({
-            url: '/ajax/change_user_password.php', // We will route the update through your existing user API
+            url: '/ajax/change_user_password.php', 
             type: 'POST',
             data: $(this).serialize(),
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
                     $('#linuxPassModal').modal('hide');
-                    alert("Password update queued to system processor.");
-                    // Switch to overview to see the task run
+                    window.showToast('success', 'Task Queued', 'Password update queued to system processor.');
                     $('#overview-tab').tab('show'); 
                 } else {
-                    alert("Error: " + res.error);
+                    window.showToast('error', 'Update Failed', res.error);
                 }
                 btn.prop('disabled', false).html('Update Password');
             }

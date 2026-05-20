@@ -3,7 +3,7 @@
         <div class="modal-content bg-dark text-light border-secondary">
             <div class="modal-header border-secondary">
                 <h6 class="modal-title font-monospace"><i class="bi bi-terminal text-success"></i> Task Execution Log: <span id="logTaskAction" class="text-warning"></span></h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">
                 <div class="bg-black p-3 font-monospace" style="height: 400px; overflow-y: auto; font-size: 0.85rem;">

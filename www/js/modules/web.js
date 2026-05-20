@@ -161,7 +161,7 @@ window.fetchDomains = function() {
                                     <div class="col border-start border-opacity-10">
                                         <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-shield-check me-1"></i> Security</h6>
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-sm btn-${wafColor} shadow-sm border-0 text-start toggle-waf" data-domain="${d.domain_name}" data-action="${d.waf_enabled == 1 ? 'off' : 'on'}"><i class="bi ${wafIcon} me-2"></i> ${wafText}</button>
+                                            <button class="btn btn-sm btn-outline-${wafColor} shadow-sm border-0 text-start toggle-waf" data-domain="${d.domain_name}" data-action="${d.waf_enabled == 1 ? 'off' : 'on'}"><i class="bi ${wafIcon} me-2"></i> ${wafText}</button>
                                             <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start edit-waf-rules" data-domain="${d.domain_name}" data-rules="${btoa(d.waf_custom_rules || '')}"><i class="bi bi-shield-lock me-2"></i> WAF Rules</button>
                                             <button class="btn btn-sm btn-outline-success shadow-sm border-0 text-start" data-bs-toggle="modal" data-bs-target="#installSslModal" onclick="$('#sslTargetDomain').val('${d.domain_name}').trigger('change');"><i class="bi bi-shield-lock-fill me-2"></i> Install SSL</button>
                                         </div>
@@ -185,7 +185,7 @@ window.fetchDomains = function() {
                                             <button class="btn btn-sm btn-outline-warning shadow-sm border-0 text-start manage-ftp" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-hdd-network-fill me-2"></i> FTP Accounts</button>
                                             <button class="btn btn-sm btn-outline-secondary shadow-sm border-0 text-start manage-mail" data-domain="${d.domain_name}"><i class="bi bi-envelope-at-fill me-2"></i> Mailboxes</button>
                                             <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start view-domain-logs" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-journal-code me-2"></i> Website Logs</button>
-                                            <button class="btn btn-sm btn-${suspendColor} shadow-sm border-0 text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}"><i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain</button>
+                                            <button class="btn btn-sm btn-outline-${suspendColor} shadow-sm border-0 text-start toggle-domain-status" data-domain="${d.domain_name}" data-action="${suspendAction}"><i class="bi ${suspendIcon} me-2"></i> ${suspendText} Domain</button>
                                         </div>
                                     </div>
                                 </div>

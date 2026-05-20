@@ -3,7 +3,7 @@
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title"><i class="bi bi-palette-fill me-2"></i> White-Label Branding</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <form id="brandingForm" enctype="multipart/form-data">

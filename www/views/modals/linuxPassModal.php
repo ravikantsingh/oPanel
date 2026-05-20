@@ -1,9 +1,9 @@
 <div class="modal fade" id="linuxPassModal" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header">
                 <h6 class="modal-title"><i class="bi bi-key"></i> System User: <span id="linuxPassTitle"></span></h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <form id="linuxPassForm">

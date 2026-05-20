@@ -2,9 +2,9 @@
 <div class="modal fade" id="advancedWebModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-0">
+            <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold"><i class="bi bi-gear-fill text-warning me-2"></i> Advanced Settings: <span id="advWebDomainTitle" class="text-info"></span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light p-0">
                 <div class="d-flex align-items-start">

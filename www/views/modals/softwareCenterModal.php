@@ -1,9 +1,9 @@
 <div class="modal fade" id="softwareCenterModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-bottom border-primary border-3">
+            <div class="modal-header border-bottom border-primary border-3">
                 <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i> Software Center</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info small shadow-sm">

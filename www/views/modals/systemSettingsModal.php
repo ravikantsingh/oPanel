@@ -1,9 +1,9 @@
 <div class="modal fade" id="systemSettingsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-bottom border-primary border-3">
+            <div class="modal-header border-bottom border-primary border-3">
                 <h5 class="modal-title"><i class="bi bi-sliders me-2 text-primary"></i> Stackrium System Settings</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <div class="modal-body bg-light p-0">

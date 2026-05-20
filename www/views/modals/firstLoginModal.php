@@ -1,7 +1,7 @@
 <div class="modal fade" id="firstLoginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-dark text-white border-bottom-0">
+            <div class="modal-header border-bottom-0">
                 <h5 class="modal-title fw-bold"><i class="bi bi-rocket-takeoff me-2"></i> Welcome to Stackrium Control</h5>
             </div>
             <div class="modal-body bg-light p-4">

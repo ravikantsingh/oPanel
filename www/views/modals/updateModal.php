@@ -2,11 +2,11 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg">
             
-            <div class="modal-header bg-dark text-white border-bottom-0">
+            <div class="modal-header border-bottom-0">
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-cloud-arrow-down-fill me-2 text-primary"></i> Stackrium Updates
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="closeUpdateModalBtn"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeUpdateModalBtn"></button>
             </div>
             
             <div class="modal-body bg-light p-0">

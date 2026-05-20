@@ -1,9 +1,9 @@
 <div class="modal fade" id="proxyModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-shield-shaded"></i> Traffic Routing: <span id="proxyDomainTitle"></span></h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info small">

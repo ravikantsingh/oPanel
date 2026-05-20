@@ -2,9 +2,9 @@
 <div class="modal fade" id="devRedisModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-0">
+            <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold"><i class="bi bi-code-slash text-warning me-2"></i> Custom App Integration Guide</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info border-0 shadow-sm small">

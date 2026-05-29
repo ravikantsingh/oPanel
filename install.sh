@@ -529,7 +529,7 @@ failregex = "ip":\s*"<HOST>",.*"method":\s*"POST",.*"uri":\s*".*(wp-login\.php|x
 ignoreregex =
 EOF
 
-sudo cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-waf.conf
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-waf.conf
 [Definition]
 failregex = \[client <HOST>\] ModSecurity: Access denied
 ignoreregex =

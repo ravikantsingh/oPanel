@@ -523,6 +523,18 @@ failregex = "ip":\s*"<HOST>",.*"status":\s*"444"
 ignoreregex =
 EOF
 
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-wp.conf
+[Definition]
+failregex = "ip":\s*"<HOST>",.*"method":\s*"POST",.*"uri":\s*".*(wp-login\.php|xmlrpc\.php)"
+ignoreregex =
+EOF
+
+sudo cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-waf.conf
+[Definition]
+failregex = \[client <HOST>\] ModSecurity: Access denied
+ignoreregex =
+EOF
+
 cat << 'EOF' > /etc/fail2ban/jail.local
 [DEFAULT]
 usedns   = no
@@ -577,6 +589,39 @@ backend  = polling
 maxretry = 2
 findtime = 10m
 bantime  = 24h
+
+[stackrium-wp]
+enabled  = true
+port     = http,https
+filter   = stackrium-wp
+logpath  = /home/*/web/*/logs/access.log
+backend  = polling
+maxretry = 5
+findtime = 10m
+bantime  = 24h
+
+[stackrium-waf]
+enabled  = true
+port     = http,https
+filter   = stackrium-waf
+# We watch the wildcard error logs for ModSecurity blocks
+logpath  = /home/*/web/*/logs/error.log
+backend  = polling
+maxretry = 3
+findtime = 10m
+bantime  = 24h
+
+[recidive]
+enabled  = true
+# Uses the built-in recidive filter to watch Fail2ban.log
+filter   = recidive
+logpath  = /var/log/fail2ban.log
+backend  = polling
+# The Meta-Trap: If an IP gets banned 3 times in one day across ANY 
+# of our other jails, they get slammed with a 1-week permanent ban.
+maxretry = 3
+findtime = 1d
+bantime  = 1w
 EOF
 
 touch /opt/panel/logs/auth.log

@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content bg-dark text-light border-secondary">
             <div class="modal-header border-secondary">
-                <h6 class="modal-title font-monospace"><i class="bi bi-terminal text-success"></i> Task Execution Log: <span id="logTaskAction" class="text-warning"></span></h6>
+                <h6 class="modal-title font-monospace"><i class="bi bi-terminal text-success"></i><span class="text-primary"> Task Execution Log: </span><span id="logTaskAction" class="text-warning"></span></h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-0">

@@ -21,7 +21,7 @@ window.fetchMailboxes = function(domain) {
                         <td class="fw-bold text-dark"><i class="bi bi-person-badge text-muted me-2"></i> ${m.email}</td>
                         <td><span class="badge bg-light text-dark border-0 shadow-sm rounded-pill px-3 py-1">${m.quota} MB</span></td>
                         <td class="text-end">
-                            <a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-light border-0 text-primary shadow-sm me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>
+                            <!--<a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-light border-0 text-primary shadow-sm me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>-->
                             <button class="btn btn-sm btn-light border-0 text-danger shadow-sm delete-mail" data-email="${m.email}" data-domain="${domain}" title="Delete Mailbox"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;

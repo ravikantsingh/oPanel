@@ -33,6 +33,17 @@
 
                 <!-- STATE 2: ENGINE IS INSTALLED (Your existing form) -->
                 <div id="mailEngineInstalled" class="d-none">
+                    <!-- MAIL SSL SECURITY BLOCK -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white border border-success border-2 rounded shadow-sm">
+                        <div>
+                            <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-lock-fill text-success"></i> Mail Server Security</h6>
+                            <small class="text-muted">Issue a free Let's Encrypt SSL certificate to secure IMAP, POP3, and SMTP connections.</small>
+                        </div>
+                        <button class="btn btn-sm btn-success fw-bold secure-mail-btn shadow-sm">
+                            <i class="bi bi-lightning-charge"></i> Secure Mail Server
+                        </button>
+                    </div>
+                    <!-- END MAIL SSL SECURITY BLOCK -->
                     <div class="card shadow-sm mb-4 border-0 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3 text-primary"><i class="bi bi-plus-circle"></i> Create New Mailbox</h6>

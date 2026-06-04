@@ -48,11 +48,26 @@ $(document).ready(function() {
         $.ajax({
             url: '/ajax/get_mail_engine_status.php',
             type: 'POST',
+            data: { domain: domain }, // <-- Ensure you are passing the domain to PHP
             dataType: 'json',
             success: function(response) {
                 if(response.installed) {
                     $('#mailEngineInstalled').removeClass('d-none');
                     window.fetchMailboxes(domain); 
+                    
+                    // --- NEW UI LOGIC: Change the button if SSL is active ---
+                    if (response.ssl_active) {
+                        $('.secure-mail-btn')
+                            .removeClass('btn-success')
+                            .addClass('btn-outline-secondary disabled')
+                            .html('<i class="bi bi-patch-check-fill text-success"></i> SSL Active');
+                    } else {
+                        $('.secure-mail-btn')
+                            .removeClass('btn-outline-secondary disabled')
+                            .addClass('btn-success')
+                            .html('<i class="bi bi-lightning-charge"></i> Secure Mail Server');
+                    }
+                    
                 } else {
                     $('#mailEngineNotInstalled').removeClass('d-none');
                 }
@@ -183,6 +198,37 @@ $(document).ready(function() {
                     window.showToast('success', 'DNS Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
                 } else { window.showToast('error', 'Routing Failed', response.error); }
+            }
+        });
+    });
+    $(document).on('click', '.secure-mail-btn', function() {
+        let domain = $('#mailDomain').val(); // Gets the currently selected domain
+        let mailDomain = 'mail.' + domain;
+        let btn = $(this);
+        let originalText = btn.html();
+        
+        let warning = `Issue Let's Encrypt SSL for ${mailDomain}?\n\nCRITICAL: Ensure the DNS A-record for ${mailDomain} is pointing to this server and is NOT proxied (Grey Clouded).`;
+        if(!confirm(warning)) return;
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing...');
+        
+        $.ajax({
+            url: '/ajax/install_mail_ssl.php',
+            type: 'POST',
+            data: { domain: domain, mail_domain: mailDomain },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    window.showToast('success', 'Task Queued', response.message + ' Check Live Tasks.');
+                    $('#overview-tab').tab('show'); // Jump to tasks overview
+                } else {
+                    window.showToast('error', 'SSL Failed', response.error);
+                }
+                btn.prop('disabled', false).html(originalText);
+            },
+            error: function() {
+                window.showToast('error', 'Network Error', 'Failed to contact server.');
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });

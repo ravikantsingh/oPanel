@@ -81,6 +81,21 @@ sudo postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
 sudo postconf -e "smtp_sasl_security_options = noanonymous"
 sudo postconf -e "smtp_tls_security_level = encrypt"
 sudo postconf -e "header_size_limit = 4096000"
+# ====================================================================
+# 5.5 ENABLE SMTPS (PORT 465) NATIVELY INSIDE master.cf
+# ====================================================================
+echo "[+] Enabling Postfix Submissions (Port 465) with TLS Wrappermode..."
+# Define the core submissions internet service entry
+sudo postconf -M submissions/inet="submissions inet n - y - - smtpd"
+
+# Inject the necessary parameter overrides (-o options) into the service entry
+sudo postconf -P submissions/inet/syslog_name="postfix/submissions"
+sudo postconf -P submissions/inet/smtpd_tls_wrappermode="yes"
+sudo postconf -P submissions/inet/smtpd_sasl_auth_enable="yes"
+sudo postconf -P submissions/inet/local_header_rewrite_clients="static:all"
+sudo postconf -P submissions/inet/smtpd_reject_unlisted_recipient="no"
+sudo postconf -P submissions/inet/smtpd_recipient_restrictions="permit_sasl_authenticated,reject"
+sudo postconf -P submissions/inet/milter_macro_daemon_name="ORIGINATING"
 
 # Create a blank SASL password file if it doesn't exist
 if [ ! -f /etc/postfix/sasl_passwd ]; then

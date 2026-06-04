@@ -420,6 +420,17 @@ EOF
 
 chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-ftp-ssl.sh
 
+echo -e "\e[34m[+] Provisioning Certbot Mail SSL Hook...\e[0m"
+cat << 'EOF' > /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
+#!/bin/bash
+# If the renewed domain starts with "mail.", restart the mail services
+if [[ "$RENEWED_DOMAINS" == *"mail."* ]]; then
+    systemctl restart postfix dovecot
+fi
+EOF
+
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
+
 systemctl restart nginx
 
 # ==========================================

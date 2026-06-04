@@ -12,11 +12,14 @@ fi
 
 ACTION=$(echo "$PAYLOAD" | jq -r '.sub_action')
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
-VHOST="/etc/nginx/sites-available/$DOMAIN.conf"
 
-if [ ! -f "$VHOST" ]; then
-    echo "Error: Nginx configuration for $DOMAIN not found."
-    exit 1
+# VHOST check ONLY for website actions (Prevents Mail SSL from crashing)
+if [ "$ACTION" == "letsencrypt" ] || [ "$ACTION" == "custom" ]; then
+    VHOST="/etc/nginx/sites-available/$DOMAIN.conf"
+    if [ ! -f "$VHOST" ]; then
+        echo "Error: Nginx configuration for $DOMAIN not found."
+        exit 1
+    fi
 fi
 
 # ==========================================
@@ -103,6 +106,43 @@ elif [ "$ACTION" == "toggle_renewal" ]; then
             echo "Notice: Disabled config not found. Already enabled?"
         fi
         exit 0
+    fi
+# ==========================================
+# 4. MAIL SERVER SSL (POSTFIX & DOVECOT)
+# ==========================================
+elif [ "$ACTION" == "mail_letsencrypt" ]; then
+    MAIL_DOMAIN=$(echo "$PAYLOAD" | jq -r '.mail_domain')
+    EMAIL=$(echo "$PAYLOAD" | jq -r '.email')
+    echo "Starting Let's Encrypt provisioning for Mail Server: $MAIL_DOMAIN..."
+
+    # 1. Temporarily stop Nginx to free up ports 80/443 for Certbot's standalone server
+    systemctl stop nginx
+
+    # 2. Run Certbot in standalone mode (completely circumvents Nginx/ModSecurity/HSTS blocks)
+    certbot certonly --standalone -d "$MAIL_DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
+    CERT_EXIT_CODE=$?
+
+    # 3. Restart Nginx immediately to restore web traffic
+    systemctl start nginx
+
+    if [ $CERT_EXIT_CODE -eq 0 ]; then
+        echo "Certificate issued. Securing Postfix and Dovecot..."
+        
+        # Inject paths into Postfix
+        postconf -e "smtpd_tls_cert_file=/etc/letsencrypt/live/$MAIL_DOMAIN/fullchain.pem"
+        postconf -e "smtpd_tls_key_file=/etc/letsencrypt/live/$MAIL_DOMAIN/privkey.pem"
+        
+        # Inject paths into Dovecot
+        sed -i "s|^ssl_cert =.*|ssl_cert = </etc/letsencrypt/live/$MAIL_DOMAIN/fullchain.pem|" /etc/dovecot/conf.d/10-ssl.conf
+        sed -i "s|^ssl_key =.*|ssl_key = </etc/letsencrypt/live/$MAIL_DOMAIN/privkey.pem|" /etc/dovecot/conf.d/10-ssl.conf
+        
+        systemctl restart postfix dovecot
+        
+        echo "Success: Mail SSL applied and services restarted."
+        exit 0
+    else
+        echo "Error: Certbot standalone challenge failed. Verify DNS points to this server."
+        exit 1
     fi
     
 else

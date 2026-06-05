@@ -51,7 +51,7 @@ user = postfix_db_user
 password = ${DB_PASS}
 hosts = 127.0.0.1
 dbname = panel_core
-query = SELECT 1 FROM mail_users WHERE email='%s'
+query = SELECT CONCAT('%d/', '%u', '/') FROM mail_users WHERE email='%s'
 EOF
 
 sudo tee /etc/postfix/mysql-virtual-alias-maps.cf > /dev/null <<EOF
@@ -81,14 +81,30 @@ sudo postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
 sudo postconf -e "smtp_sasl_security_options = noanonymous"
 sudo postconf -e "smtp_tls_security_level = encrypt"
 sudo postconf -e "header_size_limit = 4096000"
-# ====================================================================
-# 5.5 ENABLE SMTPS (PORT 465) NATIVELY INSIDE master.cf
-# ====================================================================
-echo "[+] Enabling Postfix Submissions (Port 465) with TLS Wrappermode..."
-# Define the core submissions internet service entry
-sudo postconf -M submissions/inet="submissions inet n - y - - smtpd"
 
-# Inject the necessary parameter overrides (-o options) into the service entry
+# INBOUND CLIENT AUTHENTICATION BRIDGE (Fixes Relay Access Denied)
+sudo postconf -e "smtpd_sasl_type = dovecot"
+sudo postconf -e "smtpd_sasl_path = private/auth"
+
+# ====================================================================
+# 5.5 PROVISION MAIL DAEMONS (PORT 587 & 465) NATIVELY INSIDE master.cf
+# ====================================================================
+echo "[+] Activating Secure Mail Submission Daemons..."
+
+# A. Provision Port 587 (Submission - STARTTLS)
+sudo postconf -M submission/inet="submission inet n - y - - smtpd"
+sudo postconf -P submission/inet/syslog_name="postfix/submission"
+sudo postconf -P submission/inet/smtpd_tls_security_level="encrypt"
+sudo postconf -P submission/inet/smtpd_sasl_auth_enable="yes"
+sudo postconf -P submission/inet/smtpd_tls_auth_only="yes"
+sudo postconf -P submission/inet/local_header_rewrite_clients="static:all"
+sudo postconf -P submission/inet/smtpd_reject_unlisted_recipient="no"
+sudo postconf -P submission/inet/smtpd_recipient_restrictions="permit_sasl_authenticated,reject"
+sudo postconf -P submission/inet/milter_macro_daemon_name="ORIGINATING"
+sudo postconf -P submission/inet/smtpd_relay_restrictions="permit_sasl_authenticated,reject"
+
+# B. Provision Port 465 (Submissions - Implicit SSL/TLS Wrapper)
+sudo postconf -M submissions/inet="submissions inet n - y - - smtpd"
 sudo postconf -P submissions/inet/syslog_name="postfix/submissions"
 sudo postconf -P submissions/inet/smtpd_tls_wrappermode="yes"
 sudo postconf -P submissions/inet/smtpd_sasl_auth_enable="yes"
@@ -96,6 +112,25 @@ sudo postconf -P submissions/inet/local_header_rewrite_clients="static:all"
 sudo postconf -P submissions/inet/smtpd_reject_unlisted_recipient="no"
 sudo postconf -P submissions/inet/smtpd_recipient_restrictions="permit_sasl_authenticated,reject"
 sudo postconf -P submissions/inet/milter_macro_daemon_name="ORIGINATING"
+sudo postconf -P submissions/inet/smtpd_relay_restrictions="permit_sasl_authenticated,reject"
+
+# ====================================================================
+# 5.6 PROVISION NETWORK FIREWALL PERIMETER (UFW ALLOW RULES)
+# ====================================================================
+echo "[+] Opening system network firewall for secure mail routing..."
+sudo ufw allow 25/tcp
+sudo ufw allow 465/tcp
+sudo ufw allow 587/tcp
+sudo ufw allow 993/tcp
+sudo ufw reload
+
+# SRE SOURCE OF TRUTH PARITY: Reconcile live system rules with database schema
+echo "[+] Syncing database source of truth with raw UFW status..."
+if [ -f /opt/panel/scripts/sync_firewall.sh ]; then
+    sudo /bin/bash /opt/panel/scripts/sync_firewall.sh
+else
+    echo "Warning: sync_firewall.sh not found. Skipping database sync."
+fi
 
 # Create a blank SASL password file if it doesn't exist
 if [ ! -f /etc/postfix/sasl_passwd ]; then
@@ -113,7 +148,7 @@ driver = mysql
 connect = host=127.0.0.1 dbname=panel_core user=postfix_db_user password=$DB_PASS
 default_pass_scheme = SHA512-CRYPT
 password_query = SELECT email as user, password FROM mail_users WHERE email='%u';
-user_query = SELECT '/var/vmail/%d/%n' as home, 5000 as uid, 5000 as gid FROM mail_users WHERE email='%u';
+user_query = SELECT '/var/vmail/%d/%n' as home, 'maildir:/var/vmail/%d/%n' as mail, 5000 as uid, 5000 as gid FROM mail_users WHERE email='%u';
 EOF
 
 sudo chown root:root /etc/dovecot/dovecot-sql.conf.ext
@@ -128,7 +163,9 @@ sudo sed -i 's|^#!include auth-sql.conf.ext|!include auth-sql.conf.ext|g' /etc/d
 sudo sed -i 's|^auth_mechanisms = plain|auth_mechanisms = plain login|g' /etc/dovecot/conf.d/10-auth.conf
 
 if ! grep -q "unix_listener /var/spool/postfix/private/auth" /etc/dovecot/conf.d/10-master.conf; then
-sudo tee -a /etc/dovecot/conf.d/10-master.conf > /dev/null <<EOF
+    echo "[+] Constructing explicit Postfix-to-Dovecot SASL bridge..."
+    sudo tee -a /etc/dovecot/conf.d/10-master.conf > /dev/null <<EOF
+
 service auth {
   unix_listener /var/spool/postfix/private/auth {
     mode = 0666
@@ -137,6 +174,8 @@ service auth {
   }
 }
 EOF
+else
+    echo "[+] Postfix-to-Dovecot SASL bridge socket is already provisioned. Skipping append."
 fi
 
 sudo systemctl restart dovecot

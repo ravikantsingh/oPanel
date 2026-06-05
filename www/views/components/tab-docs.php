@@ -70,8 +70,8 @@
                             <h2 class="fw-bold mb-4">Critical Cloud Prerequisite</h2>
                             <p class="fs-6 mb-4">Stackrium strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group or Network Firewall before proceeding.</p>
 
-                            <div class="alert alert-warning shadow-sm border-warning border-start border-4">
-                                <h5 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Required External Ports</h5>
+                            <div class="alert alert-warning shadow-sm border-warning border-start border-4 mb-4">
+                                <h5 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Required Core External Ports</h5>
                                 <ul class="small mb-0 mt-3 text-dark font-monospace">
                                     <li class="mb-2"><strong>TCP 80 & 443:</strong> Web Traffic (HTTP/HTTPS)</li>
                                     <li class="mb-2"><strong>TCP 7443:</strong> Stackrium Dashboard Access</li>
@@ -79,6 +79,45 @@
                                     <li class="mb-2"><strong>TCP 20, 21, & 40000-50000:</strong> Pure-FTPd Access</li>
                                     <li><strong>TCP 22:</strong> SSH Server Access</li>
                                 </ul>
+                            </div>
+
+                            <div class="alert alert-primary bg-primary bg-opacity-10 shadow-sm border-primary border-start border-4 mb-4">
+                                <h5 class="alert-heading fw-bold text-primary"><i class="bi bi-envelope-exclamation-fill me-2"></i> Conditional Mail Engine Ports</h5>
+                                <p class="small text-dark mb-3"><strong>CRITICAL RULE:</strong> The infrastructure mappings below are strictly conditional. <strong>DO NOT</strong> open these ports in your cloud provider's security group unless you are planning to install, or have already activated, the local Stackrium Mail Engine subsystem.</p>
+                                <ul class="small mb-0 text-dark font-monospace">
+                                    <li class="mb-2"><strong>TCP 25 (SMTP Inbound):</strong> Used for server-to-server traffic. Required for remote engines (like Gmail) to route incoming emails into your local tenant mailboxes.</li>
+                                    <li class="mb-2"><strong>TCP 465 (SMTPS Submissions):</strong> Secure implicit outbound mail submission channel utilizing dedicated native SSL/TLS handshakes from client apps.</li>
+                                    <li class="mb-2"><strong>TCP 587 (SMTP Submission):</strong> Modern outbound client mail submission port utilizing explicit STARTTLS protocol upgrades.</li>
+                                    <li class="mb-2"><strong>TCP 993 (IMAPS Secure):</strong> Encrypted incoming mailbox synchronization channel for real-time remote client connections (IMAP over SSL/TLS).</li>
+                                    <li><strong>TCP 995 (POP3S Secure):</strong> Encrypted connection layer for legacy local-download mailbox configurations.</li>
+                                </ul>
+                            </div>
+
+                            <div class="alert alert-danger shadow-sm border-danger border-start border-4 mt-4 p-4">
+                                <h4 class="fw-bold text-danger mb-3"><i class="bi bi-shield-lock-fill me-2"></i> The Industry-Wide "Port 25" Outbound Block</h4>
+                                
+                                <h6 class="fw-bold text-dark mt-4">Why is my outgoing mail blocked by default?</h6>
+                                <p class="small text-dark mb-3">
+                                    To combat global spam networks, almost every major cloud hosting provider (AWS, DigitalOcean, Vultr, Linode) blocks <strong>Outbound Port 25</strong> at the hardware network layer for all new accounts. Historically, automated botnets would spin up hundreds of virtual servers using stolen credit cards to blast millions of spam emails. This ruined the IP Reputation of the entire cloud provider's network (their ASN). <br><br>
+                                    To protect legitimate customers from inheriting blacklisted IP addresses, providers now physically intercept and drop outgoing packets directed at external mail hubs (like Gmail or Yahoo). Your server will queue the mail and eventually throw a <em>"Connection timed out"</em> error until a human administrator verifies your account.
+                                </p>
+
+                                <h6 class="fw-bold text-dark mt-4">The Resolution Process (AWS, DigitalOcean, Vultr)</h6>
+                                <p class="small text-dark mb-3">You must submit a manual limit increase or support ticket to your cloud provider. Approval typically takes 12 to 24 hours.</p>
+                                <ol class="small text-dark mb-4">
+                                    <li class="mb-2"><strong>Establish Reputation:</strong> Ensure your server is assigned a static IP (e.g., an AWS Elastic IP) and your billing profile is fully verified.</li>
+                                    <li class="mb-2"><strong>File the Ticket:</strong> Go to your provider's Support Center and open a "Service Limit Increase" (AWS) or "General Support" ticket. Request the removal of the <em>"Port 25 outbound sending restriction."</em></li>
+                                    <li class="mb-2"><strong>Provide the Blueprint:</strong> Copy and paste this exact justification into your ticket:<br>
+                                        <div class="bg-white p-2 mt-2 rounded border font-monospace text-muted">
+                                            "I am provisioning a legitimate corporate mail transfer agent (MTA) via Postfix. I have attached a static Elastic IP to the instance and fully configured my Forward/Reverse DNS (PTR), SPF, and DMARC records. Please lift the outbound Port 25 routing restriction on this instance so my server can deliver mail to external providers."
+                                        </div>
+                                    </li>
+                                </ol>
+
+                                <div class="bg-white p-3 rounded border border-danger small text-dark mt-3">
+                                    <strong><i class="bi bi-x-octagon-fill text-danger me-1"></i> The Permanent Exceptions (GCP & Azure):</strong><br>
+                                    Google Cloud Platform (GCP) and Microsoft Azure permanently block outbound Port 25 for all standard, free, and pay-as-you-go accounts. They will <strong>not</strong> lift this restriction via support ticket under any circumstances. If you host Stackrium on these platforms, you cannot use Postfix for direct internet delivery. You must configure Postfix to route all outbound mail through a third-party authenticated SMTP Relay (such as SendGrid, Mailgun, or Amazon SES) using Port 587.
+                                </div>
                             </div>
                         </div>
 
@@ -105,9 +144,9 @@
                             <h5 class="fw-bold mt-4"><i class="bi bi-pause-circle text-warning me-2"></i> Suspending Domains</h5>
                             <p>If a domain is consuming too many resources or payment is overdue, you can instantly suspend it.</p>
                             <ul class="list-unstyled mb-4 text-muted">
-                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Go to <b>Websites</b> and click the Status toggle next to the domain.</li>
-                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Stackrium intercepts the Nginx traffic and redirects all visitors to a 503 "Service Unavailable" page.</li>
-                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> It is completely non-destructive (files and DBs remain intact) and can be unsuspended instantly.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> Go to <b>Websites</b> and click the Status toggle next to the domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> Stackrium intercepts the Nginx traffic and redirects all visitors to a 503 "Service Unavailable" page.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> It is completely non-destructive (files and DBs remain intact) and can be unsuspended instantly.</li>
                             </ul>
 
                             <h5 class="fw-bold mt-4"><i class="bi bi-filetype-php text-info me-2"></i> Changing PHP Versions (Hot-Swap)</h5>
@@ -292,18 +331,29 @@
                         </div>
                         
                         <div class="tab-pane fade" id="doc-mail" role="tabpanel">
-                            <h2 class="fw-bold mb-4">Mail Server (Postfix/Dovecot)</h2>
-                            <p class="fs-6 mb-4">Stackrium includes a full-featured Mail Transfer Agent (MTA) allowing you to host your own domain email (e.g., hello@yourdomain.com).</p>
+                            <h2 class="fw-bold mb-4">Mail Server Subsystem (Postfix/Dovecot Engine)</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a secure, highly scalable multi-tenant Mail Transfer Agent (MTA) built around Postfix and Dovecot, backed directly by automated system user boundaries and live MySQL lookup mappings.</p>
 
-                            <h5 class="fw-bold text-primary"><i class="bi bi-envelope-plus me-2"></i> Setting up a Mail Domain</h5>
+                            <h5 class="fw-bold text-primary"><i class="bi bi-envelope-plus me-2"></i> Step 1: Provisioning a Mail Domain</h5>
                             <ol class="list-group list-group-numbered list-group-flush mb-4">
                                 <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Mail Server</b> tab.</li>
-                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add Mail Domain" and enter your domain name.</li>
-                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium will configure Postfix & Dovecot for this domain automatically.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add Mail Domain" and enter your parent domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">The panel instantly provisions independent MySQL access records and configures the environment to listen across local interfaces.</li>
                             </ol>
 
-                            <h5 class="fw-bold text-primary"><i class="bi bi-person-badge me-2"></i> Creating Email Accounts</h5>
-                            <p>Once a domain is added, click the <b>Accounts</b> button next to the domain name. You can create mailboxes (e.g., admin@yourdomain.com) and set storage quotas.</p>
+                            <h5 class="fw-bold text-primary"><i class="bi bi-person-badge me-2"></i> Step 2: Provisioning Isolated Mailboxes</h5>
+                            <p>Once your domain mapping is verified, click the <b>Accounts</b> button next to the target domain name to configure mail users.</p>
+                            <ul class="list-unstyled text-muted mb-4 ps-3">
+                                <li class="mb-2"><i class="bi bi-shield-check text-success me-2"></i> <strong>Cryptographic Isolation:</strong> System mail users are mapped to a secure global <code>vmail</code> profile (UID/GID 5000).</li>
+                                <li class="mb-2"><i class="bi bi-folder-symlink text-success me-2"></i> <strong>Maildir Delivery:</strong> The system enforces explicit Maildir resolution paths via <code>CONCAT('%d/', '%u', '/')</code> mapping fields. Raw messages are saved directly into independent filesystem paths at <code>/var/vmail/{domain}/{user}/new/</code>.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-lock-fill me-2"></i> Step 3: Standalone SRE SSL Provisioning</h5>
+                            <p>To avoid security exceptions or port filtering conflicts with ModSecurity Web Application Firewalls (WAF), securing your mail subsystem utilizes an explicit **Standalone Handshake Method**.</p>
+                            <div class="bg-light p-3 border rounded mb-4 small">
+                                <span class="fw-bold text-dark d-block mb-1"><i class="bi bi-terminal-fill me-1"></i> Under the Hood Security Loop:</span>
+                                When you click <b>Secure Mail Server</b>, the background system pauses Nginx for 2–3 seconds to temporarily release port 80/443 interface bindings. Certbot spins up an ultra-light standalone authentication server to communicate with Let's Encrypt directly, bypassing all web rule filters. Once the valid trusted certificates are verified and saved, Nginx reloads instantly alongside Postfix and Dovecot.
+                            </div>
 
                             <div class="alert alert-warning border-0 shadow-sm d-flex mt-4">
                                 <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
@@ -311,7 +361,7 @@
                                     <strong>Crucial DNS Requirements for Mail Delivery:</strong>
                                     <p class="mb-1 mt-2 small">To prevent your emails from going to Spam, you <b>must</b> configure these DNS records for your domain:</p>
                                     <ul class="mb-0 small pl-3">
-                                        <li><b>MX Record:</b> Pointing to `mail.yourdomain.com`</li>
+                                        <li><b>MX Record:</b> Pointing to `mail.yourdomain.com` (Priority 10)</li>
                                         <li><b>A Record:</b> `mail.yourdomain.com` pointing to this server's IP.</li>
                                         <li><b>TXT (SPF):</b> `v=spf1 mx a ip4:YOUR_SERVER_IP ~all`</li>
                                         <li><b>TXT (DMARC):</b> `v=DMARC1; p=quarantine;`</li>
@@ -319,13 +369,53 @@
                                 </div>
                             </div>
                             
-                             <h5 class="fw-bold text-primary mt-4"><i class="bi bi-pc-display me-2"></i> Email Client Settings</h5>
-                             <div class="bg-light p-3 rounded border">
-                                 <p class="mb-1"><b>Incoming Server (IMAP):</b> mail.yourdomain.com (Port 993, SSL/TLS)</p>
-                                 <p class="mb-1"><b>Incoming Server (POP3):</b> mail.yourdomain.com (Port 995, SSL/TLS)</p>
-                                 <p class="mb-1"><b>Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 465, SSL/TLS) - <i>Requires Authentication</i></p>
-                                 <p class="mb-0"><b>Username:</b> Your full email address.</p>
-                             </div>
+                            <h5 class="fw-bold text-primary mt-4"><i class="bi bi-pc-display me-2"></i> Client Connection Matrix</h5>
+                            <div class="bg-light p-3 rounded border font-monospace small mb-4">
+                                <p class="mb-1"><b>Incoming Server (IMAP):</b> mail.yourdomain.com (Port 993, Connection Security: SSL/TLS)</p>
+                                <p class="mb-1"><b>Incoming Server (POP3):</b> mail.yourdomain.com (Port 995, Connection Security: SSL/TLS)</p>
+                                <p class="mb-1"><b>Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 465, Connection Security: SSL/TLS) - <i>Requires Authentication</i></p>
+                                <p class="mb-1"><b>Alternative Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 587, Connection Security: STARTTLS)</p>
+                                <p class="mb-0"><b>Username / Auth Identification:</b> Your full email address (e.g., admin@yourdomain.com).</p>
+                            </div>
+
+                            <h5 class="fw-bold text-primary mt-4"><i class="bi bi-send-check me-2"></i> Step 4: Connecting a Mail Client (e.g., Mozilla Thunderbird)</h5>
+                            <p class="text-muted mb-3">Once your mailbox is provisioned and secured with an SSL certificate, you can connect it to desktop or mobile email clients like Mozilla Thunderbird, Microsoft Outlook, or Apple Mail. Here is a detailed, step-by-step example using Thunderbird:</p>
+                            
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Open Thunderbird and navigate to <b>Account Settings > Add Mail Account</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter your Full Name, your <b>Full Email Address</b> (e.g., <code>admin@yourdomain.com</code>), and your mailbox password. Click <b>Configure Manually</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">
+                                    <strong>Incoming Server Settings:</strong>
+                                    <ul class="mb-0 mt-2 small text-muted">
+                                        <li><b>Protocol:</b> Select <code>IMAP</code> (Recommended to keep devices synced) or <code>POP3</code> (Downloads and removes from server).</li>
+                                        <li><b>Hostname:</b> <code>mail.yourdomain.com</code></li>
+                                        <li><b>Port:</b> <code>993</code> (for IMAP) or <code>995</code> (for POP3).</li>
+                                        <li><b>Connection Security:</b> Select <code>SSL/TLS</code>.</li>
+                                        <li><b>Authentication Method:</b> Select <code>Normal password</code>.</li>
+                                        <li><b>Username:</b> Enter your <i>full email address</i> (not just the prefix).</li>
+                                    </ul>
+                                </li>
+                                <li class="list-group-item bg-transparent border-0 py-2">
+                                    <strong>Outgoing Server (SMTP) Settings:</strong>
+                                    <ul class="mb-0 mt-2 small text-muted">
+                                        <li><b>Hostname:</b> <code>mail.yourdomain.com</code></li>
+                                        <li><b>Port:</b> <code>465</code> (Recommended implicit SSL wrapper) or <code>587</code>.</li>
+                                        <li><b>Connection Security:</b> Select <code>SSL/TLS</code> (if using port 465) or <code>STARTTLS</code> (if using port 587).</li>
+                                        <li><b class="text-danger">Authentication Method:</b> Select <code>Normal password</code>. <i>CRITICAL: Do not leave this blank or anonymous. Postfix will reject outbound emails with an "Access Denied" error if you do not authenticate.</i></li>
+                                        <li><b>Username:</b> Enter your <i>full email address</i>.</li>
+                                    </ul>
+                                </li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click <b>Done</b> or <b>Re-test</b>. The client will securely connect to the Dovecot/Postfix backend using your Let's Encrypt certificate, sync your inbox, and allow you to send outbound emails instantly.</li>
+                            </ol>
+
+                            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-start border-4 mt-4 p-4">
+                                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-send-x-fill me-2"></i> Troubleshooting: Emails are sending but not arriving?</h6>
+                                <p class="mb-0 text-dark" style="font-size: 0.9rem;">
+                                    If your mail client successfully sends the email, but it never arrives at the destination (like Gmail or Yahoo), your server is likely suffering from an <strong>Outbound Port 25 Block</strong> imposed by your cloud provider. <br><br>
+                                    You can verify this by logging into your server terminal via SSH and typing <code>mailq</code>. If you see emails sitting in the queue with a <em>"Connection timed out"</em> error, your cloud provider (AWS, DigitalOcean, Vultr) is dropping your packets. You must contact their support team to remove the anti-spam block on your account. <em>(See <strong>1. Cloud Prerequisites</strong> for more details).</em>
+                                </p>
+                            </div>
+
                         </div>
 
                         <div class="tab-pane fade" id="doc-cron" role="tabpanel">
@@ -573,6 +663,37 @@
                                     <div id="faq_sys_task" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body px-0 text-muted">
                                             If you see "System Task", it means a new backend script was added to the Python daemon, but the JavaScript translation dictionary in <code>system.js</code> hasn't been updated with the new icon and title mapping yet.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mail_zero_msg">
+                                            Incoming emails hit the log with status=sent but mail clients show 0 messages.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mail_zero_msg" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This occurs when Postfix delivers mail in <strong>mbox format</strong> (a single flat file) while Dovecot scans for a modern folder-based **Maildir system**. If your MySQL query parameters return a static integer fallback, Postfix pools every email into a flat file named <code>/var/vmail/1</code> instead of parsing individual user paths.<br><br>
+                                            <strong>The Fix:</strong> Ensure your <code>/etc/postfix/mysql-virtual-mailbox-maps.cf</code> handles relational paths using explicit string concatenation: <br><code>query = SELECT CONCAT('%d/', '%u', '/') FROM mail_users WHERE email='%s'</code>. <br>The trailing slash explicitly instructs Postfix to initialize full Maildir directories, allowing Dovecot and mail clients to sync indices successfully.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mail_relay_denied">
+                                            Outbound mail drops with "Recipient address rejected: Access denied" or disconnects.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mail_relay_denied" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This error indicates that Postfix is evaluating external mail routes before your client authenticates, or it hasn't been configured to leverage Dovecot's security daemons for SASL verification. Postfix rejects the unverified transfer request to prevent the server from becoming an open proxy for spam.<br><br>
+                                            <strong>The Fix:</strong> Ensure Postfix connects directly to Dovecot's authentication paths by running:<br>
+                                            <code>sudo postconf -e "smtpd_sasl_type = dovecot"</code><br>
+                                            <code>sudo postconf -e "smtpd_sasl_path = private/auth"</code><br>
+                                            Additionally, ensure both <code>submission</code> (587) and <code>submissions</code> (465) services include the explicit relay parameter override inside your <code>master.cf</code> file to process SASL tokens before dropping traffic: <br><code>-o smtpd_relay_restrictions=permit_sasl_authenticated,reject</code>. Finally, check your client application (e.g., Thunderbird) to ensure its outgoing SMTP server is explicitly set to use <strong>Normal password</strong> authentication rather than anonymous submission.
                                         </div>
                                     </div>
                                 </div>

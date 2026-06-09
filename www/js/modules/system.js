@@ -53,7 +53,7 @@ const taskDictionary = {
     'uninstall_mail_engine': { icon: 'bi-envelope-x text-danger', title: 'Uninstall Mail Engine', desc: 'Removing mail server components' },
     'manage_mail_dns': { icon: 'bi-envelope-paper text-primary', title: 'Mail DNS Routing', desc: 'Updating MX and SPF records' },
     'manage_mail_user': { icon: 'bi-person-badge text-info', title: 'Manage Mailbox', desc: 'Updating Postfix/Dovecot accounts' },
-    'setup_smtp_relay': { icon: 'bi-send-arrow-up text-success', title: 'SMTP Relay config', desc: 'Configuring external Postfix mail routing' },
+    'setup_smtp_relay': { icon: 'bi-cloud-arrow-up text-success', title: 'SMTP Relay config', desc: 'Configuring external Postfix mail routing' },
 
     // === DNS & System Level Tasks ===
     'create_dns': { icon: 'bi-diagram-2 text-info', title: 'Create DNS Zone', desc: 'Generating BIND9 master zone' },

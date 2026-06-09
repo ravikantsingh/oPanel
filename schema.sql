@@ -295,3 +295,17 @@ CREATE TABLE IF NOT EXISTS `support_attachments` (
   FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`reply_id`) REFERENCES `support_replies` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 4. native SMTP Relay interface
+CREATE TABLE IF NOT EXISTS `mail_global_settings` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `smtp_relay_active` TINYINT(1) DEFAULT 0,
+    `relay_provider` VARCHAR(50) DEFAULT 'none',
+    `relay_host` VARCHAR(255) DEFAULT '',
+    `relay_port` INT DEFAULT 587,
+    `relay_user` VARCHAR(255) DEFAULT '',
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Initialize the single global settings row
+INSERT IGNORE INTO `mail_global_settings` (`id`) VALUES (1);

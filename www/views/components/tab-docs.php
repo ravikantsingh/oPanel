@@ -416,6 +416,26 @@
                                 </p>
                             </div>
 
+                            <h5 class="fw-bold text-primary mt-5"><i class="bi bi-send-arrow-up me-2"></i> Step 5: External SMTP Relay (Bypassing Cloud Blocks)</h5>
+                                <p class="text-muted mb-3"><strong>When and Why to use it:</strong> If your cloud provider (AWS, GCP, DigitalOcean) blocks outbound Port 25, your emails will queue up locally and eventually fail with connection timeouts. Additionally, even if Port 25 is open, sending directly from a fresh server IP can cause your emails to land in spam. The <strong>External SMTP Relay</strong> solves both issues by seamlessly routing all outgoing server mail through highly trusted third-party networks (like SendGrid, Brevo, or Amazon SES) using an alternate secure port (Port 587).</p>
+
+                                <p class="text-muted mb-2"><strong>Setup Process & Example:</strong></p>
+                                <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Get an API Key:</strong> Register for a free tier account at an SMTP provider like Brevo or SendGrid. Navigate to their SMTP & API settings and generate a new SMTP API Key.</li>
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Configure the Panel:</strong> Open the Mailboxes interface for your domain in Stackrium. Click the <b>Configure Relay</b> button located in the External SMTP Routing banner.</li>
+                                    <li class="list-group-item bg-transparent border-0 py-2">
+                                        <strong>Input Credentials Example (Using Brevo):</strong>
+                                        <ul class="mb-0 mt-2 small text-dark font-monospace bg-light p-3 rounded border">
+                                            <li class="mb-1">Provider Preset: Custom Provider</li>
+                                            <li class="mb-1">SMTP Hostname: smtp-relay.brevo.com</li>
+                                            <li class="mb-1">Port: 587</li>
+                                            <li class="mb-1">SMTP Username: your_brevo_login_email@example.com</li>
+                                            <li>SMTP Password: (Paste the long API Key generated in Step 1)</li>
+                                        </ul>
+                                    </li>
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Apply & Bypass:</strong> Click <b>Apply Routing Rules</b>. Stackrium will cryptographically lock the credentials, inject the new route into the active Postfix memory, and immediately begin routing your mail around the cloud firewall.</li>
+                                </ol>
+
                         </div>
 
                         <div class="tab-pane fade" id="doc-cron" role="tabpanel">
@@ -694,6 +714,20 @@
                                             <code>sudo postconf -e "smtpd_sasl_type = dovecot"</code><br>
                                             <code>sudo postconf -e "smtpd_sasl_path = private/auth"</code><br>
                                             Additionally, ensure both <code>submission</code> (587) and <code>submissions</code> (465) services include the explicit relay parameter override inside your <code>master.cf</code> file to process SASL tokens before dropping traffic: <br><code>-o smtpd_relay_restrictions=permit_sasl_authenticated,reject</code>. Finally, check your client application (e.g., Thunderbird) to ensure its outgoing SMTP server is explicitly set to use <strong>Normal password</strong> authentication rather than anonymous submission.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_smtp_relay_auth">
+                                            My SMTP Relay connects, but the provider rejects the sender or bounces the email.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_smtp_relay_auth" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you see a "sender rejected" or "domain not valid" error in your logs after setting up an External SMTP Relay, it means Stackrium successfully bypassed your cloud firewall and handed the email to your relay provider (e.g., Brevo or SendGrid), but their edge network rejected the payload for security reasons. To prevent spam spoofing, external relays require cryptographic proof that you actually own the domain you are sending from.<br><br>
+                                            <strong>The Fix:</strong> Log into your relay provider's dashboard, locate their Domain Authentication section, and generate their specific DNS records (usually a TXT verification code, DKIM, and SPF). Copy those values and add them into Stackrium's <strong>Security & DNS > DNS Management</strong> tab. Once the DNS records propagate, click "Authenticate" in the provider's dashboard to permanently lift the security hold and allow your emails through.
                                         </div>
                                     </div>
                                 </div>

@@ -48,14 +48,14 @@ $(document).ready(function() {
         $.ajax({
             url: '/ajax/get_mail_engine_status.php',
             type: 'POST',
-            data: { domain: domain }, // <-- Ensure you are passing the domain to PHP
+            data: { domain: domain }, 
             dataType: 'json',
             success: function(response) {
                 if(response.installed) {
                     $('#mailEngineInstalled').removeClass('d-none');
                     window.fetchMailboxes(domain); 
                     
-                    // --- NEW UI LOGIC: Change the button if SSL is active ---
+                    // --- EXISTING UI LOGIC: Change the button if SSL is active ---
                     if (response.ssl_active) {
                         $('.secure-mail-btn')
                             .removeClass('btn-success')
@@ -66,6 +66,13 @@ $(document).ready(function() {
                             .removeClass('btn-outline-secondary disabled')
                             .addClass('btn-success')
                             .html('<i class="bi bi-lightning-charge"></i> Secure Mail Server');
+                    }
+
+                    // --- NEW UI LOGIC: Update SMTP Relay Status Banner ---
+                    if (response.relay_active) {
+                        $('#smtpRelayStatusText').html(`<span class="badge bg-success bg-opacity-10 text-success border-0 px-2 me-1"><i class="bi bi-check-circle-fill"></i> Active</span> Routing outbound mail through <strong>${response.relay_host}</strong>.`);
+                    } else {
+                        $('#smtpRelayStatusText').html(`<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2 me-1">Inactive</span> Using default local Postfix delivery (Subject to Cloud Port 25 Blocks).`);
                     }
                     
                 } else {
@@ -229,6 +236,64 @@ $(document).ready(function() {
             error: function() {
                 window.showToast('error', 'Network Error', 'Failed to contact server.');
                 btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+    // === SMTP RELAY CONTROLLERS ===
+    // Enable Relay Trigger
+    $('#btnEnableRelay').click(function() {
+        let btn = $(this);
+        let form = $('#formSmtpRelay');
+        
+        // Basic validation 
+        if (!$('#relayPass').val() && $('#relayProvider').val() !== 'aws_ses') {
+            window.showToast('warning', 'Validation Error', 'Please enter your SMTP Password or API Key.');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Queueing...');
+
+        $.ajax({
+            url: '/ajax/manage_smtp_relay.php',
+            type: 'POST',
+            data: form.serialize() + '&sub_action=enable',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#smtpRelayModal').modal('hide');
+                    window.showToast('success', 'Task Queued', res.message);
+                    $('#overview-tab').tab('show'); // Jump to Live Tasks
+                    if (typeof window.fetchRecentTasks === "function") window.fetchRecentTasks();
+                } else {
+                    window.showToast('error', 'Configuration Error', res.error);
+                }
+                btn.prop('disabled', false).text('Apply Routing Rules');
+            }
+        });
+    });
+
+    // Disable Relay Trigger (Rollback)
+    $('#btnDisableRelay').click(function() {
+        if(!confirm("Are you sure you want to disable the external relay and revert to local delivery?")) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_smtp_relay.php',
+            type: 'POST',
+            data: { sub_action: 'disable' },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#smtpRelayModal').modal('hide');
+                    window.showToast('success', 'Task Queued', res.message);
+                    $('#overview-tab').tab('show');
+                    if (typeof window.fetchRecentTasks === "function") window.fetchRecentTasks();
+                } else {
+                    window.showToast('error', 'Error', res.error);
+                }
+                btn.prop('disabled', false).text('Disable Relay');
             }
         });
     });

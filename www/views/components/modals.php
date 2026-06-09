@@ -52,6 +52,7 @@ include 'views/modals/devRedisModal.php';
 
 //7. Mail
 include 'views/modals/mailBoxModal.php';
+include 'views/modals/smtpRelayModal.php';
 
 //8. First Login Modal
 include 'views/modals/firstLoginModal.php';

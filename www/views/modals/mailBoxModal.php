@@ -22,6 +22,17 @@
             
             <!-- MODE A: LOCAL HOSTING -->
             <div class="tab-pane fade show active" id="localMailMode" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 border shadow-sm rounded-3 mb-4" id="smtpRelayBanner">
+                    <div>
+                        <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-send-arrow-up text-primary me-2"></i> External SMTP Routing</h6>
+                        <p class="mb-0 text-muted small" id="smtpRelayStatusText">
+                            <span class="spinner-border spinner-border-sm text-secondary me-1"></span> Checking routing status...
+                        </p>
+                    </div>
+                    <button class="btn btn-outline-primary shadow-sm btn-sm fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#smtpRelayModal">
+                        <i class="bi bi-sliders me-1"></i> Configure Relay
+                    </button>
+                </div>
                 
                 <!-- STATE 1: ENGINE NOT INSTALLED -->
                 <div id="mailEngineNotInstalled" class="text-center py-5 d-none">

@@ -72,6 +72,7 @@ ALLOWED_ACTIONS = {
     'restart_app': '/opt/panel/scripts/restart_app.sh',
     'update_waf': '/opt/panel/scripts/waf_updater.sh',
     'manage_proxy': '/opt/panel/scripts/proxy_manager.sh',
+    'setup_smtp_relay': '/opt/panel/scripts/setup_smtp_relay.sh',
 }
 
 def get_db_connection():

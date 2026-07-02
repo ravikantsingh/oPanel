@@ -596,6 +596,7 @@ port     = http,https
 filter   = stackrium-bots
 # The Magic: Watch every single tenant's log file simultaneously
 logpath  = /home/*/web/*/logs/access.log
+allowmissing = yes
 backend  = polling
 maxretry = 2
 findtime = 10m
@@ -606,6 +607,7 @@ enabled  = true
 port     = http,https
 filter   = stackrium-wp
 logpath  = /home/*/web/*/logs/access.log
+allowmissing = yes
 backend  = polling
 maxretry = 5
 findtime = 10m
@@ -617,6 +619,7 @@ port     = http,https
 filter   = stackrium-waf
 # We watch the wildcard error logs for ModSecurity blocks
 logpath  = /home/*/web/*/logs/error.log
+allowmissing = yes
 backend  = polling
 maxretry = 3
 findtime = 10m

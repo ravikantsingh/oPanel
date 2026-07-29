@@ -36,7 +36,13 @@ cat <<EOF > "$FM_DIR/config.php"
 \$use_auth = true;
 \$theme = 'dark';
 \$root_path = '$DOC_ROOT';
-\$root_url = '';
+// Stackrium IP Fallback Routing
+\$req_uri = \$_SERVER['REQUEST_URI'];
+if (preg_match('/^\/~([^\/]+)\/filemanager/', \$req_uri, \$matches)) {
+    \$root_url = 'http://' . \$_SERVER['HTTP_HOST'] . '/~' . \$matches[1] . '';
+} else {
+    \$root_url = '';
+}
 // Dynamically detect HTTPS so cookies don't break over HTTP
 \$is_https = isset(\$_SERVER['HTTPS']) && (\$_SERVER['HTTPS'] === 'on' || \$_SERVER['HTTPS'] == 1);
 ?>
@@ -62,7 +68,8 @@ if (isset($_GET['sso_t']) && isset($_GET['sso_h'])) {
         session_write_close();
         
         // Redirect to clear the tokens from the URL bar immediately
-        header("Location: index.php");
+        $clean_url = strtok($_SERVER["REQUEST_URI"], '?');
+        header("Location: " . $clean_url);
         exit;
     }
 }

@@ -431,6 +431,25 @@ EOF
 
 chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
 
+echo -e "\e[34m[+] Provisioning Temporary IP Routing Map...\e[0m"
+touch /etc/nginx/stackrium_tenant_map.conf
+chown root:root /etc/nginx/stackrium_tenant_map.conf
+chmod 644 /etc/nginx/stackrium_tenant_map.conf
+
+cat << 'EOF' > /etc/nginx/conf.d/tenant_mapping.conf
+# 1. Extract the domain from the Temporary IP URL
+map $request_uri $extracted_domain {
+    ~^/~([^/]+)/  $1;
+    default       "";
+}
+
+# 2. Find the Linux Username that owns the domain
+map $extracted_domain $tenant_user {
+    default "nobody";
+    include /etc/nginx/stackrium_tenant_map.conf;
+}
+EOF
+
 systemctl restart nginx
 
 # ==========================================

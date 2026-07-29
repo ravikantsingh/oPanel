@@ -30,9 +30,20 @@ try {
     // Cryptographically sign the payload so hackers cannot forge it
     $hash = hash_hmac('sha256', $domain . '|' . $timestamp, $secret);
 
-    // Build the dynamic SSO URL
-    $protocol = $data['has_ssl'] ? 'https://' : 'http://';
-    $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    // ====================================================
+    // STACKRIUM SMART IP DETECTION
+    // ====================================================
+    $panel_host = $_SERVER['HTTP_HOST'];
+    $ip_only = preg_replace('/:[0-9]+$/', '', $panel_host); // Strip port 7443
+
+    if (filter_var($ip_only, FILTER_VALIDATE_IP)) {
+        // Admin logged into Panel via IP -> Construct Fallback HTTPS URL
+        $url = 'https://' . $ip_only . '/~' . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    } else {
+        // Admin logged in via Domain -> Construct Standard URL
+        $protocol = $data['has_ssl'] ? 'https://' : 'http://';
+        $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    }
 
     echo json_encode(['success' => true, 'url' => $url]);
     

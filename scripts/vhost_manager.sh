@@ -216,6 +216,11 @@ EOF
     # 3. Enable the site and test Nginx
     ln -s "$VHOST_CONF" "$NGINX_ENABLED/"
     
+   # Write to Map File for IP Routing
+    if ! grep -q "^$DOMAIN " /etc/nginx/stackrium_tenant_map.conf 2>/dev/null; then
+        echo "$DOMAIN $USERNAME;" >> /etc/nginx/stackrium_tenant_map.conf
+    fi  
+
     if nginx -t; then
         /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # ---> SOURCE OF TRUTH TRACKING <---
@@ -227,6 +232,7 @@ EOF
         # Rollback if Nginx config is invalid
         rm -f "$VHOST_CONF"
         rm -f "$NGINX_ENABLED/$DOMAIN.conf"
+        sed -i "/^$DOMAIN /d" /etc/nginx/stackrium_tenant_map.conf
         echo "Error: Invalid Nginx configuration generated. Rolled back."
         exit 1
     fi

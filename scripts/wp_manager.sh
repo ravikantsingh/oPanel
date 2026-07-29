@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 WP_TITLE=$(echo "$PAYLOAD" | jq -r '.wp_title')
@@ -24,7 +25,7 @@ if [ "$(ls -A $DOC_ROOT | grep -v 'index.php')" ]; then
     exit 1
 fi
 
-# Clean the default oPanel index.php if it exists
+# Clean the default Stackrium index.php if it exists
 rm -f "$DOC_ROOT/index.php"
 
 # 2. Generate Database Credentials dynamically
@@ -104,7 +105,7 @@ chmod 600 "$DOC_ROOT/wp-config.php"
 VHOST_CONF="/etc/nginx/sites-available/$DOMAIN.conf"
 if [ -f "$VHOST_CONF" ]; then
     sed -i 's/try_files $uri $uri\/ =404;/try_files $uri $uri\/ \/index.php?$query_string;/g' "$VHOST_CONF"
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 fi
 # ---------------------------------
 

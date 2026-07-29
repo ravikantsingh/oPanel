@@ -221,3 +221,18 @@
     # 8. Restart Dovecot to apply the new architecture
     sudo systemctl restart dovecot
     sudo systemctl status dovecot --no-pager
+
+# Run these exact commands in your VPS terminal to extract the backup and restore the missing folders:
+    # 1. Navigate to the root directory (so the backup extracts to the right place)
+    cd /
+
+    # 2. Extract the backup we made right before the update
+    sudo tar -xzf /opt/panel/backups/system/panel_core_$(date +%F).tar.gz
+
+    # 3. Re-apply the permissions that the script missed
+    sudo chown -R root:root /opt/panel/scripts /opt/panel/daemon
+    sudo chmod +x /opt/panel/scripts/*.sh
+    sudo chmod +x /opt/panel/daemon/*.py
+
+    # 4. Restart the background worker
+    sudo systemctl restart panel-daemon

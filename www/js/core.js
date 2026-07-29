@@ -1,128 +1,196 @@
 // /opt/panel/www/js/core.js
 
+// =================================================================
+// 1. STACKRIUM GLOBAL TOAST ENGINE (SaaS Edition)
+// =================================================================
+window.showToast = function(type, title, message) {
+    let icon = type === 'success' ? 'bi-check-circle-fill text-success' : 
+              (type === 'error' ? 'bi-exclamation-triangle-fill text-danger' : 
+              (type === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-info-circle-fill text-info'));
+    
+    let toastId = 'toast-' + Date.now();
+    let toastHtml = `
+        <div id="${toastId}" class="toast align-items-center border-0 shadow-lg rounded-4 mb-3" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body d-flex p-3 bg-white rounded-4">
+                <i class="bi ${icon} fs-3 me-3 align-self-center"></i>
+                <div>
+                    <h6 class="mb-1 fw-bold text-dark">${title}</h6>
+                    <p class="mb-0 small text-muted">${message}</p>
+                </div>
+                <button type="button" class="btn-close ms-auto align-self-start" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    $('.toast-container').append(toastHtml);
+    let toastEl = new bootstrap.Toast(document.getElementById(toastId), { delay: 4000 });
+    toastEl.show();
+    
+    // Self-cleanup: Remove HTML from DOM after it fades out
+    document.getElementById(toastId).addEventListener('hidden.bs.toast', () => {
+        $('#' + toastId).remove();
+    });
+}
+
 $(document).ready(function() {
     // =================================================================
-    // GLOBAL UI INJECTIONS
+    // 2. GLOBAL UI INJECTIONS
     // =================================================================
     $('<style>').prop('type', 'text/css').html(`
         #logTaskOutput, #logTerminal { cursor: pointer; transition: opacity 0.2s; }
         #logTaskOutput:hover, #logTerminal:hover { opacity: 0.8; }
+        .copy-trigger { cursor: pointer; transition: transform 0.1s; }
+        .copy-trigger:active { transform: scale(0.90); }
     `).appendTo('head');
 
     // =================================================================
-    // GLOBAL CSRF INTERCEPTOR
+    // 3. GLOBAL NETWORK CONTROLLER & FIREWALL
     // =================================================================
+    window.stackriumLocked = false;
     let csrfToken = $('meta[name="csrf-token"]').attr('content');
+    
     $.ajaxSetup({
-        headers: { 'X-CSRF-TOKEN': csrfToken }
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        beforeSend: function(jqXHR, settings) {
+            if (window.stackriumLocked) {
+                let allowedUrls = ['get_license_info.php', 'sync_license.php', 'logout.php'];
+                let isAllowed = allowedUrls.some(url => settings.url.includes(url));
+                if (!isAllowed) {
+                    jqXHR.abort();
+                    return false;
+                }
+            }
+        }
     });
 
     // =================================================================
-    // TAB STATE PERSISTENCE (URL HASH METHOD)
+    // 4. TAB STATE PERSISTENCE (URL HASH METHOD)
     // =================================================================
-    let activeHash = window.location.hash;
-    if (activeHash) {
-        let targetTab = $('button[data-bs-target="' + activeHash + '"], a[href="' + activeHash + '"]');
-        if (targetTab.length) {
-            targetTab.tab('show'); 
-            let tabId = targetTab.attr('id');
-            $('.sidebar a').removeClass('active');
-            $('.sidebar a[onclick*="' + tabId + '"]').addClass('active');
+    let urlHash = window.location.hash;
+    if (urlHash) {
+        let targetTab = document.querySelector(`.sidebar a[href="${urlHash}"]`);
+        if (targetTab) {
+            new bootstrap.Tab(targetTab).show();
+            let titleEl = document.getElementById('pageTitle');
+            if(titleEl) titleEl.innerText = targetTab.innerText.trim();
         }
     }
-
-    $('button[data-bs-toggle="tab"], a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-        let target = $(e.target).attr('data-bs-target') || $(e.target).attr('href');
-        if(history.replaceState) {
-            history.replaceState(null, null, target);
+    
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        if(history.pushState) {
+            history.pushState(null, null, e.target.hash);
         } else {
-            window.location.hash = target;
+            window.location.hash = e.target.hash;
         }
     });
 
     // =================================================================
-    // GLOBAL UX: 100% BULLETPROOF CUSTOM TOAST SYSTEM
+    // 5. UNIVERSAL COPY CONTROLLERS
     // =================================================================
-    if ($('#customOpanelToast').length === 0) {
-        $('body').append(`
-            <div id="customOpanelToast" style="display:none; position:fixed; bottom:20px; right:20px; z-index:999999; background:#212529; color:#fff; padding:12px 20px; border-radius:8px; box-shadow:0 10px 20px rgba(0,0,0,0.4); font-weight:bold; border-left:4px solid #198754; pointer-events:none;">
-                <i class="bi bi-check-circle-fill text-success me-2 fs-5" style="vertical-align: middle;"></i> 
-                <span id="customOpanelToastMsg" style="vertical-align: middle;">Copied!</span>
-            </div>
-        `);
-    }
-
-    window.showToast = function(message) {
-        $('#customOpanelToastMsg').text(message);
-        let toast = $('#customOpanelToast');
-        toast.stop(true, true).fadeIn(200);
-        setTimeout(() => { toast.fadeOut(400); }, 2500);
-    };
-
-    // =================================================================
-    // UNIVERSAL COPY CONTROLLERS
-    // =================================================================
-    $(document).on('click', '.copy-btn', function() {
-        let targetId = $(this).data('target');
-        let targetEl = $('#' + targetId);
-        let textToCopy = targetEl.is('input, textarea') ? targetEl.val() : targetEl.text();
-        let btn = $(this);
+    $(document).on('click', '.copy-trigger', function() {
+        let textToCopy = $(this).data('copy') || $(this).text().trim();
         
-        if (!textToCopy) return;
-
-        const doFallbackCopy = () => {
-            let $temp = $("<textarea>");
-            $temp.css({position: 'absolute', left: '-9999px'});
-            $('body').append($temp);
-            $temp.val(textToCopy).select();
-            try { document.execCommand("copy"); } catch (e) {}
-            $temp.remove();
-        };
-
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(textToCopy).catch(() => doFallbackCopy());
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                window.showToast('success', 'Copied to Clipboard', `Data successfully copied.`);
+            }).catch(err => {
+                window.showToast('error', 'Copy Failed', 'Your browser blocked the clipboard action.');
+            });
         } else {
-            doFallbackCopy();
+            // Fallback for older browsers
+            let $temp = $("<textarea>");
+            $("body").append($temp);
+            $temp.val(textToCopy).select();
+            document.execCommand("copy");
+            $temp.remove();
+            window.showToast('success', 'Copied to Clipboard', `Data successfully copied.`);
         }
-
-        let originalIcon = btn.html();
-        btn.html('<i class="bi bi-check2 text-success"></i>');
-        showToast("Copied to clipboard!");
-        setTimeout(() => { btn.html(originalIcon); }, 1500);
     });
 
+    // Terminal Log Copy Handler
     $(document).on('click', '#logTaskOutput, #logTerminal', function() {
         let terminal = $(this);
         let textToCopy = terminal.text();
-        
         if (!textToCopy || textToCopy.trim() === '') return;
 
-        const triggerSuccessUI = () => {
-            terminal.addClass('bg-dark bg-opacity-75 text-success');
-            showToast("Terminal log copied to clipboard!");
-            setTimeout(() => { terminal.removeClass('bg-dark bg-opacity-75 text-success'); }, 1500);
-        };
-
-        const fallbackCopy = (text) => {
-            let $temp = $("<textarea>");
-            $temp.css({position: 'absolute', left: '-9999px'});
-            terminal.parent().append($temp); 
-            $temp.val(text).select();
-            try {
-                document.execCommand("copy");
-                triggerSuccessUI();
-            } catch (err) {
-                console.error("Fallback copy failed.");
-            }
-            $temp.remove();
-        };
-
         if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(textToCopy)
-                .then(triggerSuccessUI)
-                .catch(() => fallbackCopy(textToCopy));
-        } else {
-            fallbackCopy(textToCopy);
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                terminal.addClass('bg-dark bg-opacity-75 text-success');
+                window.showToast('success', 'Terminal Copied', 'Log output copied to clipboard!');
+                setTimeout(() => { terminal.removeClass('bg-dark bg-opacity-75 text-success'); }, 1500);
+            });
+        }
+    });
+
+    // =================================================================
+    // 6. FIRST-LOGIN GATEKEEPER (Forces Admin to change 'admin123')
+    // =================================================================
+    $.ajax({
+        url: '/ajax/check_first_login.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(res) {
+            if (res.is_first_login) {
+                let gatekeeperModal = new bootstrap.Modal(document.getElementById('firstLoginModal'), {
+                    backdrop: 'static', 
+                    keyboard: false     
+                });
+                gatekeeperModal.show();
+            }
+        }
+    });
+
+    $(document).on('submit', '#firstLoginForm', function(e) {
+        e.preventDefault();
+        let btn = $('#btnSaveFirstLogin');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing Server...');
+
+        let pass1 = $('#firstPass1').val();
+        let pass2 = $('#firstPass2').val();
+
+        if (pass1 !== pass2) {
+            window.showToast('error', 'Password Mismatch', 'Your new passwords do not match.');
+            btn.prop('disabled', false).html('Secure & Unlock Panel');
+            return;
+        }
+
+        $.ajax({
+            url: '/ajax/setup_first_admin.php',
+            type: 'POST',
+            data: { new_password: pass1 },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    $('#firstLoginModal').modal('hide');
+                    window.showToast('success', 'Server Secured', 'Your administrator password has been updated.');
+                } else {
+                    window.showToast('error', 'Update Failed', res.error);
+                    btn.prop('disabled', false).html('Secure & Unlock Panel');
+                }
+            }
+        });
+    });
+
+    // =================================================================
+    // 7. GLOBAL AJAX ERROR INTERCEPTOR (Silent Lockouts)
+    // =================================================================
+    $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+        if (jqXHR.status === 0 || jqXHR.statusText === 'abort') return;
+
+        if (jqXHR.status === 403) {
+            try {
+                let res = JSON.parse(jqXHR.responseText);
+                if (res.error && res.hasOwnProperty('license_status')) {
+                    window.stackriumLocked = true;
+                    $('button').prop('disabled', false);
+                    $('.spinner-border').remove();
+                    $('#globalLicenseBanner').removeClass('d-none').addClass('d-flex');
+                    $('#bannerHeading').text('CRITICAL: Panel Locked (License ' + res.license_status.toUpperCase() + ')');
+                    
+                    let licenseTab = document.querySelector('.sidebar a[href="#license-updates"]');
+                    if (licenseTab) new bootstrap.Tab(licenseTab).show();
+                }
+            } catch(e) {}
         }
     });
 });

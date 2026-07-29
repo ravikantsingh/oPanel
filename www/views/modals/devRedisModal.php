@@ -2,13 +2,13 @@
 <div class="modal fade" id="devRedisModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-0">
+            <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold"><i class="bi bi-code-slash text-warning me-2"></i> Custom App Integration Guide</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <div class="alert alert-info border-0 shadow-sm small">
-                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> oPanel provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
+                    <i class="bi bi-info-circle-fill me-1"></i> <strong>Developer Note:</strong> Stackrium provides an isolated, high-speed RAM cache. Use these credentials to connect your raw PHP, Laravel, or Node.js applications.
                 </div>
 
                 <!-- Credentials Section -->
@@ -43,7 +43,7 @@
                 <div class="position-relative shadow-sm">
                     <textarea class="form-control bg-dark text-success font-monospace" id="devPhpBoilerplate" rows="12" style="font-size: 0.85rem; resize: none;" readonly>
 &lt;?php
-// 1. Connect to oPanel Redis
+// 1. Connect to Stackrium Redis
 $redis = new Redis();
 $redis-&gt;connect('127.0.0.1', 6379);
 $redis-&gt;auth('PASSWORD_WILL_LOAD_HERE');

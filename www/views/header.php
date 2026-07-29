@@ -26,18 +26,82 @@ $brand = Branding::getSettings();
             --bs-primary-rgb: <?= implode(',', sscanf($brand['theme_color'], "#%02x%02x%02x")) ?>;
         }
         body { background-color: #f4f6f9; }
-        .sidebar { min-height: 100vh; background-color: <?= $brand['sidebar_color'] ?>; padding-top: 20px;}
-        .sidebar a { color: #8b8b9e; text-decoration: none; padding: 12px 20px; display: block; border-left: 3px solid transparent; transition: all 0.2s; }
-        .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
-        .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); border-left: 3px solid #0d6efd; }
         .main-content { padding: 30px; }
-        .nav-tabs .nav-link { color: #6c757d; }
+        
+        /* --- Stackrium Premium SaaS UI Overrides --- */
+        .card {
+            border: none !important;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .modal-header {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            background-color: #f8f9fa !important;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+        }
+        .table-light th {
+            background-color: #f8f9fa;
+            border-bottom: none;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .table-hover tbody tr { transition: background-color 0.2s ease; }
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            transition: all 0.2s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.6rem 1rem;
+            box-shadow: none !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.1) !important;
+        }
+        
+        /* --- Sidebar Polish --- */
+        .sidebar { 
+            min-height: 100vh; 
+            background-color: <?= $brand['sidebar_color'] ?>; 
+            padding-top: 20px;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+        .sidebar a { 
+            color: #8b8b9e; 
+            text-decoration: none; 
+            padding: 12px 20px; 
+            display: block; 
+            border-left: 3px solid transparent; 
+            transition: all 0.2s; 
+            border-radius: 8px;
+            margin: 0 10px;
+        }
+        .sidebar a:hover { color: #fff; background-color: rgba(255,255,255,0.05); }
+        .sidebar a.active { color: #fff; background-color: rgba(13, 110, 253, 0.1); }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="row">
-        <!-- Make Sidebar a flex-column to push the admin menu to the bottom -->
         <nav class="col-md-3 col-lg-2 d-md-flex flex-column sidebar collapse">
             <a href="<?= htmlspecialchars($brand['logo_url']) ?>" class="text-center d-block mb-4 text-decoration-none">
                 <?php if (!empty($brand['logo'])): ?>
@@ -46,31 +110,40 @@ $brand = Branding::getSettings();
                     <h4 class="text-white"><i class="bi bi-hexagon-fill text-primary"></i> <?= htmlspecialchars($brand['title']) ?></h4>
                 <?php endif; ?>
             </a>
-            <ul class="nav flex-column mb-auto">
+            
+            <ul class="nav flex-column mb-auto" id="sidebarNav" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" href="#" onclick="$('#overview-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                    <a class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview" href="#overview" role="tab"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#domains-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-globe me-2"></i> Web & Domains</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#domains" href="#domains" role="tab"><i class="bi bi-globe me-2"></i> Web & Domains</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#users-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-people me-2"></i> Users & DBs</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#users" href="#users" role="tab"><i class="bi bi-people me-2"></i> Users & DBs</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#security-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-shield-check me-2"></i> Security</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#security" href="#security" role="tab"><i class="bi bi-shield-check me-2"></i> Security & DNS</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#cron-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-clock-history me-2"></i> Cron Jobs</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#redis" href="#redis" role="tab"><i class="bi bi-lightning-charge me-2"></i> Performance</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" onclick="$('#backups-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-archive me-2"></i> Backups</a>
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#cron" href="#cron" role="tab"><i class="bi bi-clock-history me-2"></i> Cron Jobs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#backups" href="#backups" role="tab"><i class="bi bi-archive me-2"></i> Backups</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#license-updates" href="#license-updates" role="tab"><i class="bi bi-arrow-repeat me-2"></i> Updates</a>
                 </li>
                 <li class="nav-item mt-4 border-top border-secondary pt-3">
-                    <a class="nav-link text-info" href="#" onclick="$('#docs-tab').tab('show'); $('.sidebar a').removeClass('active'); $(this).addClass('active');"><i class="bi bi-journal-text me-2"></i> User Manual</a>
+                    <a class="nav-link text-info" data-bs-toggle="tab" data-bs-target="#docs" href="#docs" role="tab"><i class="bi bi-journal-text me-2"></i> User Manual</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-success" id="support-tab" data-bs-toggle="tab" data-bs-target="#support" href="#support" role="tab"><i class="bi bi-life-preserver me-2"></i> Support Desk</a>
                 </li>
             </ul>
 
-            <!-- Admin Profile Bottom Menu -->
             <hr class="border-secondary mt-4 mb-3">
             <div class="dropdown px-3 mb-4">
                 <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="adminMenu" data-bs-toggle="dropdown" aria-expanded="false">

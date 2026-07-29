@@ -1,10 +1,11 @@
 #!/bin/bash
 # ==============================================================================
-# oPanel Installer
+# Stackrium Control Installer
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
-GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git"
+GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
+BRANCH="lara-py"
 
 # Ensure script is run as root
 if [ "$EUID" -ne 0 ]; then
@@ -12,13 +13,48 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-echo -e "\e[32mStarting oPanel Installation...\e[0m"
+# 1. Check if the user passed the email as an environment variable (for automation)
+if [ -z "$USER_EMAIL" ]; then
+    # 2. If not, prompt them interactively. 
+    # The "< /dev/tty" forces bash to read from the keyboard, bypassing the curl pipe!
+    read -p "Enter your email address for License Registration: " USER_EMAIL < /dev/tty
+fi
+
+# 3. Final validation check
+if [ -z "$USER_EMAIL" ]; then
+    echo -e "\e[31mError: Email is required to register the server.\e[0m"
+    exit 1
+fi
+
+echo -e "\n\e[32mStarting Stackrium Control Installation...\e[0m"
 export DEBIAN_FRONTEND=noninteractive
 
 # ==========================================
-# 1. INSTALL CORE DEPENDENCIES & NODE.JS
+# 1 PROVISION SWAP MEMORY (OOM Protection)
 # ==========================================
-echo -e "\e[34m[1/13] Installing system dependencies...\e[0m"
+echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
+# Only create swap if it doesn't already exist
+if [ ! -f /swapfile ]; then
+    fallocate -l 2G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    # Make it permanent across reboots
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    
+    # Optimize swappiness (Tell kernel to prefer physical RAM, use swap only as fallback)
+    sysctl vm.swappiness=10
+    echo 'vm.swappiness=10' >> /etc/sysctl.conf
+    
+    echo -e "\e[32mSwap memory provisioned successfully.\e[0m"
+else
+    echo -e "\e[33mSwap file already exists. Skipping...\e[0m"
+fi
+
+# ==========================================
+# 1.5 INSTALL CORE DEPENDENCIES & NODE.JS
+# ==========================================
+echo -e "\e[34m[1/14] Installing system dependencies...\e[0m"
 apt-get update && apt-get upgrade -y
 apt-get install -y software-properties-common curl wget git unzip jq quota quotatool
 
@@ -48,87 +84,142 @@ pm2 startup systemd -u root --hp /root
 # Purge vsftpd just in case it was installed, to prevent Port 21 conflicts
 apt-get purge -y vsftpd 2>/dev/null || true
 
-# --- oPanel Master WAF Provisioning ---
+# --- Stackrium Master WAF Provisioning ---
 echo "Configuring ModSecurity for Master Panel..."
-
-# Ensure the WAF directory exists
 mkdir -p /etc/nginx/waf/
-
-# Create the dedicated Master Panel exceptions file
-touch /etc/nginx/waf/opanel-master.conf
-
-# Optional: Pre-fill it with common OWASP whitelists for control panels
-cat <<EOF > /etc/nginx/waf/opanel-master.conf
-# oPanel Master WAF Rules & Exceptions
-# Add SecRuleRemoveById directives here if legitimate panel actions get blocked.
-
-# Example: Whitelist oPanel saving Bash/JSON configurations
-# SecRuleRemoveById 941100
+touch /etc/nginx/waf/stackrium-master.conf
+cat <<EOF > /etc/nginx/waf/stackrium-master.conf
+# Stackrium Master WAF Rules & Exceptions
 EOF
-
 systemctl restart nginx
+
+# ==========================================
+# 1.6 MARIADB MEMORY TUNING
+# ==========================================
+echo -e "\e[34m[+] Tuning MariaDB for micro-instance memory efficiency...\e[0m"
+cat << 'EOF' > /etc/mysql/mariadb.conf.d/99-stackrium.cnf
+[mysqld]
+innodb_buffer_pool_size = 64M
+max_connections = 60
+key_buffer_size = 16M
+thread_cache_size = 4
+host_cache_size = 0
+innodb_ft_cache_size = 1600000
+innodb_ft_total_cache_size = 32000000
+query_cache_type = 0
+query_cache_size = 0
+EOF
+systemctl restart mariadb
 
 # ==========================================
 # 2. CLONE PANEL FILES
 # ==========================================
-echo -e "\e[34m[2/13] Downloading oPanel core...\e[0m"
-mkdir -p /opt/panel
-git clone "$GITHUB_REPO" /tmp/panel_temp
+echo -e "\e[34m[2/14] Downloading Stackrium Control core (Branch: $BRANCH)...\e[0m"
+
+# 1. Clone the repository into a temporary folder
+git clone -b "$BRANCH" "$GITHUB_REPO" /tmp/panel_temp
+
+# 2. Create the destination config directory on the VPS
+mkdir -p /opt/panel/config
+
+# 3. Copy the public key from the cloned repo to the VPS config folder
+# We use 2>/dev/null so the script doesn't crash if the file is missing for some reason
+cp /tmp/panel_temp/config/public_key.pem /opt/panel/config/public_key.pem 2>/dev/null || true
+
+# 4. Copy the rest of the core panel files
 cp -r /tmp/panel_temp/daemon /opt/panel/
 cp -r /tmp/panel_temp/scripts /opt/panel/
 cp -r /tmp/panel_temp/www /opt/panel/
 cp -r /tmp/panel_temp/templates /opt/panel/
+cp -r /tmp/panel_temp/cli /opt/panel/
 
 # ==========================================
-# 3. SET STRICT PERMISSIONS
+# 3. SECURE LICENSE REGISTRATION
 # ==========================================
-echo -e "\e[34m[3/13] Securing file permissions...\e[0m"
+echo -e "\e[34m[3/14] Registering server with Stackrium Central...\e[0m"
+
+if [ ! -f "/opt/panel/config/public_key.pem" ]; then
+    echo -e "\e[31mError: public_key.pem not found in repository. Cannot encrypt registration.\e[0m"
+    exit 1
+fi
+
+# Encrypt the email payload using the public key
+JSON_PAYLOAD="{\"email\":\"$USER_EMAIL\"}"
+ENCRYPTED_PAYLOAD=$(echo -n "$JSON_PAYLOAD" | openssl pkeyutl -encrypt -pubin -inkey "/opt/panel/config/public_key.pem" | base64 -w 0)
+
+# Send via secure URL-encoded cURL
+RESPONSE=$(curl -s -X POST https://stackrium.com/api/register.php --data-urlencode "payload=$ENCRYPTED_PAYLOAD")
+LICENSE_KEY=$(echo "$RESPONSE" | jq -r '.license_key')
+
+if [ "$LICENSE_KEY" == "null" ] || [ -z "$LICENSE_KEY" ]; then
+    echo -e "\e[31mError: Failed to obtain license key from stackrium.com. Registration failed.\e[0m"
+    echo "Response: $RESPONSE"
+    exit 1
+fi
+
+echo -e "\e[32mLicense activated successfully: $LICENSE_KEY\e[0m"
+echo "$LICENSE_KEY" > /opt/panel/license.key
+chown root:www-data /opt/panel/license.key
+chmod 640 /opt/panel/license.key
+
+# ==========================================
+# 4. SET STRICT PERMISSIONS
+# ==========================================
+echo -e "\e[34m[4/14] Securing file permissions...\e[0m"
 mkdir -p /opt/panel/logs
 mkdir -p /opt/panel/backups/databases
 mkdir -p /opt/panel/backups/websites
 mkdir -p /etc/nginx/waf
+mkdir -p /opt/panel/cli/migrations
+mkdir -p /opt/panel/www/uploads/tickets
 
-chown -R www-data:www-data /opt/panel/www
-chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates
+echo "<?php define('PANEL_VERSION', '1.0.0'); ?>" > /opt/panel/www/version.php
+chown www-data:www-data /opt/panel/www/version.php
+# Provision the dynamic WAF settings state
+echo '{"waf_branch": "v3.3/master"}' > /opt/panel/www/config/waf_settings.json
+chown www-data:www-data /opt/panel/www/config/waf_settings.json
+chmod 644 /opt/panel/www/config/waf_settings.json
 
-# Make all bash scripts and the Python daemons executable
+chown -R www-data:www-data /opt/panel/www /opt/panel/www/uploads
+chown -R root:root /opt/panel/daemon /opt/panel/scripts /opt/panel/logs /opt/panel/templates /opt/panel/cli
+
+chmod -R 750 /opt/panel/www/uploads
+
+# This instantly scrubs Windows characters from ALL cloned scripts
+sed -i -e 's/\r$//' /opt/panel/scripts/*.sh
+sed -i -e 's/\r$//' /opt/panel/daemon/*.py
+sed -i -e 's/\r$//' /opt/panel/cli/*.php
+sed -i -e 's/\r$//' /opt/panel/config/*.pem
+
 chmod +x /opt/panel/scripts/*.sh
 chmod +x /opt/panel/daemon/worker.py
-chmod +x /opt/panel/daemon/scheduler.py # <-- NEW: Backup Scheduler
+chmod +x /opt/panel/daemon/scheduler.py 
 
-# Secure the Backup Vaults
 chgrp -R www-data /opt/panel/backups
 find /opt/panel/backups -type d -exec chmod 750 {} +
 find /opt/panel/backups -type f -exec chmod 640 {} +
 
-# WAF Sudoers Bridge
-# This allows the PHP UI toggle to control the Master WAF script
-echo 'www-data ALL=(root) NOPASSWD: /opt/panel/scripts/toggle_master_waf.sh *' > /etc/sudoers.d/opanel-waf
-chmod 440 /etc/sudoers.d/opanel-waf
+echo 'www-data ALL=(root) NOPASSWD: /opt/panel/scripts/toggle_master_waf.sh *' > /etc/sudoers.d/stackrium-waf
+chmod 440 /etc/sudoers.d/stackrium-waf
 
 # ==========================================
-# 4. INITIALIZE DATABASE
+# 5. INITIALIZE DATABASE
 # ==========================================
-echo -e "\e[34m[4/13] Bootstrapping MariaDB Environment...\e[0m"
+echo -e "\e[34m[5/14] Bootstrapping MariaDB Environment...\e[0m"
 systemctl start mariadb
 
-# Generate a highly secure random password for the panel's internal DB connection
 DB_PASS=$(openssl rand -hex 16)
 
-# Create the databases and users
 mysql -e "CREATE DATABASE IF NOT EXISTS panel_core;"
 mysql -e "CREATE USER IF NOT EXISTS 'panel_user'@'localhost' IDENTIFIED BY '$DB_PASS';"
 mysql -e "GRANT ALL PRIVILEGES ON panel_core.* TO 'panel_user'@'localhost';"
 
-# Create the background phpMyAdmin SSO user (Hardcoded to match config.inc.php)
 mysql -e "CREATE USER IF NOT EXISTS 'pma_sso'@'localhost' IDENTIFIED BY 'PmaMasterKey998877';"
 mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'pma_sso'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
-# Import the schema
 mysql panel_core < /tmp/panel_temp/schema.sql
 
-# Update the PHP config file with the new generated password
 cat <<EOF > /opt/panel/www/config/database.php
 <?php
 define('DB_HOST', 'localhost');
@@ -138,180 +229,222 @@ define('DB_PASS', '$DB_PASS');
 EOF
 
 # ==========================================
-# 5. CONFIGURE PHPMYADMIN
+# 6. CONFIGURE PHPMYADMIN
 # ==========================================
-echo -e "\e[34m[5/13] Installing phpMyAdmin...\e[0m"
+echo -e "\e[34m[6/14] Installing phpMyAdmin...\e[0m"
 
-# FIX: Robust Download with Fallback to prevent silent 404s
 wget -q --tries=3 --timeout=15 https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -O /tmp/pma.zip
 
-# If wget failed or the file is empty, fallback to curl
 if [ ! -s /tmp/pma.zip ]; then
     echo -e "\e[33mWarning: wget failed. Falling back to curl...\e[0m"
     curl -sL https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.zip -o /tmp/pma.zip
 fi
 
 unzip -q /tmp/pma.zip -d /tmp/
-mv /tmp/phpMyAdmin-*-all-languages /opt/panel/www/pma
+
+# Move the contents, not the folder
+mv /tmp/phpMyAdmin-*-all-languages/* /opt/panel/www/pma/
+rm -rf /tmp/phpMyAdmin-*-all-languages
+
 rm /tmp/pma.zip
 
-# Generate Blowfish Secret for SSO Cookies
+# Ensure the template cache folder exists
+mkdir -p /opt/panel/www/pma/tmp
+chmod 777 /opt/panel/www/pma/tmp
+
 BLOWFISH=$(openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 32)
 cp /tmp/panel_temp/www/pma/config.inc.php /opt/panel/www/pma/config.inc.php
 sed -i "s/'x8y9z0A1b2C3d4E5f6G7h8I9j0K1l2M3'/'$BLOWFISH'/g" /opt/panel/www/pma/config.inc.php
 chown -R www-data:www-data /opt/panel/www/pma
 
 # ==========================================
-# 6. CONFIGURE MODSECURITY & PURE-FTPD & BIND9
+# 7. CONFIGURE MODSECURITY & PURE-FTPD & BIND9
 # ==========================================
-echo -e "\e[34m[6/13] Configuring WAF, FTP, and DNS...\e[0m"
-# WAF
+echo -e "\e[34m[7/14] Configuring WAF, FTP, and DNS...\e[0m"
 mkdir -p /etc/modsecurity
 wget -qO /etc/modsecurity/modsecurity.conf https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/modsecurity.conf-recommended
 wget -qO /etc/modsecurity/unicode.mapping https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/unicode.mapping
 sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
 echo 'Include /usr/share/modsecurity-crs/owasp-crs.load' >> /etc/modsecurity/modsecurity.conf
 find /usr/share/modsecurity-crs/ -type f -exec sed -i 's/IncludeOptional/Include/g' {} +
-apt-mark hold modsecurity-crs # Prevent OS from overwriting rules
+apt-mark hold modsecurity-crs 
 
-# FTP
 ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
 echo 'yes' > /etc/pure-ftpd/conf/ChrootEveryone
-# CLOUD NAT FIX FOR PASSIVE FTP
 PUBLIC_IP=$(curl -s ifconfig.me)
 echo '40000 50000' > /etc/pure-ftpd/conf/PassivePortRange
-echo '$PUBLIC_IP' > /etc/pure-ftpd/conf/ForcePassiveIP
+echo "$PUBLIC_IP" > /etc/pure-ftpd/conf/ForcePassiveIP
 touch /etc/pure-ftpd/pureftpd.passwd
 pure-pw mkdb
+echo "yes" | sudo tee /etc/pure-ftpd/conf/VerboseLog
+echo '1' > /etc/pure-ftpd/conf/TLS
 systemctl restart pure-ftpd
 
-# DNS
 mkdir -p /etc/bind/zones
 chown bind:bind /etc/bind/zones
 
-# SRE FIX FOR SYSTEMD-RESOLVED vs BIND9
 echo -e "\e[34m[+] Resolving local DNS Port 53 conflicts...\e[0m"
 mkdir -p /etc/systemd/resolved.conf.d
-echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/opanel-dns.conf
+echo -e "[Resolve]\nDNSStubListener=no" > /etc/systemd/resolved.conf.d/stackrium-dns.conf
 systemctl restart systemd-resolved
 rm /etc/resolv.conf
 ln -s /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+echo -e "\e[34m[+] Configuring BIND9 for Public Access...\e[0m"
+cat << 'EOF' > /etc/bind/named.conf.options
+options {
+        directory "/var/cache/bind";
+
+        // Listen on all IPv4 interfaces
+        listen-on { any; };
+        
+        // Listen on all IPv6 interfaces
+        listen-on-v6 { any; };
+
+        // Allow anyone on the internet to query your DNS server
+        allow-query { any; };
+
+        // SECURITY WARNING: Do NOT enable recursion if this is a public authoritative server!
+        recursion no; 
+};
+EOF
+
 systemctl restart bind9
 
 # ==========================================
-# 7. CONFIGURE NGINX & SSL
+# 8. CONFIGURE NGINX & SSL
 # ==========================================
-echo -e "\e[34m[7/13] Provisioning Nginx, SSL, and Custom Errors...\e[0m"
+echo -e "\e[34m[8/14] Provisioning Nginx, SSL, and Custom Errors...\e[0m"
 SERVER_IP=$(curl -s ifconfig.me)
 mkdir -p /etc/ssl/private /etc/ssl/certs
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -keyout /etc/ssl/private/mypanel-selfsigned.key \
     -out /etc/ssl/certs/mypanel-selfsigned.crt \
-    -subj "/C=IN/ST=UP/L=City/O=oPanel/CN=$SERVER_IP" >/dev/null 2>&1
+    -subj "/C=IN/ST=UP/L=City/O=Stackrium/CN=$SERVER_IP" >/dev/null 2>&1
 
-# HIDE OS & NGINX VERSION
-# This uncomments the server_tokens rule in the master Nginx config
 sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 
-# DEPLOY CUSTOM ERROR PAGES
-mkdir -p /var/www/opanel_errors
-# Copy the files from your Git repo to the web directory
-cp /tmp/panel_temp/www/errors/*.html /var/www/opanel_errors/ 2>/dev/null || true
+echo -e "\e[34m[+] Configuring Native JSON Logging for Nginx...\e[0m"
+cat << 'EOF' > /etc/nginx/conf.d/stackrium_logging.conf
+# Stackrium Native JSON Access Logs (Optimized for low-RAM parsing)
+log_format json_access escape=json
+'{'
+  '"time": "$time_iso8601",'
+  '"ip": "$remote_addr",'
+  '"method": "$request_method",'
+  '"uri": "$request_uri",'
+  '"status": "$status",'
+  '"size": "$body_bytes_sent",'
+  '"user_agent": "$http_user_agent"'
+'}';
+EOF
 
-# Secure the error pages
-chown -R www-data:www-data /var/www/opanel_errors
-find /var/www/opanel_errors -type f -exec chmod 644 {} +
-chmod 755 /var/www/opanel_errors
+mkdir -p /var/www/stackrium_errors
+cp /tmp/panel_temp/www/errors/*.html /var/www/stackrium_errors/ 2>/dev/null || true
 
-# DEPLOY GLOBAL OPANEL LANDING PAGE
-# Clear out the default Ubuntu/Nginx landing pages
+chown -R www-data:www-data /var/www/stackrium_errors
+find /var/www/stackrium_errors -type f -exec chmod 644 {} +
+chmod 755 /var/www/stackrium_errors
+
 rm -f /var/www/html/index.nginx-debian.html
 rm -f /var/www/html/index.html
-
-# Copy the master template to the global web root
 cp /opt/panel/templates/index.html /var/www/html/index.html
 
-# Secure the permissions
 chown www-data:www-data /var/www/html/index.html
 chmod 644 /var/www/html/index.html
 
-# Generate the global error snippet automatically
-cat << 'EOF' > /etc/nginx/snippets/opanel-errors.conf
-# Intercept errors from FastCGI (PHP)
+cat << 'EOF' > /etc/nginx/snippets/stackrium-errors.conf
 fastcgi_intercept_errors on;
-
-error_page 403 /opanel_403.html;
-error_page 404 /opanel_404.html;
-error_page 500 502 504 /opanel_50x.html;
-error_page 503 /opanel_suspended.html;
-
-location = /opanel_403.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_404.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_50x.html { root /var/www/opanel_errors; allow all; internal; }
-location = /opanel_suspended.html { root /var/www/opanel_errors; allow all; internal; }
+error_page 403 /stackrium_403.html;
+error_page 404 /stackrium_404.html;
+error_page 500 502 504 /stackrium_50x.html;
+error_page 503 /stackrium_suspended.html;
+location = /stackrium_403.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_404.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_50x.html { root /var/www/stackrium_errors; allow all; internal; }
+location = /stackrium_suspended.html { root /var/www/stackrium_errors; allow all; internal; }
 EOF
 
-# Generate the dedicated Domain Suspension Snippet
 cat << 'EOF' > /etc/nginx/snippets/domain-suspended.conf
 error_page 503 @suspended;
 return 503;
-
 location @suspended {
-    root /var/www/opanel_errors;
-    rewrite ^(.*)$ /opanel_suspended.html break;
+    root /var/www/stackrium_errors;
+    rewrite ^(.*)$ /stackrium_suspended.html break;
     allow all;
 }
 EOF
 
-# SRE SUDOERS BRIDGE FOR SSL CHECKS
-echo -e "\e[34m[+] Configuring Sudoers Bridge for SSL telemetry...\e[0m"
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-ssl
-echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/opanel-ssl
-chmod 440 /etc/sudoers.d/opanel-ssl
+echo -e "\e[34m[+] Provisioning Layer-7 Botnet Defense...\e[0m"
+cat << 'EOF' > /etc/nginx/snippets/block-bots.conf
+# Stackrium Global Botnet Drop Rules
+# Instantly drops connections for known toxic vulnerability scanners
+location ~* (\.env|phpunit|eval-stdin\.php|wp_filemanager\.php|\.git\/config) {
+    return 444;
+}
+EOF
 
-# SRE SUDOERS BRIDGE FOR radis Cache
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-redis
-echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc/sudoers.d/opanel-redis
-chmod 440 /etc/sudoers.d/opanel-redis
+echo -e "\e[34m[+] Configuring Sudoers Bridge...\e[0m"
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-ssl
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/openssl x509 *' >> /etc/sudoers.d/stackrium-ssl
+chmod 440 /etc/sudoers.d/stackrium-ssl
+
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-redis
+echo 'www-data ALL=(root) NOPASSWD: /bin/systemctl restart redis-server' >> /etc/sudoers.d/stackrium-redis
+chmod 440 /etc/sudoers.d/stackrium-redis
 
 cp /tmp/panel_temp/nginx-default.conf /etc/nginx/sites-available/default
 
-# SRE FOLDERS FOR REDIRECTS, HOTLINKS AND MIME TYPE
-mkdir -p /etc/nginx/opanel/redirects
-mkdir -p /etc/nginx/opanel/mimes
-mkdir -p /etc/nginx/opanel/hotlink
-chown -R root:root /etc/nginx/opanel
-chmod -R 755 /etc/nginx/opanel
-chown -R root:root /etc/nginx/opanel/hotlink
+mkdir -p /etc/nginx/stackrium/redirects
+mkdir -p /etc/nginx/stackrium/mimes
+mkdir -p /etc/nginx/stackrium/hotlink
+mkdir -p /etc/nginx/conf.d/domains
+chown -R root:root /etc/nginx/stackrium
+chmod -R 755 /etc/nginx/stackrium
+chown -R root:root /etc/nginx/stackrium/hotlink
+
+echo -e "\e[34m[+] Provisioning Certbot FTP SSL Hook...\e[0m"
+mkdir -p /etc/letsencrypt/renewal-hooks/deploy/
+
+cat << 'EOF' > /etc/letsencrypt/renewal-hooks/deploy/update-ftp-ssl.sh
+#!/bin/bash
+# Check if the renewed certificate belongs to the Master Panel
+PANEL_DOMAIN=$(mysql -N -s -e "SELECT setting_value FROM panel_core.settings WHERE setting_key='panel_domain' LIMIT 1;" 2>/dev/null)
+
+if [ "$RENEWED_DOMAINS" == "$PANEL_DOMAIN" ] && [ -n "$PANEL_DOMAIN" ]; then
+    cat /etc/letsencrypt/live/$PANEL_DOMAIN/privkey.pem /etc/letsencrypt/live/$PANEL_DOMAIN/fullchain.pem > /etc/ssl/private/pure-ftpd.pem
+    chmod 600 /etc/ssl/private/pure-ftpd.pem
+    systemctl restart pure-ftpd
+fi
+EOF
+
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-ftp-ssl.sh
+
+echo -e "\e[34m[+] Provisioning Certbot Mail SSL Hook...\e[0m"
+cat << 'EOF' > /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
+#!/bin/bash
+# If the renewed domain starts with "mail.", restart the mail services
+if [[ "$RENEWED_DOMAINS" == *"mail."* ]]; then
+    systemctl restart postfix dovecot
+fi
+EOF
+
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
 
 systemctl restart nginx
 
 # ==========================================
-# 7.5 INSTALL & SECURE REDIS CACHE
+# 9. INSTALL & SECURE REDIS CACHE
 # ==========================================
-echo -e "\e[34m[+] Provisioning Redis In-Memory Cache...\e[0m"
-
-# 1. Install Redis and the PHP-Redis extension
+echo -e "\e[34m[9/14] Provisioning Redis In-Memory Cache...\e[0m"
 apt-get install -y redis-server php8.3-redis
-
-# 2. Generate a highly secure random password for Redis
 REDIS_PASS=$(openssl rand -hex 16)
-
-# 3. Apply SRE Guardrails and Security to redis.conf
-# Set the password
 sed -i "s/# requirepass foobared/requirepass $REDIS_PASS/g" /etc/redis/redis.conf
-
-# Hard-cap memory to 128MB to prevent OOM crashes
 echo "maxmemory 128mb" >> /etc/redis/redis.conf
-
-# Set eviction policy to seamlessly drop oldest items when full
 echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
-
-# Restart and enable the Redis service
 systemctl restart redis-server
 systemctl enable redis-server
 
-# 4. Save the credentials securely for oPanel to use
 mkdir -p /opt/panel/www/config
 cat <<EOF > /opt/panel/www/config/redis.php
 <?php
@@ -320,16 +453,13 @@ define('REDIS_PORT', 6379);
 define('REDIS_PASS', '$REDIS_PASS');
 EOF
 
-# Ensure www-data can read the config
 chown root:www-data /opt/panel/www/config/redis.php
 chmod 640 /opt/panel/www/config/redis.php
 
 # ==========================================
-# 8. START PYTHON TASK DAEMON
+# 10. START PYTHON TASK DAEMON
 # ==========================================
-echo -e "\e[34m[8/13] Initializing Background Queue Worker...\e[0m"
-
-# NEW: Sync the generated DB password with the Python worker & scheduler
+echo -e "\e[34m[10/14] Initializing Background Queue Worker...\e[0m"
 sed -i "s/YOUR_SECURE_PASSWORD/$DB_PASS/g" /opt/panel/daemon/worker.py
 sed -i "s/YOUR_DB_PASSWORD/$DB_PASS/g" /opt/panel/daemon/scheduler.py
 
@@ -338,14 +468,42 @@ systemctl daemon-reload
 systemctl enable panel-daemon
 systemctl start panel-daemon
 
-# NEW: WAF & Master Scheduler Cron Jobs
-(crontab -l 2>/dev/null; echo "0 3 * * * /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1") | crontab -
-(crontab -l 2>/dev/null; echo "0 * * * * /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1") | crontab -
+echo -e "\e[34m[+] Configuring System Cron Jobs...\e[0m"
+
+cat <<EOF > /etc/cron.d/stackrium-core
+# Stackrium Control Automated Tasks
+# --------------------------------------------------
+# Run Python scheduler every hour
+0 * * * * root /usr/bin/python3 /opt/panel/daemon/scheduler.py >> /opt/panel/logs/scheduler.log 2>&1
+
+# Telemetry Heartbeat (2:00 AM)
+0 2 * * * root /bin/bash /opt/panel/scripts/heartbeat.sh > /dev/null 2>&1
+
+# Update WAF Rules (3:00 AM)
+0 3 * * * root /opt/panel/scripts/waf_updater.sh > /dev/null 2>&1
+
+# Auto-Update Engine (4:00 AM)
+0 4 * * * root /usr/bin/php /opt/panel/cli/auto_update.php >> /opt/panel/logs/auto_update.log 2>&1
+
+# Update Cloudflare Proxy IPs (Sunday at 4:00 AM)
+0 5 * * 0 root /bin/bash /opt/panel/scripts/update_cdn_ips.sh > /dev/null 2>&1
+EOF
+
+chmod 644 /etc/cron.d/stackrium-core
+systemctl restart cron
+
+echo -e "\e[34m[+] Configuring Sudoers Bridge for Heartbeat Sync...\e[0m"
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-heartbeat
+echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/heartbeat.sh' >> /etc/sudoers.d/stackrium-heartbeat
+chmod 440 /etc/sudoers.d/stackrium-heartbeat
+# Update Engine sudoers
+echo 'www-data ALL=(root) NOPASSWD: /bin/bash /opt/panel/scripts/updater.sh *' | tee /etc/sudoers.d/stackrium-updater
+chmod 440 /etc/sudoers.d/stackrium-updater
 
 # ==========================================
-# 9. CONFIGURE UFW FIREWALL
+# 11. CONFIGURE UFW FIREWALL
 # ==========================================
-echo -e "\e[34m[9/13] Securing perimeter...\e[0m"
+echo -e "\e[34m[11/14] Securing perimeter...\e[0m"
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
@@ -355,31 +513,45 @@ ufw allow 20/tcp
 ufw allow 40000:50000/tcp
 ufw allow 53/tcp
 ufw allow 53/udp
-
 ufw --force enable
 
-# Force the Source of Truth to sync on boot!
 /opt/panel/scripts/sync_firewall.sh
 
 # ==========================================
-# 10 CONFIGURE FAIL2BAN ACTIVE DEFENSE
+# 12. CONFIGURE FAIL2BAN ACTIVE DEFENSE
 # ==========================================
-echo -e "\e[34m[10/13] Configuring Fail2ban Intrusion Prevention...\e[0m"
-
-# 1. Create the Custom oPanel Filter (FIXED: Capital P to match jail)
-cat << 'EOF' > /etc/fail2ban/filter.d/oPanel.conf
+echo -e "\e[34m[12/14] Configuring Fail2ban Intrusion Prevention...\e[0m"
+cat << 'EOF' > /etc/fail2ban/filter.d/Stackrium.conf
 [Definition]
-failregex = ^.*oPanel Auth Failed:.*IP: <HOST>.*$
+failregex = ^.*Stackrium Auth Failed:.*IP: <HOST>.*$
 ignoreregex =
 EOF
 
-# 2. Configure the Jails
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-bots.conf
+[Definition]
+# Matches our custom json_access format looking for IP and Status 444
+failregex = "ip":\s*"<HOST>",.*"status":\s*"444"
+ignoreregex =
+EOF
+
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-wp.conf
+[Definition]
+failregex = "ip":\s*"<HOST>",.*"method":\s*"POST",.*"uri":\s*".*(wp-login\.php|xmlrpc\.php)"
+ignoreregex =
+EOF
+
+cat << 'EOF' > /etc/fail2ban/filter.d/stackrium-waf.conf
+[Definition]
+failregex = \[client <HOST>\] ModSecurity: Access denied
+ignoreregex =
+EOF
+
 cat << 'EOF' > /etc/fail2ban/jail.local
 [DEFAULT]
 usedns   = no
-bantime  = 1h
-findtime  = 10m
-maxretry = 5
+bantime  = 2h
+findtime  = 15m
+maxretry = 3
 banaction = ufw
 
 [sshd]
@@ -393,7 +565,7 @@ maxretry = 3
 enabled  = true
 port     = ftp
 filter   = pure-ftpd
-logpath  = /var/log/syslog
+backend  = systemd
 maxretry = 5
 
 [postfix-sasl]
@@ -410,83 +582,129 @@ filter  = dovecot
 logpath = /var/log/mail.log
 maxretry = 5
 
-[opanel]
+[stackrium]
 enabled  = true
 port     = 7443
-filter   = oPanel
+filter   = Stackrium
 logpath  = /opt/panel/logs/auth.log
+backend  = polling
 maxretry = 5
+
+[stackrium-bots]
+enabled  = true
+port     = http,https
+filter   = stackrium-bots
+# The Magic: Watch every single tenant's log file simultaneously
+logpath  = /home/*/web/*/logs/access.log
+allowmissing = yes
+backend  = polling
+maxretry = 2
+findtime = 10m
+bantime  = 24h
+
+[stackrium-wp]
+enabled  = true
+port     = http,https
+filter   = stackrium-wp
+logpath  = /home/*/web/*/logs/access.log
+allowmissing = yes
+backend  = polling
+maxretry = 5
+findtime = 10m
+bantime  = 24h
+
+[stackrium-waf]
+enabled  = true
+port     = http,https
+filter   = stackrium-waf
+# We watch the wildcard error logs for ModSecurity blocks
+logpath  = /home/*/web/*/logs/error.log
+allowmissing = yes
+backend  = polling
+maxretry = 3
+findtime = 10m
+bantime  = 24h
+
+[recidive]
+enabled  = true
+# Uses the built-in recidive filter to watch Fail2ban.log
+filter   = recidive
+logpath  = /var/log/fail2ban.log
+backend  = polling
+# The Meta-Trap: If an IP gets banned 3 times in one day across ANY 
+# of our other jails, they get slammed with a 1-week permanent ban.
+maxretry = 3
+findtime = 1d
+bantime  = 1w
 EOF
 
-# 3. Prepare the oPanel custom auth log
 touch /opt/panel/logs/auth.log
 chown www-data:www-data /opt/panel/logs/auth.log
 chmod 660 /opt/panel/logs/auth.log
 
-# 4. Create the Sudoers Bridge for PHP (FIXED: Silenced PAM logging)
-echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/opanel-fail2ban
-echo 'www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *' >> /etc/sudoers.d/opanel-fail2ban
-chmod 440 /etc/sudoers.d/opanel-fail2ban
+echo 'Defaults:www-data !syslog, !pam_session' > /etc/sudoers.d/stackrium-fail2ban
+echo 'www-data ALL=(root) NOPASSWD: /usr/bin/fail2ban-client status, /usr/bin/fail2ban-client status *' >> /etc/sudoers.d/stackrium-fail2ban
+chmod 440 /etc/sudoers.d/stackrium-fail2ban
 
-# 5. Restart and Enable
 systemctl restart fail2ban
 systemctl enable fail2ban
 
 # ==========================================
-# 11 OPTIMIZE SYSTEM JOURNAL LOGGING
+# 13. OPTIMIZE SYSTEM JOURNAL LOGGING
 # ==========================================
-echo -e "\e[34m[11/13] Capping System Logs to prevent CPU/Disk exhaustion...\e[0m"
-
-# Uncomment and set SystemMaxUse to 200 Megabytes
+echo -e "\e[34m[13/14] Capping System Logs to prevent CPU/Disk exhaustion...\e[0m"
 sed -i 's/#SystemMaxUse=/SystemMaxUse=200M/g' /etc/systemd/journald.conf
 systemctl restart systemd-journald
 
 # ==========================================
-# 12 CONFIGURE CLI & SERVER BRANDING
+# 14. CONFIGURE CLI & SERVER BRANDING
 # ==========================================
-echo -e "\e[34m[12/13] Installing oPanel CLI and Branding...\e[0m"
+echo -e "\e[34m[14/14] Installing Stackrium CLI and Branding...\e[0m"
+chmod +x /opt/panel/cli/stackrium
+ln -sf /opt/panel/cli/stackrium /usr/local/bin/stackrium
 
-# 1. Install the global CLI tool
-cp /tmp/panel_temp/cli/opanel /usr/local/bin/opanel
-chmod +x /usr/local/bin/opanel
-
-# 2. Silence default Ubuntu/Plesk login messages
 chmod -x /etc/update-motd.d/* 2>/dev/null || true
 rm -f /etc/motd
 
-# 3. Create the custom oPanel Welcome Banner
-cat <<\EOF > /etc/update-motd.d/01-opanel
+cat <<\EOF > /etc/update-motd.d/01-stackrium
 #!/bin/bash
+echo -e "\e[33m"
+echo "     .d0000b.  000                      000              000                        "    
+echo "    d00P  Y00b 000                      000              000                        "
+echo "    Y00b.      000                      000                                         "
+echo "     'Y000b.   000000  0000b.   .d0000b 000  000 000d000 000 000  000 00000b.d00b.  "
+echo "        'Y00b. 000        '00b d00P'    000 .0P  000P'   000 000  000 000 '000 '00b "
+echo "          '000 000    .d000000 000      0000K    000     000 000  000 000  000  000 "
+echo "    Y00b  d00P Y00b.  000  000 Y00b.    000 '0b  000     000 Y00b 000 000  000  000 "
+echo "     'Y0000P'   'Y000 'Y000000  'Y0000P 000  000 000     000  'Y00000 000  000  000 "
 echo -e "\e[34m"
-echo "            8888888b.                            888  "
-echo "            888   Y88b                           888  "
-echo "            888    888                           888  "
-echo "    .d88b.  888   d88P 8888b.  88888b.   .d88b.  888  "
-echo "   d88''88b 8888888P'     '88b 888 '88b d8P  Y8b 888  "
-echo "   888  888 888       .d888888 888  888 88888888 888  "
-echo "   Y88..88P 888       888  888 888  888 Y8b.     888  "
-echo "    'Y88P'  888       'Y888888 888  888  'Y8888  888  "
+echo "                        00''''''Y00                     00                     00   "
+echo "                        0' .000. '0                     00                     00   "
+echo "                        0  00000oo0 .d0000b. 00d000b. d0000P 00d000b. .d0000b. 00   "
+echo "                        0  00000000 00'  '00 00'  '00   00   00'  '00 00'  '00 00   "
+echo "                        0. '000' .0 00.  .00 00    00   00   00       00.  .00 00   "
+echo "                        00.......d0 '00000P' 00    00   00   00       '00000P' 00   "
 echo -e "\e[0m"
-echo -e "\e[1m Welcome to oPanel(Open Panel)\e[0m"
-echo -e "\e[1m Open, Omni and Optimize hosting control panel.\e[0m"
+echo -e "\e[1m Welcome to Stackrium Control\e[0m"
+echo -e "\e[1m Enterprise Cloud Server Management\e[0m"
 echo -e " ----------------------------------------------"
 echo -e " \e[32mSystem:\e[0m $(lsb_release -d -s)"
 echo -e " \e[32mKernel:\e[0m $(uname -r)"
-echo -e " \e[1mAccess:\e[0m Type \e[32msudo opanel login\e[0m to access the web interface."
+echo -e " \e[1mAccess:\e[0m Type \e[31msudo stackrium login\e[0m to access the web interface."
 echo ""
 EOF
 
-# 4. Make the banner executable
-chmod +x /etc/update-motd.d/01-opanel
-
-# Cleanup
+chmod +x /etc/update-motd.d/01-stackrium
 rm -rf /tmp/panel_temp
 
+echo -e "\e[34m[+] Performing initial Update & Telemetry Sync...\e[0m"
+/bin/bash /opt/panel/scripts/heartbeat.sh
+
 # ==========================================
-# 13. COMPLETE
+# COMPLETE
 # ==========================================
 echo -e "\e[32m=========================================================\e[0m"
-echo -e "\e[32m🎉 oPanel Installation Complete! \e[0m"
+echo -e "\e[32m🎉 Stackrium Control Installation Complete! \e[0m"
 echo -e "\e[32m=========================================================\e[0m"
 echo -e "Your server is now locked down and running securely on Port 7443."
 echo -e ""
@@ -494,7 +712,7 @@ echo -e "Login URL: \e[1mhttps://${SERVER_IP}:7443\e[0m"
 echo -e "Username:  \e[1madmin\e[0m"
 echo -e "Password:  \e[1madmin123\e[0m"
 echo -e ""
-echo -e "Access oPanel by running:\e[32m sudo opanel login\e[0m in the Terminal."
+echo -e "Access the CLI by running:\e[31m sudo stackrium login\e[0m in the Terminal."
 echo -e ""
 echo -e "IMPORTANT: You will see a 'Not Private' warning because the"
 echo -e "initial certificate is self-signed. Click 'Advanced' to bypass it."

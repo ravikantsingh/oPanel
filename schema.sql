@@ -1,5 +1,5 @@
 -- schema.sql
--- Master Database Initialization for the oPanel
+-- Master Database Initialization for the Stackrium
 
 CREATE DATABASE IF NOT EXISTS panel_core;
 USE panel_core;
@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS `settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT IGNORE INTO `settings` (`setting_key`, `setting_value`) VALUES
-('panel_name', 'oPanel'),
-('brand_title', 'oPanel'),
+('panel_name', 'Stackrium'),
+('brand_title', 'Stackrium'),
 ('brand_logo', ''), 
 ('brand_logo_url', '/index.php'),
 ('brand_favicon_ico', ''),
@@ -183,68 +183,129 @@ CREATE TABLE IF NOT EXISTS `tasks_queue` (
 -- ==========================================
 -- 11. AUTOMATIC BACKUP
 -- ==========================================
-CREATE TABLE IF NOT EXISTS backup_schedules (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    target VARCHAR(255) NOT NULL,
-    backup_type ENUM('web', 'db') NOT NULL,
-    frequency ENUM('daily', 'weekly', 'monthly') NOT NULL,
-    run_hour INT DEFAULT 2, -- Default to 2 AM
-    retention_days INT DEFAULT 3, -- How many automated backups to keep
-    last_run DATETIME NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS `backup_schedules` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(255) NOT NULL,
+    `target` VARCHAR(255) NOT NULL,
+    `backup_type` ENUM('web', 'db') NOT NULL,
+    `frequency` ENUM('daily', 'weekly', 'monthly') NOT NULL,
+    `run_hour` INT DEFAULT 2, -- Default to 2 AM
+    `retention_days` INT DEFAULT 3, -- How many automated backups to keep
+    `last_run` DATETIME NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
 -- 12. Table for email domains
 -- ==========================================
-CREATE TABLE IF NOT EXISTS mail_domains (
-    name VARCHAR(255) NOT NULL PRIMARY KEY
+CREATE TABLE IF NOT EXISTS `mail_domains` (
+    `name` VARCHAR(255) NOT NULL PRIMARY KEY
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ==========================================
 -- 13. Table for physical email accounts
 -- ==========================================
-CREATE TABLE IF NOT EXISTS mail_users (
-    email VARCHAR(255) NOT NULL PRIMARY KEY,
-    domain VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    quota INT DEFAULT 1024,
+CREATE TABLE IF NOT EXISTS `mail_users` (
+    `email` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `domain` VARCHAR(255) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `quota` INT DEFAULT 1024,
     FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ==========================================
 -- 14. Table for email forwarders/aliases
 -- ==========================================
-CREATE TABLE IF NOT EXISTS mail_aliases (
-    source VARCHAR(255) NOT NULL PRIMARY KEY,
-    domain VARCHAR(255) NOT NULL,
-    destination TEXT NOT NULL,
+CREATE TABLE IF NOT EXISTS `mail_aliases` (
+    `source` VARCHAR(255) NOT NULL PRIMARY KEY,
+    `domain` VARCHAR(255) NOT NULL,
+    `destination` TEXT NOT NULL,
     FOREIGN KEY (domain) REFERENCES mail_domains(name) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ==========================================
 -- 15. Create Dedicated Redirects Table
 -- ==========================================
-CREATE TABLE IF NOT EXISTS domain_redirects (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    domain_name VARCHAR(255) NOT NULL,
-    source_path VARCHAR(255) NOT NULL,
-    target_url VARCHAR(255) NOT NULL,
-    redirect_type INT NOT NULL DEFAULT 301,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS `domain_redirects` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `domain_name` VARCHAR(255) NOT NULL,
+    `source_path` VARCHAR(255) NOT NULL,
+    `target_url` VARCHAR(255) NOT NULL,
+    `redirect_type` INT NOT NULL DEFAULT 301,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (domain_name) REFERENCES domains(domain_name) ON DELETE CASCADE
 );
 
 -- ==========================================
 -- 16. Create Dedicated MIME Types Table
 -- ==========================================
-CREATE TABLE IF NOT EXISTS domain_mimes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    domain_name VARCHAR(255) NOT NULL,
-    extension VARCHAR(50) NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE IF NOT EXISTS `domain_mimes` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `domain_name` VARCHAR(255) NOT NULL,
+    `extension` VARCHAR(50) NOT NULL,
+    `mime_type` VARCHAR(100) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (domain_name) REFERENCES domains(domain_name) ON DELETE CASCADE
 );
+
+-- ==========================================
+-- 17. Create Table for Migration
+-- ==========================================
+CREATE TABLE IF NOT EXISTS `migrations` (
+    `version` VARCHAR(20) PRIMARY KEY,
+    `applied_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT IGNORE INTO `migrations` (`version`) VALUES ('1.0.0');
+
+-- 1. Local Support Tickets
+CREATE TABLE IF NOT EXISTS `support_tickets` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `central_id` INT(11) DEFAULT NULL UNIQUE,
+  `ticket_number` VARCHAR(32) NULL UNIQUE, 
+  `subject` VARCHAR(255) NOT NULL,
+  `priority` VARCHAR(50) DEFAULT 'Normal',
+  `status` VARCHAR(50) DEFAULT 'Open',
+  `is_unread` TINYINT(1) DEFAULT 0,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 2. Local Ticket Replies
+CREATE TABLE IF NOT EXISTS `support_replies` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `central_reply_id` INT(11) DEFAULT NULL UNIQUE,
+  `ticket_id` INT(11) NOT NULL,
+  `sender_type` VARCHAR(50) NOT NULL,
+  `message_body` TEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 3. Local Ticket Attachments
+CREATE TABLE IF NOT EXISTS `support_attachments` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `ticket_id` INT(11) NOT NULL,
+  `reply_id` INT(11) DEFAULT NULL,
+  `file_name` VARCHAR(255) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `mime_type` VARCHAR(100) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`reply_id`) REFERENCES `support_replies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 4. native SMTP Relay interface
+CREATE TABLE IF NOT EXISTS `mail_global_settings` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `smtp_relay_active` TINYINT(1) DEFAULT 0,
+    `relay_provider` VARCHAR(50) DEFAULT 'none',
+    `relay_host` VARCHAR(255) DEFAULT '',
+    `relay_port` INT DEFAULT 587,
+    `relay_user` VARCHAR(255) DEFAULT '',
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Initialize the single global settings row
+INSERT IGNORE INTO `mail_global_settings` (`id`) VALUES (1);

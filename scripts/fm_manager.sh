@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 PHP_VER=$(echo "$PAYLOAD" | jq -r '.php_version')
@@ -110,7 +111,7 @@ fi
 
 # 6. Test and Reload
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     # Clean up the backup file since it succeeded
     rm -f "${VHOST}.bak"
     echo "Success: File Manager deployed securely for $DOMAIN."

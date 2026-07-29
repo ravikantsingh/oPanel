@@ -3,6 +3,7 @@
 # Purpose: Initialize a Laravel Environment, configure Nginx, and spin up Queue Workers
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 
@@ -20,10 +21,10 @@ echo "Initializing Laravel Environment for $DOMAIN..."
 # This securely hides the .env file and application logic from the public web
 if grep -q "root /home/$USERNAME/web/$DOMAIN/public_html;" "$VHOST"; then
     sed -i "s|root /home/$USERNAME/web/$DOMAIN/public_html;|root /home/$USERNAME/web/$DOMAIN/public_html/public;|g" "$VHOST"
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 fi
 
-# 2. Extract DB Password to update the oPanel Database
+# 2. Extract DB Password to update the Stackrium Database
 DB_PASS=$(grep DB_PASS /opt/panel/www/config/database.php | cut -d"'" -f4)
 MYSQL_CMD="mysql -B -N -upanel_user -p${DB_PASS} panel_core -e"
 
@@ -69,7 +70,7 @@ if [ -f "artisan" ] || [ -f "composer.json" ]; then
         su - "$USERNAME" -c "pm2 save"
     fi
 
-    # 6. Officially Register the App Environment in the oPanel Database
+    # 6. Officially Register the App Environment in the Stackrium Database
     $MYSQL_CMD "UPDATE domains SET app_type='laravel', document_root='public_html/public', pm2_process='$WORKER_NAME' WHERE domain_name='$DOMAIN';"
 
     echo "Laravel Deployment Complete! App is live."

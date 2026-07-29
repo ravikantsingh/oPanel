@@ -1,271 +1,767 @@
-<!-- /opt/panel/www/views/components/tab-docs.php -->
 <div class="tab-pane fade" id="docs" role="tabpanel">
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-        <h4 class="mb-0 fw-bold text-dark"><i class="bi bi-book text-primary me-2"></i> oPanel Official User Manual</h4>
-        <span class="badge bg-secondary fs-6">v1.1.0</span>
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <h4 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Documentation & Guide</h4>
+            <p class="text-muted mt-1">Learn how to manage domains, deploy apps, configure firewalls, schedule backups, and use Stackrium effectively.</p>
+        </div>
     </div>
 
-    <!-- The Core Workflow Warning -->
-    <div class="alert alert-warning shadow-sm border-warning border-start-0 border-end-0 border-bottom-0 border-3 rounded-0 mb-4 pb-3 pt-3">
-        <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Critical Cloud Prerequisite: Port Opening</h6>
-        <p class="small mb-0 text-dark">oPanel strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group / Network Firewall:</p>
-        <ul class="small mb-0 mt-2 text-dark font-monospace">
-            <li><strong>TCP 80 & 443:</strong> Web Traffic (HTTP/HTTPS)</li>
-            <li><strong>TCP 7443:</strong> oPanel Dashboard Access</li>
-            <li><strong>TCP & UDP 53:</strong> BIND9 DNS Routing</li>
-            <li><strong>TCP 20, 21, & 40000-50000:</strong> Pure-FTPd Access</li>
-            <li><strong>TCP 22:</strong> SSH Server Access</li>
-        </ul>
-    </div>
-
-    <!-- The Accordion Manual -->
-    <div class="accordion shadow-sm border-0" id="manualAccordion">
-        
-        <!-- SECTION 1: Core Workflow -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingWorkflow">
-                <button class="accordion-button fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWorkflow">
-                    <i class="bi bi-diagram-3-fill me-2 text-primary"></i> 1. The Core Workflow (Order of Operations)
-                </button>
-            </h2>
-            <div id="collapseWorkflow" class="accordion-collapse collapse show" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">oPanel utilizes a strict permission and isolation architecture. To successfully get a website or app online, you must follow this exact order of operations:</p>
-                    <ol class="mb-0 list-group list-group-numbered list-group-flush">
-                        <li class="list-group-item border-0 pb-1"><strong>Create a System User:</strong> Go to the <em>Users & DBs</em> tab and create a Linux user. This isolates your website's files from other users on the server.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Add the Domain:</strong> Go to the <em>Web & Git</em> tab, click "New Domain", and assign it to the user you just created. This generates the Nginx vHost and PHP pool.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Point Your DNS:</strong> Before proceeding, ensure your domain (or subdomain) has an A-Record pointing to this server's public IP address globally.</li>
-                        <li class="list-group-item border-0 pb-1"><strong>Install SSL (HTTPS):</strong> Go to the <em>Security & DNS</em> tab and issue a Let's Encrypt certificate. <em>(This will fail if Step 3 is incomplete).</em></li>
-                        <li class="list-group-item border-0"><strong>Deploy Code:</strong> Return to <em>Web & Git</em> to deploy Laravel, Python, Node.js, clone a Git repo, or upload files via the File Manager.</li>
-                    </ol>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 position-sticky" style="top: 20px;">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush rounded" id="docs-list" role="tablist">
+                        <a class="list-group-item list-group-item-action active fw-bold py-3" data-bs-toggle="list" href="#doc-prereq" role="tab">
+                            <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> 1. Cloud Prerequisites
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-domains" role="tab">
+                            <i class="bi bi-globe me-2 text-primary"></i> 2. Domains & Subdomains
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-ftp" role="tab">
+                            <i class="bi bi-folder2-open me-2 text-warning"></i> 3. FTP & File Access
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-db-backups" role="tab">
+                            <i class="bi bi-database me-2 text-success"></i> 4. Databases & Backups
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-dns" role="tab">
+                            <i class="bi bi-diagram-2 me-2 text-info"></i> 5. DNS Configuration
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-git" role="tab">
+                            <i class="bi bi-git me-2 text-danger"></i> 6. Git Deployment
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-pm2" role="tab">
+                            <i class="bi bi-cpu me-2 text-success"></i> 7. Node.js & PM2
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-security" role="tab">
+                            <i class="bi bi-shield-lock me-2 text-dark"></i> 8. Security & WAF
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cdn" role="tab">
+                            <i class="bi bi-diagram-3 me-2 text-danger"></i> 9. CDN & Proxy Routing
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-mail" role="tab">
+                            <i class="bi bi-envelope me-2 text-primary"></i> 10. Mail Server
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cron" role="tab">
+                            <i class="bi bi-clock-history me-2 text-secondary"></i> 11. Cron Jobs
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-updates" role="tab">
+                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 12. System Updates
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-logs" role="tab">
+                            <i class="bi bi-terminal me-2 text-dark"></i> 13. Logs & Tasks
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-faq" role="tab">
+                            <i class="bi bi-question-circle me-2 text-secondary"></i> 14. Common FAQ
+                        </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-license" role="tab">
+                            <i class="bi bi-award me-2 text-primary"></i> 15. Commercial License
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- SECTION 2: Web, App Engines & Deployment -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingWeb">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWeb">
-                    <i class="bi bi-cpu-fill me-2 text-success"></i> 2. Domains, App Engines & Deployment
-                </button>
-            </h2>
-            <div id="collapseWeb" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p>The <strong>Web & Git</strong> tab is the core engine for hosting applications. oPanel automatically configures Nginx, FastCGI Process Managers, and PM2 background workers behind the scenes.</p>
-                    
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Framework-Specific Deployments</h6>
-                    <ul class="text-muted small mb-3">
-                        <li class="mb-2"><strong>Laravel Environment:</strong> When you click "Deploy Laravel", oPanel automatically reconfigures Nginx to point the document root to the <code>/public</code> directory. It also installs Composer dependencies. <em>Note: Laravel 11 requires SQLite. Ensure <code>php8.3-sqlite3</code> and <code>php8.3-xml</code> are installed via the Software Center.</em></li>
-                        <li class="mb-2"><strong>Python (WSGI/ASGI):</strong> Python apps run in isolated virtual environments (<code>venv</code>). oPanel uses PM2 to keep the process running forever. Nginx is reconfigured as a <strong>Reverse Proxy</strong>, securely forwarding external port 80/443 traffic to your internal Python app.</li>
-                        <li class="mb-2"><strong>Node.js (NPM):</strong> Deployed natively via PM2. You can specify your entry file (e.g., <code>server.js</code>) and internal port. PM2 ensures the app restarts automatically if it crashes or if the server reboots.</li>
-                        <li class="mb-2"><strong>1-Click WordPress:</strong> Auto-generates the database and installs the CMS. <em>Requires an empty <code>public_html</code> folder.</em></li>
-                    </ul>
+        <div class="col-md-9">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <div class="tab-content" id="nav-tabContent">
+                        
+                        <div class="tab-pane fade show active" id="doc-prereq" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Critical Cloud Prerequisite</h2>
+                            <p class="fs-6 mb-4">Stackrium strictly manages your server's internal firewall (UFW). However, if you are hosting on AWS, Google Cloud, DigitalOcean, or Azure, you <strong>MUST</strong> also open the following ports in your provider's external Security Group or Network Firewall before proceeding.</p>
 
-                    <h6 class="fw-bold text-dark border-bottom pb-1">The "Revert to PHP" Safety Mechanism</h6>
-                    <p class="text-muted small mb-3">If you want to uninstall Laravel, Python, or Node.js and go back to a standard website, use the <strong>Revert to PHP</strong> tool. This performs a "Scorched Earth" cleanup:</p>
-                    <ul class="text-muted small mb-3">
-                        <li>It securely targets and kills the specific PM2 background worker associated with the domain.</li>
-                        <li>It strips the Reverse Proxy rules from Nginx and restores the standard FastCGI PHP execution blocks.</li>
-                        <li><strong>Safety Net:</strong> If your folder is empty after reverting, oPanel automatically injects a default <code>index.html</code> template so your website doesn't show a blank "Invalid Response" error.</li>
-                    </ul>
+                            <div class="alert alert-warning shadow-sm border-warning border-start border-4 mb-4">
+                                <h5 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Required Core External Ports</h5>
+                                <ul class="small mb-0 mt-3 text-dark font-monospace">
+                                    <li class="mb-2"><strong>TCP 80 & 443:</strong> Web Traffic (HTTP/HTTPS)</li>
+                                    <li class="mb-2"><strong>TCP 7443:</strong> Stackrium Dashboard Access</li>
+                                    <li class="mb-2"><strong>TCP & UDP 53:</strong> BIND9 DNS Routing</li>
+                                    <li class="mb-2"><strong>TCP 20, 21, & 40000-50000:</strong> Pure-FTPd Access</li>
+                                    <li><strong>TCP 22:</strong> SSH Server Access</li>
+                                </ul>
+                            </div>
 
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Git Repository Auto-Deployment</h6>
-                    <ul class="text-muted small mb-4">
-                        <li>oPanel enforces a <strong class="text-dark">"One User, One Identity"</strong> rule. Each system user gets one unique SSH Deploy Key. If deploying different private repos to different domains, create a new System User for each project.</li>
-                        <li><strong>Webhooks:</strong> Once cloned, oPanel provides a unique Webhook URL. Add this to your GitHub/GitLab repository settings (Content type: <code>application/json</code>). Every code push will automatically trigger oPanel to pull the latest changes!</li>
-                    </ul>
+                            <div class="alert alert-primary bg-primary bg-opacity-10 shadow-sm border-primary border-start border-4 mb-4">
+                                <h5 class="alert-heading fw-bold text-primary"><i class="bi bi-envelope-exclamation-fill me-2"></i> Conditional Mail Engine Ports</h5>
+                                <p class="small text-dark mb-3"><strong>CRITICAL RULE:</strong> The infrastructure mappings below are strictly conditional. <strong>DO NOT</strong> open these ports in your cloud provider's security group unless you are planning to install, or have already activated, the local Stackrium Mail Engine subsystem.</p>
+                                <ul class="small mb-0 text-dark font-monospace">
+                                    <li class="mb-2"><strong>TCP 25 (SMTP Inbound):</strong> Used for server-to-server traffic. Required for remote engines (like Gmail) to route incoming emails into your local tenant mailboxes.</li>
+                                    <li class="mb-2"><strong>TCP 465 (SMTPS Submissions):</strong> Secure implicit outbound mail submission channel utilizing dedicated native SSL/TLS handshakes from client apps.</li>
+                                    <li class="mb-2"><strong>TCP 587 (SMTP Submission):</strong> Modern outbound client mail submission port utilizing explicit STARTTLS protocol upgrades.</li>
+                                    <li class="mb-2"><strong>TCP 993 (IMAPS Secure):</strong> Encrypted incoming mailbox synchronization channel for real-time remote client connections (IMAP over SSL/TLS).</li>
+                                    <li><strong>TCP 995 (POP3S Secure):</strong> Encrypted connection layer for legacy local-download mailbox configurations.</li>
+                                </ul>
+                            </div>
+
+                            <div class="alert alert-danger shadow-sm border-danger border-start border-4 mt-4 p-4">
+                                <h4 class="fw-bold text-danger mb-3"><i class="bi bi-shield-lock-fill me-2"></i> The Industry-Wide "Port 25" Outbound Block</h4>
+                                
+                                <h6 class="fw-bold text-dark mt-4">Why is my outgoing mail blocked by default?</h6>
+                                <p class="small text-dark mb-3">
+                                    To combat global spam networks, almost every major cloud hosting provider (AWS, DigitalOcean, Vultr, Linode) blocks <strong>Outbound Port 25</strong> at the hardware network layer for all new accounts. Historically, automated botnets would spin up hundreds of virtual servers using stolen credit cards to blast millions of spam emails. This ruined the IP Reputation of the entire cloud provider's network (their ASN). <br><br>
+                                    To protect legitimate customers from inheriting blacklisted IP addresses, providers now physically intercept and drop outgoing packets directed at external mail hubs (like Gmail or Yahoo). Your server will queue the mail and eventually throw a <em>"Connection timed out"</em> error until a human administrator verifies your account.
+                                </p>
+
+                                <h6 class="fw-bold text-dark mt-4">The Resolution Process (AWS, DigitalOcean, Vultr)</h6>
+                                <p class="small text-dark mb-3">You must submit a manual limit increase or support ticket to your cloud provider. Approval typically takes 12 to 24 hours.</p>
+                                <ol class="small text-dark mb-4">
+                                    <li class="mb-2"><strong>Establish Reputation:</strong> Ensure your server is assigned a static IP (e.g., an AWS Elastic IP) and your billing profile is fully verified.</li>
+                                    <li class="mb-2"><strong>File the Ticket:</strong> Go to your provider's Support Center and open a "Service Limit Increase" (AWS) or "General Support" ticket. Request the removal of the <em>"Port 25 outbound sending restriction."</em></li>
+                                    <li class="mb-2"><strong>Provide the Blueprint:</strong> Copy and paste this exact justification into your ticket:<br>
+                                        <div class="bg-white p-2 mt-2 rounded border font-monospace text-muted">
+                                            "I am provisioning a legitimate corporate mail transfer agent (MTA) via Postfix. I have attached a static Elastic IP to the instance and fully configured my Forward/Reverse DNS (PTR), SPF, and DMARC records. Please lift the outbound Port 25 routing restriction on this instance so my server can deliver mail to external providers."
+                                        </div>
+                                    </li>
+                                </ol>
+
+                                <div class="bg-white p-3 rounded border border-danger small text-dark mt-3">
+                                    <strong><i class="bi bi-x-octagon-fill text-danger me-1"></i> The Permanent Exceptions (GCP & Azure):</strong><br>
+                                    Google Cloud Platform (GCP) and Microsoft Azure permanently block outbound Port 25 for all standard, free, and pay-as-you-go accounts. They will <strong>not</strong> lift this restriction via support ticket under any circumstances. If you host Stackrium on these platforms, you cannot use Postfix for direct internet delivery. You must configure Postfix to route all outbound mail through a third-party authenticated SMTP Relay (such as SendGrid, Mailgun, or Amazon SES) using Port 587.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-domains" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Domains, Subdomains & Status</h2>
+                            <p class="fs-6 mb-4">Stackrium automatically handles Nginx configurations, permissions, and DNS zone creation when you deploy a new environment.</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="bi bi-plus-circle text-primary me-2"></i> Adding a Root Domain</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Websites</b> tab and click "New Domain".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter your domain (e.g., <code>example.com</code>). Select the PHP version and assign it to a Linux User.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium generates the Nginx vHost, dedicated PHP-FPM pool, and a primary BIND9 DNS Zone for the domain.</li>
+                            </ol>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-diagram-3 text-primary me-2"></i> Creating Subdomains</h5>
+                            <p>Subdomains are not just aliases; they are fully isolated environments with their own dedicated <code>public_html</code> directories and PHP pools.</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "New Domain" and check the <b>"Is Subdomain"</b> box.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the prefix (e.g., <code>api</code>) and select the Parent Domain from the dropdown.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium automatically injects the new A-Records directly into the parent domain's BIND9 zone file and increments the DNS serial safely.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><strong>Security Note:</strong> The backend strictly verifies that your Linux user actually owns the parent domain before allowing the subdomain to be provisioned.</li>
+                            </ol>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-pause-circle text-warning me-2"></i> Suspending Domains</h5>
+                            <p>If a domain is consuming too many resources or payment is overdue, you can instantly suspend it.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> Go to <b>Websites</b> and click the Status toggle next to the domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> Stackrium intercepts the Nginx traffic and redirects all visitors to a 503 "Service Unavailable" page.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><i class="bi bi-check2 text-success me-2"></i> It is completely non-destructive (files and DBs remain intact) and can be unsuspended instantly.</li>
+                            </ul>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-filetype-php text-info me-2"></i> Changing PHP Versions (Hot-Swap)</h5>
+                            <p>You can hot-swap the PHP version of any domain without taking the server offline.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Click <b>Change PHP</b> in the Websites tab.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Select the new version. Stackrium safely rewrites the Nginx FastCGI pass and reloads the worker pool.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Need older versions? Click <b>Software Center</b> to globally install legacy engines like PHP 7.4 or 8.1.</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-ftp" role="tabpanel">
+                            <h2 class="fw-bold mb-4">FTP & File Management</h2>
+                            <p class="fs-6 mb-4">Stackrium uses Pure-FTPd for secure, isolated file access. Every domain gets its own FTP account.</p>
+
+                            <h5 class="fw-bold"><i class="bi bi-hdd-network text-warning me-2"></i> Connection Details</h5>
+                            <div class="bg-light p-3 rounded mb-4 border">
+                                <p class="mb-1"><b>Host:</b> Your server IP or Domain Name</p>
+                                <p class="mb-1"><b>Port:</b> 21</p>
+                                <p class="mb-1"><b>Encryption:</b> Require explicit FTP over TLS (Recommended)</p>
+                            </div>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-key text-warning me-2"></i> Creating/Resetting Passwords</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to <b>Websites > Manage (Gear Icon)</b> for your domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Navigate to the <b>FTP Access</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Type a new secure password and click "Update FTP Password".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">The username is displayed on that screen (format: <code>user_domain_com</code>).</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-db-backups" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Databases & Backups</h2>
+                            <p class="fs-6 mb-4">Manage your MySQL databases and configure automated backup schedules to protect your data.</p>
+
+                            <h5 class="fw-bold text-success"><i class="bi bi-database me-2"></i> MySQL Management</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Databases</b> tab to create new databases and assign users.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">To manage tables and data, click the <b>phpMyAdmin</b> button in the top navigation bar.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Stackrium utilizes SSO (Single Sign-On), meaning you securely log in as root without typing passwords.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-success mt-4"><i class="bi bi-cloud-arrow-up me-2"></i> Automated Backups</h5>
+                            <p>Stackrium can automatically back up your website files and databases safely in the background.</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Go to the <b>Backups</b> tab.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Select whether to backup Web Files or a Database.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Choose the frequency (Daily, Weekly, Monthly) and your desired retention policy.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> Backups are stored securely on the server at <code>/opt/panel/backups/</code>.</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-dns" role="tabpanel">
+                            <h2 class="fw-bold mb-4">DNS Configuration (BIND9)</h2>
+                            <p class="fs-6 mb-4">If you want this server to act as its own Nameserver (e.g., <code>ns1.yourdomain.com</code>), use the DNS tab.</p>
+
+                            <h5 class="fw-bold text-info"><i class="bi bi-cloud-plus me-2"></i> Creating a DNS Zone</h5>
+                            <p>To start managing DNS records, you must create a Master Zone:</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>DNS Management</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add DNS Zone".</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the domain. BIND9 will automatically generate standard A, CNAME, and MX records pointing to this server.</li>
+                            </ol>
+
+                            <div class="alert alert-warning shadow-sm border-warning border-start border-4">
+                                <strong>Glue Records:</strong> For custom nameservers to work globally, you must log into your Domain Registrar (Godaddy, Namecheap, etc.) and create "Glue Records" pointing <code>ns1</code> and <code>ns2</code> to this server's IP address.
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-git" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Git Deployment</h2>
+                            <p class="fs-6 mb-4">Deploy code directly from GitHub, GitLab, or Bitbucket without using FTP.</p>
+
+                            <h5 class="fw-bold text-danger"><i class="bi bi-github me-2"></i> How to Deploy</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Ensure your repository is <b>Public</b>, or provide a URL with a Personal Access Token (PAT).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to <b>Websites > Deploy Git Repo</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Paste the HTTPS clone URL (e.g., <code>https://github.com/user/repo.git</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the branch name (usually <code>main</code> or <code>master</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click Pull Repository.</li>
+                            </ol>
+
+                            <div class="alert alert-secondary shadow-sm">
+                                <i class="bi bi-lightning-fill text-warning me-2"></i>
+                                <strong>Automatic Webhooks:</strong> After cloning, Stackrium provides a Webhook URL. Paste this into GitHub's webhook settings to trigger automatic deployments every time you push code!
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-pm2" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Node.js & PM2 Management</h2>
+                            <p class="fs-6 mb-4">Stackrium includes global PM2 installation to keep Node.js, Python, or background workers running permanently.</p>
+
+                            <h5 class="fw-bold text-success"><i class="bi bi-play-circle me-2"></i> Adding a Process</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Node.js & PM2</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the full absolute path to the script (e.g., <code>/home/user/web/domain.com/server.js</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Start Process". PM2 will launch it and add it to the startup script.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-success mt-4"><i class="bi bi-globe me-2"></i> Nginx Reverse Proxy for Node.js</h5>
+                            <p>If your Node app runs on a specific port (e.g., 3000) and you want it accessible via a domain name (e.g., example.com):</p>
+                            <ul class="list-unstyled mb-4">
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Add the domain in the <b>Websites</b> tab. Select <b>Node.js</b> as the App Type.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Enter the port number your app is using.</li>
+                                <li class="mb-2"><i class="bi bi-arrow-right text-muted me-2"></i> Nginx will automatically proxy all traffic from port 80/443 to your local app port!</li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-security" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Security, WAF & Firewalls</h2>
+                            <p class="fs-6 mb-4">Stackrium is built with defense-in-depth architecture.</p>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded h-100 bg-light">
+                                        <h5 class="fw-bold"><i class="bi bi-shield-check text-success me-2"></i> UFW Firewall</h5>
+                                        <p class="small text-muted mb-0">Manages open ports. By default, SSH (22), HTTP (80), HTTPS (443), FTP (21, 40000-50000), DNS (53), and Panel (7443) are open. Add custom ports via the Firewall tab.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 border rounded h-100 bg-light">
+                                        <h5 class="fw-bold"><i class="bi bi-shield-slash text-danger me-2"></i> Fail2Ban</h5>
+                                        <p class="small text-muted mb-0">Monitors logs. If an IP fails SSH, FTP, or Panel login 5 times in 10 minutes, Fail2Ban automatically blocks the IP in the UFW firewall for 1 hour.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="fw-bold"><i class="bi bi-shield-lock text-dark me-2"></i> ModSecurity WAF</h5>
+                            <p>The Web Application Firewall protects PHP apps from SQL Injection, XSS, and botnets. You can toggle it per-domain in the <b>Websites > SSL & Security</b> settings.</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="bi bi-braces text-dark me-2"></i> Custom WAF Rules & Dry-Runs</h5>
+                            <p class="text-muted">You can write custom ModSecurity rules directly from the dashboard to whitelist IPs or block specific payloads.</p>
+                            <div class="alert alert-success border-0 shadow-sm mb-4">
+                                <strong>The Safety Mechanism:</strong> When you submit a custom rule, Stackrium creates a backup and performs a strict <code>nginx -t</code> syntax dry-run in the background. If your custom rule contains a typo, the system instantly aborts the save and restores the backup to prevent your server from crashing!
+                            </div>
+
+                            <hr class="my-5">
+                            <h5 class="fw-bold mt-4"><i class="bi bi-file-earmark-lock text-success me-2"></i> SSL & Advanced Routing</h5>
+                            <p class="text-muted">Stackrium syncs directly with live Nginx and Certbot configurations to support automated Let's Encrypt renewals as well as Custom/Cloudflare Origin certificates.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Auto-Renewal:</b> Toggle Let's Encrypt system timers natively.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Force HTTPS:</b> Injects a permanent <code>301 Redirect</code> safely into Port 80.</li>
+                            </ul>
+
+                            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-start border-4 mt-3 mb-1 p-3">
+                                <h6 class="fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> Critical Warning: HSTS (Strict-Transport-Security)</h6>
+                                <p class="mb-0 text-dark" style="font-size: 0.85rem;">
+                                    When you enable HSTS, you command web browsers to <strong>never</strong> load your website over an insecure HTTP connection for the duration of the <code>max-age</code> (up to 2 years). <br><br>
+                                    <strong>Do not enable HSTS unless you are 100% certain you will maintain a valid SSL certificate.</strong> If your SSL expires or is removed while HSTS is cached in a user's browser, they will be permanently locked out of your site with a non-bypassable security error until the cache expires.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-cdn" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Universal CDN & Proxy Manager</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a zero-configuration proxy detection engine. This is a critical security feature if your website uses Cloudflare, Fastly, Sucuri, AWS CloudFront, or any custom load balancer.</p>
+
+                            <h5 class="fw-bold text-danger"><i class="bi bi-diagram-3 me-2"></i> Why is this required? (The "Spoofing" Problem)</h5>
+                            <p class="text-muted mb-4">
+                                When a user visits a site behind a CDN like Cloudflare, the CDN acts as a middleman. The CDN connects to your Stackrium server, not the user. 
+                                By default, Nginx and Fail2ban will only see the CDN's IP address. If a hacker attacks your site through Cloudflare, Fail2ban will block Cloudflare's IP—taking your entire site offline for everyone!
+                            </p>
+
+                            <h5 class="fw-bold"><i class="bi bi-robot text-primary me-2"></i> Automated Global Networks (The "Big Players")</h5>
+                            <p class="text-muted">Stackrium fully automates the IP resolution for major CDN networks.</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Websites</b> tab and click the <b>CDN / Proxy</b> button for your domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Select your network (e.g., <b>Cloudflare</b> or <b>Fastly</b>) from the dropdown and click Apply.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><strong>The Magic:</strong> A background cron job automatically downloads the official, trusted IP ranges from your provider's API every week. Nginx uses this list to safely intercept the correct HTTP header (e.g., <code>CF-Connecting-IP</code> or <code>Fastly-Client-IP</code>) and replaces the proxy IP with the real visitor IP in your access logs.</li>
+                            </ol>
+
+                            <h5 class="fw-bold mt-4"><i class="bi bi-sliders text-success me-2"></i> Custom Proxies & Private Load Balancers</h5>
+                            <p class="text-muted">If you are using an internal Docker network, HAProxy, or an obscure CDN, use the Custom Proxy option to prevent spoofing.</p>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Trusted Proxy IPs:</b> Enter the specific internal IP address (e.g., <code>10.0.0.5</code>) or CIDR range (e.g., <code>192.168.1.0/24</code>) of the machine forwarding the traffic. Nginx will <em>only</em> trust headers coming from these exact IPs.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-success me-2"></i> <b>Real-IP Header:</b> Enter the header name your proxy uses to pass the real IP (most commonly <code>X-Forwarded-For</code>).</li>
+                            </ul>
+                            
+                            <div class="alert alert-danger shadow-sm border-0 mt-3">
+                                <strong>Security Warning:</strong> Never configure a Custom Proxy with <code>0.0.0.0/0</code> as the Trusted IP. Hackers can easily send fake <code>X-Forwarded-For</code> headers to trick Fail2ban into blocking innocent services like Google or Cloudflare.
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="doc-mail" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Mail Server Subsystem (Postfix/Dovecot Engine)</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a secure, highly scalable multi-tenant Mail Transfer Agent (MTA) built around Postfix and Dovecot, backed directly by automated system user boundaries and live MySQL lookup mappings.</p>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-envelope-plus me-2"></i> Step 1: Provisioning a Mail Domain</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>Mail Server</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click "Add Mail Domain" and enter your parent domain.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">The panel instantly provisions independent MySQL access records and configures the environment to listen across local interfaces.</li>
+                            </ol>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-person-badge me-2"></i> Step 2: Provisioning Isolated Mailboxes</h5>
+                            <p>Once your domain mapping is verified, click the <b>Accounts</b> button next to the target domain name to configure mail users.</p>
+                            <ul class="list-unstyled text-muted mb-4 ps-3">
+                                <li class="mb-2"><i class="bi bi-shield-check text-success me-2"></i> <strong>Cryptographic Isolation:</strong> System mail users are mapped to a secure global <code>vmail</code> profile (UID/GID 5000).</li>
+                                <li class="mb-2"><i class="bi bi-folder-symlink text-success me-2"></i> <strong>Maildir Delivery:</strong> The system enforces explicit Maildir resolution paths via <code>CONCAT('%d/', '%u', '/')</code> mapping fields. Raw messages are saved directly into independent filesystem paths at <code>/var/vmail/{domain}/{user}/new/</code>.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-primary"><i class="bi bi-lock-fill me-2"></i> Step 3: Standalone SRE SSL Provisioning</h5>
+                            <p>To avoid security exceptions or port filtering conflicts with ModSecurity Web Application Firewalls (WAF), securing your mail subsystem utilizes an explicit **Standalone Handshake Method**.</p>
+                            <div class="bg-light p-3 border rounded mb-4 small">
+                                <span class="fw-bold text-dark d-block mb-1"><i class="bi bi-terminal-fill me-1"></i> Under the Hood Security Loop:</span>
+                                When you click <b>Secure Mail Server</b>, the background system pauses Nginx for 2–3 seconds to temporarily release port 80/443 interface bindings. Certbot spins up an ultra-light standalone authentication server to communicate with Let's Encrypt directly, bypassing all web rule filters. Once the valid trusted certificates are verified and saved, Nginx reloads instantly alongside Postfix and Dovecot.
+                            </div>
+
+                            <div class="alert alert-warning border-0 shadow-sm d-flex mt-4">
+                                <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                                <div>
+                                    <strong>Crucial DNS Requirements for Mail Delivery:</strong>
+                                    <p class="mb-1 mt-2 small">To prevent your emails from going to Spam, you <b>must</b> configure these DNS records for your domain:</p>
+                                    <ul class="mb-0 small pl-3">
+                                        <li><b>MX Record:</b> Pointing to `mail.yourdomain.com` (Priority 10)</li>
+                                        <li><b>A Record:</b> `mail.yourdomain.com` pointing to this server's IP.</li>
+                                        <li><b>TXT (SPF):</b> `v=spf1 mx a ip4:YOUR_SERVER_IP ~all`</li>
+                                        <li><b>TXT (DMARC):</b> `v=DMARC1; p=quarantine;`</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <h5 class="fw-bold text-primary mt-4"><i class="bi bi-pc-display me-2"></i> Client Connection Matrix</h5>
+                            <div class="bg-light p-3 rounded border font-monospace small mb-4">
+                                <p class="mb-1"><b>Incoming Server (IMAP):</b> mail.yourdomain.com (Port 993, Connection Security: SSL/TLS)</p>
+                                <p class="mb-1"><b>Incoming Server (POP3):</b> mail.yourdomain.com (Port 995, Connection Security: SSL/TLS)</p>
+                                <p class="mb-1"><b>Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 465, Connection Security: SSL/TLS) - <i>Requires Authentication</i></p>
+                                <p class="mb-1"><b>Alternative Outgoing Server (SMTP):</b> mail.yourdomain.com (Port 587, Connection Security: STARTTLS)</p>
+                                <p class="mb-0"><b>Username / Auth Identification:</b> Your full email address (e.g., admin@yourdomain.com).</p>
+                            </div>
+
+                            <h5 class="fw-bold text-primary mt-4"><i class="bi bi-send-check me-2"></i> Step 4: Connecting a Mail Client (e.g., Mozilla Thunderbird)</h5>
+                            <p class="text-muted mb-3">Once your mailbox is provisioned and secured with an SSL certificate, you can connect it to desktop or mobile email clients like Mozilla Thunderbird, Microsoft Outlook, or Apple Mail. Here is a detailed, step-by-step example using Thunderbird:</p>
+                            
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Open Thunderbird and navigate to <b>Account Settings > Add Mail Account</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter your Full Name, your <b>Full Email Address</b> (e.g., <code>admin@yourdomain.com</code>), and your mailbox password. Click <b>Configure Manually</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">
+                                    <strong>Incoming Server Settings:</strong>
+                                    <ul class="mb-0 mt-2 small text-muted">
+                                        <li><b>Protocol:</b> Select <code>IMAP</code> (Recommended to keep devices synced) or <code>POP3</code> (Downloads and removes from server).</li>
+                                        <li><b>Hostname:</b> <code>mail.yourdomain.com</code></li>
+                                        <li><b>Port:</b> <code>993</code> (for IMAP) or <code>995</code> (for POP3).</li>
+                                        <li><b>Connection Security:</b> Select <code>SSL/TLS</code>.</li>
+                                        <li><b>Authentication Method:</b> Select <code>Normal password</code>.</li>
+                                        <li><b>Username:</b> Enter your <i>full email address</i> (not just the prefix).</li>
+                                    </ul>
+                                </li>
+                                <li class="list-group-item bg-transparent border-0 py-2">
+                                    <strong>Outgoing Server (SMTP) Settings:</strong>
+                                    <ul class="mb-0 mt-2 small text-muted">
+                                        <li><b>Hostname:</b> <code>mail.yourdomain.com</code></li>
+                                        <li><b>Port:</b> <code>465</code> (Recommended implicit SSL wrapper) or <code>587</code>.</li>
+                                        <li><b>Connection Security:</b> Select <code>SSL/TLS</code> (if using port 465) or <code>STARTTLS</code> (if using port 587).</li>
+                                        <li><b class="text-danger">Authentication Method:</b> Select <code>Normal password</code>. <i>CRITICAL: Do not leave this blank or anonymous. Postfix will reject outbound emails with an "Access Denied" error if you do not authenticate.</i></li>
+                                        <li><b>Username:</b> Enter your <i>full email address</i>.</li>
+                                    </ul>
+                                </li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click <b>Done</b> or <b>Re-test</b>. The client will securely connect to the Dovecot/Postfix backend using your Let's Encrypt certificate, sync your inbox, and allow you to send outbound emails instantly.</li>
+                            </ol>
+
+                            <div class="alert alert-danger bg-danger bg-opacity-10 border-danger border-start border-4 mt-4 p-4">
+                                <h6 class="fw-bold text-danger mb-2"><i class="bi bi-send-x-fill me-2"></i> Troubleshooting: Emails are sending but not arriving?</h6>
+                                <p class="mb-0 text-dark" style="font-size: 0.9rem;">
+                                    If your mail client successfully sends the email, but it never arrives at the destination (like Gmail or Yahoo), your server is likely suffering from an <strong>Outbound Port 25 Block</strong> imposed by your cloud provider. <br><br>
+                                    You can verify this by logging into your server terminal via SSH and typing <code>mailq</code>. If you see emails sitting in the queue with a <em>"Connection timed out"</em> error, your cloud provider (AWS, DigitalOcean, Vultr) is dropping your packets. You must contact their support team to remove the anti-spam block on your account. <em>(See <strong>1. Cloud Prerequisites</strong> for more details).</em>
+                                </p>
+                            </div>
+
+                            <h5 class="fw-bold text-primary mt-5"><i class="bi bi-send-arrow-up me-2"></i> Step 5: External SMTP Relay (Bypassing Cloud Blocks)</h5>
+                                <p class="text-muted mb-3"><strong>When and Why to use it:</strong> If your cloud provider (AWS, GCP, DigitalOcean) blocks outbound Port 25, your emails will queue up locally and eventually fail with connection timeouts. Additionally, even if Port 25 is open, sending directly from a fresh server IP can cause your emails to land in spam. The <strong>External SMTP Relay</strong> solves both issues by seamlessly routing all outgoing server mail through highly trusted third-party networks (like SendGrid, Brevo, or Amazon SES) using an alternate secure port (Port 587).</p>
+
+                                <p class="text-muted mb-2"><strong>Setup Process & Example:</strong></p>
+                                <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Get an API Key:</strong> Register for a free tier account at an SMTP provider like Brevo or SendGrid. Navigate to their SMTP & API settings and generate a new SMTP API Key.</li>
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Configure the Panel:</strong> Open the Mailboxes interface for your domain in Stackrium. Click the <b>Configure Relay</b> button located in the External SMTP Routing banner.</li>
+                                    <li class="list-group-item bg-transparent border-0 py-2">
+                                        <strong>Input Credentials Example (Using Brevo):</strong>
+                                        <ul class="mb-0 mt-2 small text-dark font-monospace bg-light p-3 rounded border">
+                                            <li class="mb-1">Provider Preset: Custom Provider</li>
+                                            <li class="mb-1">SMTP Hostname: smtp-relay.brevo.com</li>
+                                            <li class="mb-1">Port: 587</li>
+                                            <li class="mb-1">SMTP Username: your_brevo_login_email@example.com</li>
+                                            <li>SMTP Password: (Paste the long API Key generated in Step 1)</li>
+                                        </ul>
+                                    </li>
+                                    <li class="list-group-item bg-transparent border-0 py-2"><strong>Apply & Bypass:</strong> Click <b>Apply Routing Rules</b>. Stackrium will cryptographically lock the credentials, inject the new route into the active Postfix memory, and immediately begin routing your mail around the cloud firewall.</li>
+                                </ol>
+
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-cron" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Scheduled Tasks (Cron Jobs)</h2>
+                            <p class="fs-6 mb-4">Automate repetitive server tasks by scheduling scripts to run at specific intervals without manual intervention.</p>
+
+                            <h5 class="fw-bold text-secondary"><i class="bi bi-clock-history me-2"></i> Creating a Cron Job</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Navigate to the <b>Cron Jobs</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Define the schedule using standard Cron syntax (Minute, Hour, Day, Month, Weekday).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Enter the full command or absolute path to your script (e.g., <code>/usr/bin/php /home/user/web/domain.com/public_html/artisan schedule:run</code>).</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Select the executing user (to ensure proper permissions) and save.</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-updates" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Stackrium Updates & Migrations</h2>
+                            <p class="fs-6 mb-4">Stackrium features a self-healing, enterprise-grade Auto-Update Engine to keep your server secure and up-to-date with zero downtime.</p>
+
+                            <h5 class="fw-bold text-info"><i class="bi bi-arrow-repeat me-2"></i> Autonomous Nightly Updates</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>The 4:00 AM Cron:</b> Every day at 4:00 AM server time, Stackrium autonomously pings the central API for new releases.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Staggered Rollouts:</b> To ensure maximum stability and prevent global server crashes, automatic updates are strictly staggered. Your server may safely wait 1-3 days after a global release before pulling the trigger.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Safe Database Migrations:</b> When an update requires a schema change, Stackrium automatically runs the pending SQL migrations during the background Rsync process.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Toggle Updates:</b> You can disable auto-updates in the <b>Settings</b> tab if you prefer to manage version control manually.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-info mt-4"><i class="bi bi-cloud-download me-2"></i> Manual Override</h5>
+                            <p>You can force a check for the latest version and bypass the staggered rollout at any time:</p>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2">Go to the <b>License & Updates</b> tab.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">Click <b>"Fetch Updates"</b>.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2">If an update is available, you will see an "Install Now" button with a live progress bar tracking the bash executor.</li>
+                            </ol>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-logs" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Logs & Live Tasks</h2>
+                            <p class="fs-6 mb-4">Stackrium utilizes a dual-context architecture to separate global system health from tenant-level website tracking.</p>
+
+                            <h5 class="fw-bold text-dark"><i class="bi bi-terminal me-2"></i> The Universal Log Router</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-cpu text-primary me-2"></i> <b>System Logs (Overview Tab):</b> Streams global OS logs, including the Python Daemon (<code>worker.py</code>), Fail2ban firewall bans, and system updater logs.</li>
+                                <li class="mb-2"><i class="bi bi-journal-code text-info me-2"></i> <b>Website Logs (Domain Tab):</b> Context-aware. Instantly streams Nginx access and error logs specific to that tenant's directory without needing to select paths manually.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-dark mt-4"><i class="bi bi-list-task me-2"></i> Dictionary-Driven Tasks</h5>
+                            <p class="text-muted">The task queue intercepts raw database JSON payloads and translates them into human-readable actions using a UI Dictionary. Raw backend payloads (e.g., <code>update_waf</code>) are never exposed directly to the end-user.</p>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-faq" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Frequently Asked Questions</h2>
+                            
+                            <div class="accordion accordion-flush" id="faqAccordion">
+                                
+                                <div class="accordion-item bg-transparent">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                            Where are my website files located?
+                                        </button>
+                                    </h2>
+                                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            All websites are stored securely within the user's home directory. The exact document root is <code>/home/{username}/web/{domain.com}/public_html</code>.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                            Do subdomains share FTP accounts with the main domain?
+                                        </button>
+                                    </h2>
+                                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Yes! Because subdomains are assigned to a specific Linux User during creation, that user's main FTP credentials will have access to the subdomain's directory as well.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-danger" type="button" data-bs-toggle="collapse" data-bs-target="#faq_cdn_ban">
+                                            My entire website went offline after turning on Cloudflare!
+                                        </button>
+                                    </h2>
+                                    <div id="faq_cdn_ban" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            You are likely a victim of <strong>CDN Suicide</strong>. Because you didn't configure the proxy routing in the panel, Fail2ban detected malicious traffic coming from Cloudflare, assumed Cloudflare was the hacker, and blocked Cloudflare's IP in the server firewall. <br><br>
+                                            <strong>The Fix:</strong> Log into the server via SSH, run <code>sudo fail2ban-client unban --all</code>, and immediately go to the Domains tab > CDN / Proxy Settings to configure Cloudflare properly!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mime">
+                                            When I visit my domain, it downloads an "octet-stream" file.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mime" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Nginx has lost its MIME types mapping. Go to <strong>Advanced Web Settings</strong> and add a MIME type, or ensure your master Nginx template includes the <code>include /etc/nginx/mime.types;</code> directive.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_dns_err">
+                                            I created a domain, but it says "Site cannot be reached."
+                                        </button>
+                                    </h2>
+                                    <div id="faq_dns_err" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This is almost always a DNS or Firewall issue. First, verify in your domain registrar (e.g., GoDaddy) that the A-Record points to your Stackrium server IP. Second, ensure Port 80 and Port 443 are open in your cloud provider's network security group.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_ssl">
+                                            Why is my Let's Encrypt SSL failing?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_ssl" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Let's Encrypt must verify that you own the domain. If your DNS hasn't fully propagated globally, or if Cloudflare Proxy (the orange cloud) is turned ON during installation, Let's Encrypt cannot verify the IP and will fail. Ensure DNS is fully propagated and proxying is disabled before retrying.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_pm2">
+                                            My PM2 App (Python/Node) deployment shows "Errored" in Live Tasks.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_pm2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This usually means the port your application is trying to use is already bound to another process, or your code has a fatal syntax error. Use the File Manager to check your application's internal logs, and verify the correct port is set in your Node <code>server.js</code> or Python <code>app.py</code>.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_git">
+                                            Can I use multiple Git repositories for a single user?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_git" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            For strict isolation, Stackrium enforces a <strong>"One User, One Identity"</strong> rule. Each system user is assigned exactly one unique SSH Deploy Key. If you are managing multiple domains that require different Git repositories, you must provision a new User in the <strong>Users</strong> tab. This ensures that if one website is compromised, the attacker cannot access your other repositories.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_db_large">
+                                            I get a "File too large" error when importing in phpMyAdmin.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_db_large" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            By default, PHP limits uploads. You can increase the global Max Upload Size to 512MB in System Settings. However, for massive SQL files (over 512MB), do not use phpMyAdmin. Upload the <code>.sql</code> file via File Manager and use the terminal: <br><code>mysql -u db_user -p database_name < database.sql</code>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_php_err">
+                                            I changed the PHP settings, but the site isn't updating.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_php_err" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Whenever you change advanced PHP settings (like <code>memory_limit</code>), Stackrium automatically tests syntax and restarts the PHP-FPM worker for that domain. If it didn't reflect, check the <strong>Live Task Log</strong>. If you entered invalid syntax, the server blocked the reload to keep your site online!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                            How do I restart PHP or Nginx manually?
+                                        </button>
+                                    </h2>
+                                    <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Go to the <b>Dashboard</b> tab, scroll down to System Services, and click the restart icon next to Nginx or PHP-FPM.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_2fa">
+                                            I enabled 2FA but lost my phone. How do I get back in?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_2fa" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            You will need SSH access to the server. Log in to your terminal and simply run the command: <code>sudo stackrium login</code>. The Stackrium CLI will instantly generate a secure, one-time access link. Copy and paste that link into your browser to bypass the login screen. Once inside, go to <strong>System Settings</strong> to reset or disable your 2FA.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_timeout">
+                                            Why did the server freeze or say ERR_TIMED_OUT when I clicked Apply?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_timeout" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you leave the panel open for a long time, your security session (CSRF Token) expires. Submitting a form triggers a <code>403 Forbidden</code> error. Stackrium's internal <strong>Fail2ban</strong> firewall detects these 403 errors and assumes a bot is attacking the panel. It immediately blocks your IP address to protect the server, causing a timeout. <br><em>Fix: Refresh the page to get a new token before submitting forms after a long idle period.</em>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_custom_ssl">
+                                            What happens if I paste a corrupted Custom SSL Certificate?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_custom_ssl" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Stackrium's backend uses a robust SRE rollback failsafe. Before applying your custom certificate to Nginx, it backs up the configuration and runs <code>nginx -t</code>. If your certificate crashes Nginx, the script instantly aborts, deletes the corrupted file, restores the backup, and reloads Nginx safely so your other domains stay online.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_sys_task">
+                                            Why does the UI show "System Task" instead of the real action?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_sys_task" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you see "System Task", it means a new backend script was added to the Python daemon, but the JavaScript translation dictionary in <code>system.js</code> hasn't been updated with the new icon and title mapping yet.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mail_zero_msg">
+                                            Incoming emails hit the log with status=sent but mail clients show 0 messages.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mail_zero_msg" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This occurs when Postfix delivers mail in <strong>mbox format</strong> (a single flat file) while Dovecot scans for a modern folder-based **Maildir system**. If your MySQL query parameters return a static integer fallback, Postfix pools every email into a flat file named <code>/var/vmail/1</code> instead of parsing individual user paths.<br><br>
+                                            <strong>The Fix:</strong> Ensure your <code>/etc/postfix/mysql-virtual-mailbox-maps.cf</code> handles relational paths using explicit string concatenation: <br><code>query = SELECT CONCAT('%d/', '%u', '/') FROM mail_users WHERE email='%s'</code>. <br>The trailing slash explicitly instructs Postfix to initialize full Maildir directories, allowing Dovecot and mail clients to sync indices successfully.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_mail_relay_denied">
+                                            Outbound mail drops with "Recipient address rejected: Access denied" or disconnects.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_mail_relay_denied" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This error indicates that Postfix is evaluating external mail routes before your client authenticates, or it hasn't been configured to leverage Dovecot's security daemons for SASL verification. Postfix rejects the unverified transfer request to prevent the server from becoming an open proxy for spam.<br><br>
+                                            <strong>The Fix:</strong> Ensure Postfix connects directly to Dovecot's authentication paths by running:<br>
+                                            <code>sudo postconf -e "smtpd_sasl_type = dovecot"</code><br>
+                                            <code>sudo postconf -e "smtpd_sasl_path = private/auth"</code><br>
+                                            Additionally, ensure both <code>submission</code> (587) and <code>submissions</code> (465) services include the explicit relay parameter override inside your <code>master.cf</code> file to process SASL tokens before dropping traffic: <br><code>-o smtpd_relay_restrictions=permit_sasl_authenticated,reject</code>. Finally, check your client application (e.g., Thunderbird) to ensure its outgoing SMTP server is explicitly set to use <strong>Normal password</strong> authentication rather than anonymous submission.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq_smtp_relay_auth">
+                                            My SMTP Relay connects, but the provider rejects the sender or bounces the email.
+                                        </button>
+                                    </h2>
+                                    <div id="faq_smtp_relay_auth" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            If you see a "sender rejected" or "domain not valid" error in your logs after setting up an External SMTP Relay, it means Stackrium successfully bypassed your cloud firewall and handed the email to your relay provider (e.g., Brevo or SendGrid), but their edge network rejected the payload for security reasons. To prevent spam spoofing, external relays require cryptographic proof that you actually own the domain you are sending from.<br><br>
+                                            <strong>The Fix:</strong> Log into your relay provider's dashboard, locate their Domain Authentication section, and generate their specific DNS records (usually a TXT verification code, DKIM, and SPF). Copy those values and add them into Stackrium's <strong>Security & DNS > DNS Management</strong> tab. Once the DNS records propagate, click "Authenticate" in the provider's dashboard to permanently lift the security hold and allow your emails through.
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="doc-license" role="tabpanel">
+                            <h2 class="fw-bold mb-4 text-success">Commercial Licensing & Billing</h2>
+                            
+                            <div class="text-center my-5">
+                                <i class="bi bi-wallet2 display-1 text-muted opacity-50 mb-3 d-block"></i>
+                                <h3 class="fw-bold">Ah, the dreaded "Commercial License" section.</h3>
+                                <p class="lead text-muted mt-3">
+                                    Our billing department has rigorously audited your account, consulted with top-tier accountants, and concluded that you currently owe us exactly...
+                                </p>
+                                <h1 class="display-2 fw-bold text-success my-4">$0.00</h1>
+                            </div>
+
+                            <div class="alert alert-light border shadow-sm p-4">
+                                <h5 class="fw-bold"><i class="bi bi-info-circle-fill text-primary me-2"></i> The Reality Check</h5>
+                                <p class="text-muted mb-3">Stackrium is 100% free to use. Seriously.</p>
+                                <p class="text-muted mb-3">
+                                    The <code>license.key</code> generated during your server's installation is simply a cryptographic handshake. It allows your server to securely authenticate with Stackrium Central so it can pull down core updates and manage staggered rollouts without getting rate-limited by our API.
+                                </p>
+                                <p class="text-muted mb-0">
+                                    Your "license" is automatically valid for the next 10 years (or until the heat death of the universe, whichever comes first). Keep your wallet in your pocket, close this tab, and go enjoy building something awesome!
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- SECTION 3: Advanced Web Settings & Performance -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingAdvanced">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced">
-                    <i class="bi bi-rocket-takeoff-fill me-2 text-danger"></i> 3. Advanced Web Settings & Redis
-                </button>
-            </h2>
-            <div id="collapseAdvanced" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Optimize how Nginx handles traffic and accelerate database queries using In-Memory caching.</p>
-                    
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Nginx Routing Rules</h6>
-                    <ul class="text-muted small mb-3">
-                        <li class="mb-2"><strong>URL Redirects:</strong> Route old links to new destinations. Use <strong>301 (Permanent)</strong> to tell Google to update its search index, or <strong>302 (Temporary)</strong> if you are just doing maintenance. <em>Example: Redirect <code>/old-store</code> to <code>https://shop.domain.com</code>.</em></li>
-                        <li class="mb-2"><strong>MIME Types:</strong> Nginx needs a dictionary to understand file types. If your users are trying to view an image or app file but it forces a "Download" instead, you need to add a MIME type. <em>Example: Ext: <code>apk</code>, MIME: <code>application/vnd.android.package-archive</code>.</em></li>
-                        <li class="mb-2"><strong>Hotlink Protection:</strong> Stop other websites from stealing your bandwidth. When enabled, Nginx checks the <code>Referer</code> header. If another website embeds your images or videos, Nginx blocks them with a <code>403 Forbidden</code> error.</li>
-                    </ul>
-
-                    <h6 class="fw-bold mt-3 text-dark border-bottom pb-1">Redis In-Memory Caching</h6>
-                    <p class="text-muted small mb-3">Redis stores frequently accessed database queries directly in your server's RAM. Because RAM is 100x faster than SSD storage, this drastically speeds up dynamic applications.</p>
-                    <ul class="text-muted small mb-0">
-                        <li><strong>Guardrails:</strong> oPanel hard-caps Redis at <strong>128MB</strong> of RAM and uses an LRU (Least Recently Used) eviction policy. This prevents Redis from causing an Out-Of-Memory (OOM) server crash.</li>
-                        <li><strong>WordPress:</strong> Use the 1-Click "Enable Redis" button to automatically install the Redis Object Cache plugin and inject the secure credentials into your <code>wp-config.php</code>.</li>
-                        <li><strong>Custom Apps:</strong> Click "Developer Guide" in the Redis tab to reveal the auto-generated secure password and get boilerplate connection code for PHP, Node, and Python.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 4: Domain Suspension & Lifecycle -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingLifecycle">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLifecycle">
-                    <i class="bi bi-pause-circle-fill me-2 text-warning"></i> 4. Domain Suspension & Lifecycle
-                </button>
-            </h2>
-            <div id="collapseLifecycle" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Administrators can temporarily pause web traffic to a domain without destroying its underlying data.</p>
-                    <ul class="text-muted small">
-                        <li class="mb-2"><strong>How Suspension Works:</strong> Clicking "Suspend" modifies the Nginx vHost configuration to intercept all incoming requests and instantly return a <code>503 Service Unavailable</code> header.</li>
-                        <li class="mb-2"><strong>Non-Destructive:</strong> Suspension does NOT delete files, databases, or SSL certificates. The domain remains perfectly intact on the hard drive for a 1-click unsuspend later.</li>
-                        <li class="mb-2"><strong>Custom Branding:</strong> While suspended, visitors are shown the <code>opanel_suspended.html</code> template. You can customize this file located in <code>/var/www/opanel_errors/</code> to match your organization's branding.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 5: Users & Databases -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingDb">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDb">
-                    <i class="bi bi-people me-2 text-info"></i> 5. System Users & Databases
-                </button>
-            </h2>
-            <div id="collapseDb" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Manage Linux system users and MariaDB/MySQL databases with granular access control.</p>
-                    <ul class="text-muted small">
-                        <li><strong>System Users:</strong> Linux users are jailed to their <code>/home/user/web/</code> directories. <em>Warning: Deleting a user destroys their entire home directory. You must delete their domains from the Web tab first.</em></li>
-                        <li><strong>Databases:</strong> When provisioning a database, use <strong>Access Control</strong> to define security. Select <em>Localhost Only</em> for maximum security, or input a specific IP if you are connecting remotely from another server.</li>
-                        <li><strong>phpMyAdmin:</strong> Click the green <i class="bi bi-database-fill-gear"></i> icon next to any database to securely launch phpMyAdmin. oPanel uses SSO, meaning you never have to type your database password.</li>
-                        <li><strong>Role-Based Access:</strong> When building custom apps, you can restrict database users to specific permissions (e.g., <code>SELECT</code>, <code>INSERT</code> only) using the Custom Role option for added security.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 6: Security, WAF & DNS -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingSecurity">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSecurity">
-                    <i class="bi bi-shield-check me-2 text-dark"></i> 6. Security, WAF & DNS
-                </button>
-            </h2>
-            <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Protect your server and route traffic using the built-in BIND9 and UFW engines.</p>
-                    <ul class="text-muted small">
-                        <li class="mb-2"><strong>WAF (ModSecurity):</strong> Toggle the Web Application Firewall on/off per domain. This protects against SQL injections, Cross-Site Scripting (XSS), and malicious bots by inspecting every incoming packet against the OWASP Core Rule Set.</li>
-                        <li class="mb-2"><strong>Install SSL:</strong> Secure domains with Let's Encrypt. The script automatically solves the ACME challenge and reloads Nginx. Ensure DNS is fully propagated before attempting.</li>
-                        <li class="mb-2"><strong>Initialize New Zone:</strong> If you want oPanel to act as your Master DNS server, click this to generate the baseline BIND9 records (A, MX, TXT) automatically. <em>(Note: You must set ns1/ns2 at your registrar).</em></li>
-                        <li class="mb-2"><strong>Manage DNS:</strong> Add custom CNAME, TXT, or A records directly into your active BIND9 zones.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 7: Backups -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingBackups">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBackups">
-                    <i class="bi bi-archive me-2 text-primary"></i> 7. Backups & Automation
-                </button>
-            </h2>
-            <div id="collapseBackups" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Never lose your data. oPanel handles automated compression and SQL dumping via Python daemon workers.</p>
-                    <ul class="text-muted small">
-                        <li><strong>Manual Backups:</strong> Generate instant <code>.tar.gz</code> website file archives or <code>.sql.gz</code> database dumps.</li>
-                        <li><strong>Auto-Schedule:</strong> Set up Daily, Weekly, or Monthly automated backups. Set a "Retention Limit" (e.g., 3 days) and oPanel will automatically delete older backups to prevent your disk from filling up.</li>
-                        <li><strong>1-Click Restore:</strong> Click the red restore button next to an archive in the vault to instantly overwrite the live site/database with the backup data.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 8: Cron Jobs -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingCron">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCron">
-                    <i class="bi bi-clock-history me-2 text-secondary"></i> 8. Automated Tasks (Cron Jobs)
-                </button>
-            </h2>
-            <div id="collapseCron" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">Automate repetitive server tasks like cache clearing, backups, or script execution without manual intervention.</p>
-                    <ul class="text-muted small">
-                        <li><strong>Add Cron Job:</strong> Schedule commands to run as specific system users. oPanel uses standard cron syntax <code>* * * * *</code> (Minute, Hour, Day, Month, Weekday).</li>
-                        <li><strong>Pro-Tip (Laravel):</strong> To run a Laravel scheduler every minute, set all time fields to <code>*</code> and use the command: <br><code>php /home/user/web/domain.com/public_html/artisan schedule:run</code></li>
-                        <li><strong>System Time:</strong> Remember that cron jobs execute based on the server's Master Time Zone, which you can configure in the Dashboard's System Settings.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 9: Mail Management -->
-        <div class="accordion-item border-0 border-bottom">
-            <h2 class="accordion-header" id="headingMail">
-                <button class="accordion-button collapsed fw-bold bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMail">
-                    <i class="bi bi-envelope-at me-2 text-info"></i> 9. Mail Server & Routing
-                </button>
-            </h2>
-            <div id="collapseMail" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-white">
-                    <p class="text-muted mb-3">oPanel uses a Modular Mail Architecture. By default, the mail engine is completely uninstalled to save your server's RAM and CPU.</p>
-                    <ul class="text-muted small mb-0">
-                        <li><strong>Local Mail Engine:</strong> If you want to host physical emails on the server, click the Mail icon next to any domain and click "Install Mail Engine". This downloads Postfix and Dovecot in the background.</li>
-                        <li><strong>External Routing (Recommended):</strong> If you use Google Workspace or Microsoft 365, do <strong>not</strong> install the local engine. Simply use the "External Provider" tab in the Mail Modal for 1-Click DNS setup.</li>
-                        <li><strong>Webmail:</strong> If hosting locally, you can access your inbox by navigating to <code>https://webmail.yourdomain.com</code>.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 10: FAQ -->
-        <div class="accordion-item border-0">
-            <h2 class="accordion-header" id="headingFaq">
-                <button class="accordion-button collapsed fw-bold bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaq">
-                    <i class="bi bi-question-circle-fill me-2 text-warning"></i> 10. Frequently Asked Questions (FAQ)
-                </button>
-            </h2>
-            <div id="collapseFaq" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
-                <div class="accordion-body text-sm bg-light">
-                    
-                    <h6 class="fw-bold text-dark mt-2">Q: When I visit my domain, it downloads an "octet-stream" file instead of showing the website.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Nginx has lost its MIME types mapping. Go to <strong>Advanced Web Settings</strong> and add a MIME type, or ensure your master Nginx template includes the <code>include /etc/nginx/mime.types;</code> directive.</p>
-
-                    <h6 class="fw-bold text-dark mt-2">Q: I created a domain, but when I visit it in my browser, it says "Site cannot be reached."</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> This is almost always a DNS or Firewall issue. First, verify in your domain registrar (e.g., GoDaddy) that the A-Record points to your oPanel server IP. Second, ensure Port 80 and Port 443 are open in your cloud provider's network security group.</p>
-
-                    <h6 class="fw-bold text-dark">Q: My Let's Encrypt SSL installation failed! Why?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Let's Encrypt must verify that you own the domain. If your DNS hasn't fully propagated globally, or if Cloudflare Proxy (the orange cloud) is turned on during installation, Let's Encrypt cannot verify the IP and will fail. Ensure DNS is propagated and proxying is disabled before retrying.</p>
-
-                    <h6 class="fw-bold text-dark">Q: My PM2 App (Python/Node) deployment shows "Errored" in Live Tasks.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> This usually means the port your application is trying to use is already bound to another process, or your code has a fatal syntax error. Use the File Manager to check your application's internal logs, and verify the correct port is set in your Node <code>server.js</code> or Python <code>app.py</code>.</p>
-
-                    <h6 class="fw-bold text-dark">Q: Can I use multiple Git repositories or generate multiple SSH Deploy Keys for a single user?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> For strict isolation, oPanel enforces a <strong>"One User, One Identity"</strong> rule. Each system user is assigned exactly one unique ED25519 SSH Deploy Key. If you are managing multiple domains that require different Git repositories, you must provision a new User in the <strong>Users</strong> tab. This ensures that if one website is compromised, the attacker cannot use that user's SSH key to access your other repositories.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I get a "File too large" error when importing a database in phpMyAdmin.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> By default, PHP limits uploads. You can increase the global Max Upload Size to 512MB in System Settings. However, for massive SQL files (over 512MB), do not use phpMyAdmin. Upload the `.sql` file via File Manager and use the terminal: <br><code>mysql -u db_user -p database_name < database.sql</code></p>
-
-                    <h6 class="fw-bold text-dark">Q: How do I completely remove the Mail Engine to get my RAM back?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Open the Mail Modal for any domain. Scroll to the bottom of the "Host Locally" tab and click the red "Uninstall Engine" button. <em>Warning: This permanently deletes all local emails and removes Postfix/Dovecot from the system.</em></p>
-
-                    <h6 class="fw-bold text-dark">Q: I changed the PHP settings for a domain, but the site isn't updating.</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Whenever you change advanced PHP settings (like <code>memory_limit</code>), oPanel automatically tests syntax and restarts the PHP-FPM worker for that domain. If it didn't reflect, check the <strong>Live Task Log</strong>. If you entered invalid syntax, the server will block the reload to keep your site online.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I need an older version of PHP for a legacy application. How do I get it?</h6>
-                    <p class="text-muted mb-3 pb-2 border-bottom"><strong>A:</strong> Go to the <strong>Web & Git</strong> tab and click the <strong>Software Center</strong>. Install older engines (like PHP 7.4) there. Once installed, click <strong>PHP Config</strong> on your domain to instantly assign the legacy engine. All other domains will remain on their modern versions.</p>
-
-                    <h6 class="fw-bold text-dark">Q: I enabled 2FA but lost my phone. How do I get back in?</h6>
-                    <p class="text-muted mb-0"><strong>A:</strong> You will need SSH access to the server. Log in to your terminal and simply run the command: <code>sudo opanel login</code>. The oPanel CLI will instantly generate a secure, one-time access link. Copy and paste that link into your browser to bypass the login screen. Once inside, go to <strong>System Settings</strong> to reset or disable your 2FA.</p>
-                    
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>

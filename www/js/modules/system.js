@@ -7,6 +7,87 @@ window.currentTaskPage = 1;
 window.taskLimit = 5;
 window.logInterval = null;
 
+// The Human-Readable Task Translation Dictionary
+const taskDictionary = {
+    // === Core Web & App Deployment ===
+    'create_vhost': { icon: 'bi-globe text-success', title: 'Provision Domain', desc: 'Setting up Nginx & PHP environment' },
+    'delete_domain': { icon: 'bi-trash text-danger', title: 'Destroy Domain', desc: 'Removing web files & configurations' },
+    'domain_status': { icon: 'bi-pause-circle text-warning', title: 'Toggle Domain Status', desc: 'Suspending or unsuspending website' },
+    'install_wp': { icon: 'bi-wordpress text-primary', title: 'Install WordPress', desc: 'Deploying CMS and Database' },
+    'deploy_laravel': { icon: 'bi-box-seam text-danger', title: 'Deploy Laravel', desc: 'Building composer framework' },
+    'deploy_python': { icon: 'bi-filetype-py text-info', title: 'Deploy Python', desc: 'Setting up WSGI/Gunicorn environment' },
+    'deploy_node': { icon: 'bi-hexagon-fill text-success', title: 'Deploy Node.js', desc: 'Configuring PM2 process manager' },
+    'node_action': { icon: 'bi-cpu text-warning', title: 'App Process Action', desc: 'Executing PM2 command' },
+    'restart_app': { icon: 'bi-bootstrap-reboot text-success', title: 'Restart Application', desc: 'Reloading backend PM2 process' },
+    'revert_to_php': { icon: 'bi-arrow-return-left text-primary', title: 'Revert App to PHP', desc: 'Restoring standard FastCGI pass' },
+    
+    // === SSL, Routing & Nginx Configuration ===
+    'install_ssl': { icon: 'bi-lock-fill text-success', title: 'Install SSL Certificate', desc: 'Provisioning Let\'s Encrypt SSL' },
+    'https_routing_manager': { icon: 'bi-sign-turn-right text-success', title: 'HTTPS Routing', desc: 'Applying Force HTTPS & HSTS rules' },
+    'adv_web_compile': { icon: 'bi-code-square text-dark', title: 'Advanced Web Rules', desc: 'Compiling custom Nginx directives' },
+    'manage_php': { icon: 'bi-sliders text-info', title: 'Reconfigure PHP', desc: 'Applying custom FPM settings' },
+    'install_php': { icon: 'bi-filetype-php text-primary', title: 'Install PHP Engine', desc: 'Compiling specific PHP version' },
+
+    // === Database Management ===
+    'create_db': { icon: 'bi-database-add text-primary', title: 'Provision Database', desc: 'Creating MariaDB instance' },
+    'manage_db': { icon: 'bi-database-gear text-info', title: 'Manage Database', desc: 'Updating DB users and privileges' },
+    'delete_db': { icon: 'bi-database-dash text-danger', title: 'Delete Database', desc: 'Dropping MariaDB instance' },
+    'wp_redis_manager': { icon: 'bi-lightning-charge text-danger', title: 'WordPress Redis', desc: 'Configuring object caching connection' },
+
+    // === Security & Firewall ===
+    'update_waf': { icon: 'bi-shield-check text-primary', title: 'WAF Security Update', desc: 'Rebuilding Nginx security rules' },
+    'manage_firewall': { icon: 'bi-bricks text-danger', title: 'Modify Firewall', desc: 'Updating UFW port rules' },
+    'manage_fail2ban': { icon: 'bi-shield-slash text-danger', title: 'Manage Fail2ban', desc: 'Updating intrusion prevention jails' },
+    'secure_panel': { icon: 'bi-shield-lock text-success', title: 'Secure Dashboard', desc: 'Applying Let\'s Encrypt to panel' },
+    
+    // === Git & File Management ===
+    'git_clone': { icon: 'bi-git text-primary', title: 'Clone Repository', desc: 'Pulling source code from remote Git' },
+    'git_pull': { icon: 'bi-git text-dark', title: 'Git Pull', desc: 'Pulling latest repository code' },
+    'generate_ssh_key': { icon: 'bi-key text-success', title: 'Generate SSH Key', desc: 'Creating ed25519 deployment key' },
+    'manage_fm': { icon: 'bi-folder2-open text-warning', title: 'Deploy File Manager', desc: 'Provisioning TinyFM application' },
+    'rotate_fm': { icon: 'bi-key text-secondary', title: 'Rotate FM Password', desc: 'Updating File Manager credentials' },
+    'manage_ftp': { icon: 'bi-folder-symlink text-warning', title: 'Manage FTP Account', desc: 'Updating Pure-FTPd credentials' },
+
+    // === Mail Server Operations ===
+    'install_mail_engine': { icon: 'bi-envelope-plus text-success', title: 'Install Mail Engine', desc: 'Provisioning Postfix & Dovecot' },
+    'uninstall_mail_engine': { icon: 'bi-envelope-x text-danger', title: 'Uninstall Mail Engine', desc: 'Removing mail server components' },
+    'manage_mail_dns': { icon: 'bi-envelope-paper text-primary', title: 'Mail DNS Routing', desc: 'Updating MX and SPF records' },
+    'manage_mail_user': { icon: 'bi-person-badge text-info', title: 'Manage Mailbox', desc: 'Updating Postfix/Dovecot accounts' },
+    'setup_smtp_relay': { icon: 'bi-cloud-arrow-up text-success', title: 'SMTP Relay config', desc: 'Configuring external Postfix mail routing' },
+
+    // === DNS & System Level Tasks ===
+    'create_dns': { icon: 'bi-diagram-2 text-info', title: 'Create DNS Zone', desc: 'Generating BIND9 master zone' },
+    'manage_dns_record': { icon: 'bi-card-list text-secondary', title: 'Manage DNS Record', desc: 'Updating BIND9 zone file' },
+    'create_user': { icon: 'bi-person-plus text-primary', title: 'Create System User', desc: 'Provisioning isolated Linux user environment' },
+    'delete_user': { icon: 'bi-person-x text-danger', title: 'Delete System User', desc: 'Removing user and associated data' },
+    'manage_cron': { icon: 'bi-clock-history text-primary', title: 'Manage Cron Job', desc: 'Updating scheduled tasks' },
+    'update_limits': { icon: 'bi-speedometer2 text-danger', title: 'Update Quotas', desc: 'Applying storage and resource limits' },
+    'set_timezone': { icon: 'bi-globe2 text-info', title: 'Set Timezone', desc: 'Updating system clock' },
+    'manage_service': { icon: 'bi-arrow-clockwise text-warning', title: 'Manage Service', desc: 'Restarting system daemon' },
+
+    // === Backups & Restoration ===
+    'manage_backup': { icon: 'bi-archive text-primary', title: 'Generate Backup', desc: 'Archiving system data to vault' },
+    'restore_backup': { icon: 'bi-arrow-counterclockwise text-warning', title: 'Restore Backup', desc: 'Overwriting live data from vault' },
+    'delete_backup': { icon: 'bi-archive-x text-danger', title: 'Delete Backup', desc: 'Removing archive from vault' },
+
+    // === The Fallback ===
+    'default': { icon: 'bi-gear text-secondary', title: 'System Task', desc: 'Executing backend process' }
+};
+
+// Helper to make dates look like "Today, 3:32 PM"
+function formatTaskTime(dateString) {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    if (date.toDateString() === today.toDateString()) return `Today, ${timeStr}`;
+    if (date.toDateString() === yesterday.toDateString()) return `Yesterday, ${timeStr}`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + `, ${timeStr}`;
+}
+
 window.fetchSystemStats = function() {
     $.ajax({
         url: '/ajax/system_stats.php',
@@ -42,49 +123,64 @@ window.fetchRecentTasks = function() {
         dataType: 'json',
         success: function(response) {
             if(response.success) {
-                let tbody = $('#dynamicTasksTable');
-                tbody.empty(); 
+                let container = $('#dynamicTasksTable');
+                container.empty(); 
                 
                 if(response.tasks.length === 0) {
-                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">No system tasks found.</td></tr>');
+                    container.html('<div class="list-group-item text-center text-muted py-5 border-0 bg-transparent">No system tasks found.</div>');
                     $('#taskPaginationContainer').empty();
                     return;
                 }
 
                 response.tasks.forEach(function(task) {
-                    let badgeClass = 'bg-secondary';
-                    let actionButtons = '';
-
+                    let map = taskDictionary[task.action] || taskDictionary['default'];
+                    let displayTitle = (map === taskDictionary['default']) ? task.action : map.title;
+                    
+                    let statusBadge = '';
+                    let btnClass = 'btn-outline-secondary';
+                    let btnText = 'View Log';
+                    
                     if(task.status === 'completed') {
-                        badgeClass = 'bg-success';
-                        actionButtons = `<button class="btn btn-sm btn-outline-secondary p-1 px-2 view-task-log" data-id="${task.id}" title="View Output Log"><i class="bi bi-terminal-fill"></i></button>`;
+                        statusBadge = '<span class="badge bg-success bg-opacity-10 text-success border-0 rounded-pill px-2 shadow-sm"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>';
+                        btnClass = 'btn-outline-success';
+                    } else if(task.status === 'failed') {
+                        statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger border-0 rounded-pill px-2 shadow-sm"><i class="bi bi-x-circle-fill me-1"></i>Failed</span>';
+                        btnClass = 'btn-outline-danger';
+                        btnText = 'View Error';
+                    } else {
+                        statusBadge = '<span class="badge bg-warning bg-opacity-10 text-warning border-0 rounded-pill px-2 shadow-sm"><i class="spinner-border spinner-border-sm me-1" style="width:10px;height:10px;"></i>Running</span>';
+                        btnClass = 'btn-outline-warning disabled';
+                        btnText = 'Processing...';
                     }
-                    if(task.status === 'failed') {
-                        badgeClass = 'bg-danger';
-                        actionButtons = `<button class="btn btn-sm btn-outline-danger p-1 px-2 view-task-log" data-id="${task.id}" title="View Error Log"><i class="bi bi-terminal-fill"></i></button>`;
-                    }
-                    if(task.status === 'pending' || task.status === 'processing') {
-                        badgeClass = 'bg-warning text-dark';
-                        actionButtons = `<div class="spinner-border spinner-border-sm text-secondary" role="status"></div>`;
-                    }
-
-                    let target = 'System Command';
-                    try {
-                        let data = JSON.parse(task.payload);
-                        target = data.domain || data.username || data.port || 'Data Object';
-                    } catch(e) {}
 
                     let row = `
-                        <tr>
-                            <td class="fw-bold text-muted">#${task.id}</td>
-                            <td><code class="text-dark">${task.action}</code></td>
-                            <td>${target}</td>
-                            <td><span class="badge ${badgeClass}">${task.status.toUpperCase()}</span></td>
-                            <td class="small text-muted">${task.created_at}</td>
-                            <td class="text-end">${actionButtons}</td> 
-                        </tr>
+                        <div class="list-group-item py-2 px-3 border-0 bg-white mb-2 shadow-sm rounded-3">
+                            <div class="row align-items-center">
+                                <div class="col-12 col-md-5 d-flex align-items-center mb-1 mb-md-0">
+                                    <div class="me-3 fs-5 bg-light rounded border-0 shadow-sm d-flex justify-content-center align-items-center" style="width: 36px; height: 36px;">
+                                        <i class="bi ${map.icon}"></i>
+                                    </div>
+                                    <div class="lh-sm">
+                                        <h6 class="mb-0 fw-bold text-dark" style="font-size:0.85rem;">${displayTitle} <span class="text-muted ms-1 fw-normal" style="font-size: 0.65rem;">#${task.id}</span></h6>
+                                        <small class="text-muted" style="font-size:0.7rem;">${map.desc}</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4 text-start text-md-center border-start-md">
+                                    <div class="fw-bold text-dark small lh-sm mb-1" style="font-size:0.8rem;"><i class="bi bi-hdd-network text-muted me-1"></i>${task.target_name}</div>
+                                    <div style="font-size:0.75rem;">${statusBadge}</div>
+                                </div>
+                                <div class="col-6 col-md-3 text-end">
+                                    <div class="text-muted mb-1" style="font-size:0.7rem;">
+                                        <i class="bi bi-calendar-event me-1"></i>${formatTaskTime(task.created_at)}
+                                    </div>
+                                    <button class="btn btn-sm ${btnClass} view-task-log shadow-sm py-1 px-2" data-id="${task.id}" style="font-size:0.75rem;">
+                                        <i class="bi bi-terminal"></i> ${btnText}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     `;
-                    tbody.append(row);
+                    container.append(row);
                 });
 
                 window.renderTaskPagination(response.pagination);
@@ -96,7 +192,7 @@ window.fetchRecentTasks = function() {
 window.renderTaskPagination = function(p) {
     let container = $('#taskPaginationContainer');
     if (container.length === 0) {
-        $('#dynamicTasksTable').closest('.table-responsive').after(`
+        $('#dynamicTasksTable').closest('.tasks-wrapper').after(`
             <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light" id="taskPaginationContainer"></div>
         `);
         container = $('#taskPaginationContainer');
@@ -112,44 +208,131 @@ window.renderTaskPagination = function(p) {
         <ul class="pagination pagination-sm mb-0 shadow-sm">`;
 
     pageHtml += `<li class="page-item ${p.current_page == 1 ? 'disabled' : ''}">
-        <a class="page-link task-page-link" href="#" data-page="${p.current_page - 1}">Prev</a></li>`;
+        <a class="page-link task-page-link border-0" href="#" data-page="${p.current_page - 1}">Prev</a></li>`;
 
-    for (let i = 1; i <= p.total_pages; i++) {
+    let startPage = Math.max(1, p.current_page - 1);
+    let endPage = Math.min(p.total_pages, p.current_page + 1);
+    
+    if (p.current_page === 1 && p.total_pages >= 3) endPage = 3;
+    if (p.current_page === p.total_pages && p.total_pages >= 3) startPage = p.total_pages - 2;
+
+    if (startPage > 1) {
+        pageHtml += `<li class="page-item"><a class="page-link task-page-link border-0" href="#" data-page="1">1</a></li>`;
+        if (startPage > 2) pageHtml += `<li class="page-item disabled"><span class="page-link text-muted border-0 bg-transparent">...</span></li>`;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
         pageHtml += `<li class="page-item ${p.current_page == i ? 'active' : ''}">
-            <a class="page-link task-page-link" href="#" data-page="${i}">${i}</a></li>`;
+            <a class="page-link task-page-link border-0" href="#" data-page="${i}">${i}</a></li>`;
+    }
+
+    if (endPage < p.total_pages) {
+        if (endPage < p.total_pages - 1) pageHtml += `<li class="page-item disabled"><span class="page-link text-muted border-0 bg-transparent">...</span></li>`;
+        pageHtml += `<li class="page-item"><a class="page-link task-page-link border-0" href="#" data-page="${p.total_pages}">${p.total_pages}</a></li>`;
     }
 
     pageHtml += `<li class="page-item ${p.current_page == p.total_pages ? 'disabled' : ''}">
-        <a class="page-link task-page-link" href="#" data-page="${p.current_page + 1}">Next</a></li>`;
+        <a class="page-link task-page-link border-0" href="#" data-page="${p.current_page + 1}">Next</a></li>`;
 
     pageHtml += `</ul></div>`;
     container.html(pageHtml);
 };
 
-window.fetchLogs = function() {
-    let type = $('#logType').val();
-    let domain = $('#logDomain').val(); 
-    let user = $('#logUser').val();
+window.fetchLogs = function(isManualFetch = false) {
+    let logType = $('#logTypeSelect').val();
+    let targetDomain = $('#logDomainSelect').val(); 
+    let targetUser = $('#logUserSelect').val();
+    let terminal = $('#logTerminal');
+    let btn = $('#fetchLogBtn');
+
+    if (isManualFetch) {
+        terminal.html('<span class="text-warning">Streaming logs...</span>');
+        btn.prop('disabled', true);
+    }
+
+    const escapeHTML = (str) => {
+        return (str || '').toString().replace(/[&<>'"]/g, 
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
+        );
+    };
 
     $.ajax({
         url: '/ajax/get_logs.php',
         type: 'POST',
-        data: { type: type, domain: domain, username: user },
+        data: { type: logType, domain: targetDomain, username: targetUser },
         dataType: 'json',
         success: function(response) {
-            let terminal = $('#logTerminal');
-            let isAtBottom = terminal[0].scrollHeight - terminal.scrollTop() === terminal.outerHeight();
+            let isAtBottom = (terminal[0].scrollHeight - terminal.scrollTop()) <= (terminal.outerHeight() + 10);
 
             if(response.success) {
                 if(response.logs.trim() !== '') {
-                    terminal.text(response.logs);
+                    const lines = response.logs.split('\n').filter(line => line.trim() !== '');
+                    terminal.empty();
+
+                    lines.forEach(line => {
+                        let formattedHtml = '';
+                        try {
+                            const logObj = JSON.parse(line);
+                            let statusBadge = '<span class="badge bg-success" style="width:45px;">' + logObj.status + '</span>';
+                            if(logObj.status >= 400) statusBadge = '<span class="badge bg-warning text-dark" style="width:45px;">' + logObj.status + '</span>';
+                            if(logObj.status >= 500) statusBadge = '<span class="badge bg-danger" style="width:45px;">' + logObj.status + '</span>';
+
+                            formattedHtml = `
+                                <div class="mb-2 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-start gap-3">
+                                    <div class="text-secondary small text-nowrap font-monospace">[${escapeHTML(logObj.time)}]</div>
+                                    <div class="text-info fw-bold text-nowrap font-monospace" style="width: 120px;">${escapeHTML(logObj.ip)}</div>
+                                    <div>${statusBadge}</div>
+                                    <div class="text-light text-break w-100">${escapeHTML(logObj.method)} ${escapeHTML(logObj.uri)}</div>
+                                </div>`;
+
+                        } catch (e) {
+                            let badge = '<span class="badge bg-secondary" style="width:45px;">INFO</span>';
+                            let textColor = 'text-light';
+                            let lowerLine = line.toLowerCase();
+
+                            if (lowerLine.includes('error') || lowerLine.includes('fatal') || lowerLine.includes('crit')) {
+                                badge = '<span class="badge bg-danger" style="width:45px;">ERR</span>';
+                                textColor = 'text-danger';
+                            } else if (lowerLine.includes('warn')) {
+                                badge = '<span class="badge bg-warning text-dark" style="width:45px;">WARN</span>';
+                                textColor = 'text-warning';
+                            }
+
+                            let cleanLine = line;
+                            let timestamp = '';
+                            const timeMatch = line.match(/^\[.*?\]|^\w+\s+\d+\s+\d+:\d+:\d+/);
+                            
+                            if (timeMatch) {
+                                timestamp = `<div class="text-secondary small text-nowrap font-monospace">[${escapeHTML(timeMatch[0].replace(/[\[\]]/g, ''))}]</div>`;
+                                cleanLine = line.substring(timeMatch[0].length).trim();
+                            }
+
+                            formattedHtml = `
+                                <div class="mb-2 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-start gap-3">
+                                    ${timestamp} 
+                                    <div>${badge}</div> 
+                                    <div class="${textColor} text-break w-100">${escapeHTML(cleanLine)}</div>
+                                </div>`;
+                        }
+                        terminal.append(formattedHtml);
+                    });
                 } else {
                     terminal.html('<span class="text-secondary">Log file is currently empty.</span>');
                 }
             } else {
-                terminal.html('<span class="text-danger">' + response.error + '</span>');
+                terminal.html('<span class="text-danger">' + escapeHTML(response.error) + '</span>');
             }
-            if(isAtBottom) terminal.scrollTop(terminal[0].scrollHeight);
+            
+            if(isManualFetch || isAtBottom) {
+                terminal.scrollTop(terminal[0].scrollHeight);
+            }
+            if(isManualFetch) btn.prop('disabled', false);
+        },
+        error: function() {
+            if(isManualFetch) {
+                terminal.html('<span class="text-danger">Critical Network Error.</span>');
+                btn.prop('disabled', false);
+            }
         }
     });
 };
@@ -164,21 +347,21 @@ window.fetchBackups = function() {
                 let tbody = $('#dynamicBackupsTable');
                 tbody.empty();
                 if(response.backups.length === 0) {
-                    tbody.html('<tr><td colspan="5" class="text-center text-muted py-3">Vault is empty.</td></tr>');
+                    tbody.html('<tr><td colspan="5" class="text-center text-muted py-5 border-0 bg-transparent">Vault is empty.</td></tr>');
                     return;
                 }
                 response.backups.forEach(function(b) {
-                    let badge = b.type === 'Website' ? '<span class="badge bg-info text-dark">Web Archive</span>' : '<span class="badge bg-warning text-dark">SQL Dump</span>';
+                    let badge = b.type === 'Website' ? '<span class="badge bg-info bg-opacity-10 text-info border-0 rounded-pill px-3 shadow-sm">Web Archive</span>' : '<span class="badge bg-warning bg-opacity-10 text-warning border-0 rounded-pill px-3 shadow-sm">SQL Dump</span>';
                     let dlUrl = `/ajax/download_backup.php?type=${b.type}&file=${b.filename}`;
                     let row = `<tr>
                             <td>${badge}</td>
                             <td class="fw-bold">${b.target}</td>
                             <td class="text-muted small">${b.time}</td>
-                            <td><span class="badge bg-light text-dark border">${b.size}</span></td>
+                            <td><span class="badge bg-light text-dark border-0 shadow-sm rounded-pill px-3">${b.size}</span></td>
                             <td class="text-end">
-                                <a href="${dlUrl}" class="btn btn-sm btn-dark me-1" title="Download to Computer"><i class="bi bi-cloud-arrow-down-fill"></i></a>
-                                <button class="btn btn-sm btn-danger restore-backup me-1" data-file="${b.filename}" data-type="${b.type}" data-target="${b.target}" title="Restore to Server"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
-                                <button class="btn btn-sm btn-outline-danger delete-backup" data-file="${b.filename}" data-type="${b.type}" title="Delete Archive"><i class="bi bi-trash"></i></button>
+                                <a href="${dlUrl}" class="btn btn-sm btn-light text-dark shadow-sm me-1" title="Download to Computer"><i class="bi bi-cloud-arrow-down-fill"></i></a>
+                                <button class="btn btn-sm btn-light text-danger shadow-sm restore-backup me-1" data-file="${b.filename}" data-type="${b.type}" data-target="${b.target}" title="Restore to Server"><i class="bi bi-arrow-counterclockwise"></i> Restore</button>
+                                <button class="btn btn-sm btn-light text-danger shadow-sm delete-backup" data-file="${b.filename}" data-type="${b.type}" title="Delete Archive"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>`;
                     tbody.append(row);
@@ -198,20 +381,20 @@ window.fetchSchedules = function() {
                 let tbody = $('#dynamicSchedulesTable');
                 tbody.empty();
                 if(response.schedules.length === 0) {
-                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-3">No automated schedules configured.</td></tr>');
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted py-5 border-0 bg-transparent">No automated schedules configured.</td></tr>');
                     return;
                 }
                 response.schedules.forEach(function(s) {
-                    let typeBadge = s.backup_type === 'web' ? '<span class="badge bg-primary">Website</span>' : '<span class="badge bg-warning text-dark">Database</span>';
+                    let typeBadge = s.backup_type === 'web' ? '<span class="badge bg-primary bg-opacity-10 text-primary border-0 rounded-pill px-3 shadow-sm">Website</span>' : '<span class="badge bg-warning bg-opacity-10 text-warning border-0 rounded-pill px-3 shadow-sm">Database</span>';
                     let runTime = s.run_hour + ':00';
                     let row = `<tr>
-                        <td class="fw-bold">${s.target}</td>
+                        <td class="fw-bold text-dark">${s.target}</td>
                         <td>${typeBadge}</td>
-                        <td class="text-capitalize">${s.frequency}</td>
-                        <td><span class="badge bg-secondary"><i class="bi bi-clock"></i> ${runTime}</span></td>
-                        <td>${s.retention_days} Days</td>
+                        <td class="text-capitalize small text-muted">${s.frequency}</td>
+                        <td><span class="badge bg-light text-dark border-0 shadow-sm px-3 rounded-pill"><i class="bi bi-clock"></i> ${runTime}</span></td>
+                        <td class="small fw-bold">${s.retention_days} Days</td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-danger delete-schedule" data-id="${s.id}" title="Delete Schedule"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-light text-danger shadow-sm delete-schedule" data-id="${s.id}" title="Delete Schedule"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;
                     tbody.append(row);
@@ -231,17 +414,17 @@ window.fetchCronJobs = function() {
                 let tbody = $('#dynamicCronTable');
                 tbody.empty();
                 if(response.jobs.length === 0) {
-                    tbody.html('<tr><td colspan="4" class="text-center text-muted py-3">No active cron jobs.</td></tr>');
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted py-5 border-0 bg-transparent">No active cron jobs.</td></tr>');
                     return;
                 }
                 response.jobs.forEach(function(job) {
-                    let schedule = `<span class="badge bg-light text-dark border font-monospace">${job.minute} ${job.hour} ${job.day} ${job.month} ${job.weekday}</span>`;
+                    let schedule = `<span class="badge bg-light text-dark shadow-sm border-0 rounded-pill px-3 font-monospace">${job.minute} ${job.hour} ${job.day} ${job.month} ${job.weekday}</span>`;
                     let row = `<tr>
-                            <td class="fw-bold"><i class="bi bi-person text-muted"></i> ${job.username}</td>
+                            <td class="fw-bold text-dark"><i class="bi bi-person text-muted"></i> ${job.username}</td>
                             <td>${schedule}</td>
-                            <td><code class="text-dark bg-light px-2 py-1 rounded">${job.command}</code></td>
+                            <td><code class="text-dark bg-light px-2 py-1 shadow-sm border-0 rounded-3">${job.command}</code></td>
                             <td class="text-end">
-                                <button class="btn btn-sm btn-outline-danger delete-cron" 
+                                <button class="btn btn-sm btn-light text-danger shadow-sm delete-cron" 
                                     data-user="${job.username}" 
                                     data-min="${job.minute}" data-hr="${job.hour}" 
                                     data-day="${job.day}" data-mon="${job.month}" 
@@ -268,25 +451,25 @@ window.fetchServices = function() {
                 res.services.forEach(function(s) {
                     let statusBadge = '';
                     if (s.status === 'active') {
-                        statusBadge = '<span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="bi bi-check-circle-fill me-1"></i> Running</span>';
+                        statusBadge = '<span class="badge bg-success bg-opacity-10 text-success border-0 rounded-pill shadow-sm px-3"><i class="bi bi-check-circle-fill me-1"></i> Running</span>';
                     } else if (s.status === 'inactive' || s.status === 'failed') {
-                        statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger border border-danger"><i class="bi bi-x-circle-fill me-1"></i> Stopped</span>';
+                        statusBadge = '<span class="badge bg-danger bg-opacity-10 text-danger border-0 rounded-pill shadow-sm px-3"><i class="bi bi-x-circle-fill me-1"></i> Stopped</span>';
                     } else {
-                        statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">Not Installed</span>';
+                        statusBadge = '<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill shadow-sm px-3">Not Installed</span>';
                     }
 
                     let actions = '';
                     if (s.status !== 'unknown') {
-                        let startBtn = `<button class="btn btn-sm btn-outline-success mx-1 execute-service" data-action="start" data-svc="${s.service}" title="Start"><i class="bi bi-play-fill"></i></button>`;
-                        let stopBtn  = `<button class="btn btn-sm btn-outline-danger mx-1 execute-service" data-action="stop" data-svc="${s.service}" title="Stop"><i class="bi bi-stop-fill"></i></button>`;
-                        let resBtn   = `<button class="btn btn-sm btn-outline-dark mx-1 execute-service" data-action="restart" data-svc="${s.service}" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>`;
+                        let startBtn = `<button class="btn btn-sm btn-light shadow-sm text-success mx-1 execute-service" data-action="start" data-svc="${s.service}" title="Start"><i class="bi bi-play-fill"></i></button>`;
+                        let stopBtn  = `<button class="btn btn-sm btn-light shadow-sm text-danger mx-1 execute-service" data-action="stop" data-svc="${s.service}" title="Stop"><i class="bi bi-stop-fill"></i></button>`;
+                        let resBtn   = `<button class="btn btn-sm btn-light shadow-sm text-dark mx-1 execute-service" data-action="restart" data-svc="${s.service}" title="Restart"><i class="bi bi-arrow-clockwise"></i></button>`;
 
                         if (!s.can_stop) { stopBtn = ''; startBtn = ''; }
                         
-                        if (s.status === 'active') startBtn = startBtn.replace('btn-outline-success', 'btn-outline-success disabled');
+                        if (s.status === 'active') startBtn = startBtn.replace('text-success', 'text-muted disabled');
                         if (s.status !== 'active') {
-                            stopBtn = stopBtn.replace('btn-outline-danger', 'btn-outline-danger disabled');
-                            resBtn = resBtn.replace('btn-outline-dark', 'btn-outline-dark disabled');
+                            stopBtn = stopBtn.replace('text-danger', 'text-muted disabled');
+                            resBtn = resBtn.replace('text-dark', 'text-muted disabled');
                         }
                         actions = startBtn + stopBtn + resBtn;
                     }
@@ -314,8 +497,8 @@ window.fetchComponents = function() {
                 tbody.empty();
                 res.components.forEach(function(c) {
                     let versionDisplay = c.version === 'Not Installed' 
-                        ? `<span class="badge bg-secondary bg-opacity-10 text-secondary border">Not Installed</span>` 
-                        : `<code class="text-dark bg-light px-2 py-1 rounded shadow-sm border">${c.version}</code>`;
+                        ? `<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill px-3 shadow-sm">Not Installed</span>` 
+                        : `<code class="text-dark bg-light px-3 py-1 rounded-pill shadow-sm border-0">${c.version}</code>`;
 
                     let row = `<tr>
                         <td class="fw-bold text-dark">${c.name}</td>
@@ -342,11 +525,11 @@ window.renderSoftwareCenter = function() {
                 supportedVersions.forEach(function(ver) {
                     let isInstalled = installedVersions.includes(ver);
                     let badge = isInstalled 
-                        ? '<span class="badge bg-success shadow-sm"><i class="bi bi-check-circle"></i> Installed</span>' 
-                        : '<span class="badge bg-secondary shadow-sm">Not Installed</span>';
+                        ? '<span class="badge bg-success bg-opacity-10 text-success border-0 rounded-pill px-3 shadow-sm"><i class="bi bi-check-circle"></i> Installed</span>' 
+                        : '<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill px-3 shadow-sm">Not Installed</span>';
                         
                     let actionBtn = isInstalled
-                        ? `<button class="btn btn-sm btn-outline-danger software-action-btn" data-action="remove" data-version="${ver}"><i class="bi bi-trash"></i> Uninstall</button>`
+                        ? `<button class="btn btn-sm btn-light text-danger shadow-sm software-action-btn" data-action="remove" data-version="${ver}"><i class="bi bi-trash"></i> Uninstall</button>`
                         : `<button class="btn btn-sm btn-primary software-action-btn shadow-sm" data-action="install" data-version="${ver}"><i class="bi bi-download"></i> Install</button>`;
 
                     tableRows += `
@@ -364,10 +547,143 @@ window.renderSoftwareCenter = function() {
     });
 };
 
+// ==========================================
+// FAIL2BAN GLOBAL SETTINGS LOGIC
+// ==========================================
+
+window.fetchFail2BanSettings = function() {
+    $('#f2b_bantime_val, #f2b_findtime_val, #f2b_maxretry').prop('disabled', true);
+    $.ajax({
+        url: '/ajax/get_f2b_settings.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                $('#f2b_bantime_val').val(response.bantime_val);
+                $('#f2b_bantime_unit').val(response.bantime_unit);
+                $('#f2b_findtime_val').val(response.findtime_val);
+                $('#f2b_findtime_unit').val(response.findtime_unit);
+                $('#f2b_maxretry').val(response.maxretry);
+            } else {
+                window.showToast('error', 'Fetch Failed', response.error);
+            }
+        },
+        error: function() { window.showToast('error', 'Network Error', 'Failed to fetch Fail2ban settings.'); },
+        complete: function() { $('#f2b_bantime_val, #f2b_findtime_val, #f2b_maxretry').prop('disabled', false); }
+    });
+};
+
+window.saveFail2BanSettings = function() {
+    const bantimeVal = $('#f2b_bantime_val').val();
+    const bantimeUnit = $('#f2b_bantime_unit').val();
+    const findtimeVal = $('#f2b_findtime_val').val();
+    const findtimeUnit = $('#f2b_findtime_unit').val();
+    const maxretry = $('#f2b_maxretry').val();
+
+    if (!bantimeVal || !findtimeVal || !maxretry) {
+        window.showToast('warning', 'Validation Error', 'Please fill in all numerical fields.');
+        return;
+    }
+
+    const bantime = bantimeVal + bantimeUnit;
+    const findtime = findtimeVal + findtimeUnit;
+
+    const btn = $('#formF2bSettings button');
+    const originalText = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+    $.ajax({
+        url: '/ajax/update_f2b_settings.php',
+        type: 'POST',
+        data: { bantime: bantime, findtime: findtime, maxretry: maxretry },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                $('#fail2banStatusModal').modal('hide');
+                const taskIdMatch = response.message.match(/Task ID: (\d+)/);
+                if (taskIdMatch && typeof pollTaskStatus === 'function') {
+                    pollTaskStatus(taskIdMatch[1]);
+                } else {
+                    window.showToast('success', 'Settings Saved', 'Fail2ban daemon is restarting.');
+                }
+            } else {
+                window.showToast('error', 'Save Failed', response.error);
+            }
+        },
+        error: function() { window.showToast('error', 'Network Error', 'Failed to save settings.'); },
+        complete: function() { btn.prop('disabled', false).html(originalText); }
+    });
+};
+
+// ==========================================
+// LICENSE & UPDATES LOGIC
+// ==========================================
+window.fetchLicenseData = function() {
+    $.ajax({
+        url: '/ajax/get_license_info.php',
+        type: 'GET',
+        dataType: 'json',
+        success: function(res) {
+            if(res.success) {
+                $('#ui-license-key').text(res.key);
+                $('#ui-license-owner').text(res.owner_name);
+                $('#ui-license-email').text(res.owner_email);
+                $('#ui-license-ip').text(res.ip);
+                $('#ui-license-expiry').text(res.expiry);
+
+                let statusBadge = $('#ui-license-status');
+                statusBadge.removeClass('bg-secondary bg-success bg-danger bg-warning');
+                
+                if (res.status === 'active') {
+                    statusBadge.addClass('bg-success bg-opacity-10 text-success border border-success').html('<i class="bi bi-check-circle-fill"></i> Active');
+                } else if (res.status === 'suspended') {
+                    statusBadge.addClass('bg-warning bg-opacity-10 text-warning border border-warning').html('<i class="bi bi-pause-circle-fill"></i> Suspended');
+                } else {
+                    statusBadge.addClass('bg-danger bg-opacity-10 text-danger border border-danger').html('<i class="bi bi-x-circle-fill"></i> ' + res.status.toUpperCase());
+                }
+            }
+        },
+        error: function() {
+            $('#ui-license-status').text('Error Loading Data').removeClass('bg-secondary').addClass('badge bg-danger');
+            $('#ui-license-key').text('Network Error');
+        }
+    });
+};
+
+window.forceLicenseSync = function() {
+    let btn = $('#btnSyncLicense');
+    let originalText = btn.html();
+    
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Syncing...');
+    
+    $.ajax({
+        url: '/ajax/sync_license.php',
+        type: 'POST',
+        dataType: 'json',
+        success: function(res) {
+            if(res.success) {
+                window.fetchLicenseData(); 
+                window.showToast('success', 'License Synced', "License successfully synced with Stackrium Central.");
+            } else {
+                window.showToast('error', 'Sync Failed', res.error);
+            }
+            btn.prop('disabled', false).html(originalText);
+        },
+        error: function() {
+            window.showToast('error', 'Network Error', "Error communicating with Stackrium Central.");
+            btn.prop('disabled', false).html(originalText);
+        }
+    });
+};
+
 // =================================================================
 // 2. EVENT LISTENERS
 // =================================================================
 $(document).ready(function() {
+
+    $('button[data-bs-target="#license-updates"], a[href="#license-updates"]').on('shown.bs.tab', function () {
+        window.fetchLicenseData();
+    });
 
     // === TASK PAGINATION & LOG VIEWER ===
     $(document).on('click', '.task-page-link', function(e) {
@@ -400,14 +716,14 @@ $(document).ready(function() {
                     $('#logTaskAction').text(response.action);
                     $('#logTaskOutput').text(response.output);
                     if (response.status === 'failed') {
-                        $('#logTaskStatus').html('<span class="text-danger">[FAILED]</span> Process exited with errors.');
+                        $('#logTaskStatus').html('<span class="text-danger fw-bold"><i class="bi bi-x-circle-fill"></i> [FAILED]</span> Process exited with errors.');
                     } else {
-                        $('#logTaskStatus').html('<span class="text-success">[OK]</span> Process exited cleanly.');
+                        $('#logTaskStatus').html('<span class="text-success fw-bold"><i class="bi bi-check-circle-fill"></i> [OK]</span> Process exited cleanly.');
                     }
                     $('#taskLogModal').modal('show');
-                } else { alert("Error fetching log: " + response.error); }
+                } else { window.showToast('error', 'Log Fetch Failed', response.error); }
             },
-            error: function() { btn.html(originalIcon); alert("Network error."); }
+            error: function() { btn.html(originalIcon); window.showToast('error', 'Network Error', 'Failed to fetch task log.'); }
         });
     });
 
@@ -419,8 +735,9 @@ $(document).ready(function() {
     $('#logModal').on('hide.bs.modal', function () {
         clearInterval(window.logInterval); 
     });
-    $('#logType').on('change', function() {
-        $('#logTerminal').html('Loading...');
+    
+    $('#logTypeSelect').on('change', function() {
+        $('#logTerminal').html('<span class="text-warning">Loading...</span>');
         window.fetchLogs();
     });
 
@@ -439,8 +756,9 @@ $(document).ready(function() {
                 if(response.success) {
                     $('.modal').modal('hide');
                     form[0].reset();
+                    window.showToast('success', 'Task Queued', 'Archive generation dispatched to system processor.');
                     setTimeout(window.fetchBackups, 5000); 
-                } else { alert("Error: " + response.error); }
+                } else { window.showToast('error', 'Backup Failed', response.error); }
                 btn.prop('disabled', false).text('Generate Archive');
             }
         });
@@ -478,15 +796,16 @@ $(document).ready(function() {
                     $('#uploadBackupModal').modal('hide');
                     form.reset();
                     $('#uploadProgress').addClass('d-none');
+                    window.showToast('success', 'Upload Complete', 'Archive stored in vault.');
                     window.fetchBackups();
                 } else {
-                    alert("Error: " + res.error);
+                    window.showToast('error', 'Upload Failed', res.error);
                     $('#uploadProgress').addClass('d-none');
                 }
                 btn.prop('disabled', false).text('Upload to Vault');
             },
             error: function() {
-                alert("Upload failed. The file might exceed PHP's max_upload_size.");
+                window.showToast('error', 'Upload Failed', "The file might exceed PHP's max_upload_size.");
                 $('#uploadProgress').addClass('d-none');
                 btn.prop('disabled', false).text('Upload to Vault');
             }
@@ -512,8 +831,8 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alert("Restore task queued successfully! Check the Live Tasks log for status.");
-                } else { alert("Error: " + response.error); }
+                    window.showToast('success', 'Restore Queued', 'Task dispatched to system processor. Check live logs.');
+                } else { window.showToast('error', 'Restore Failed', response.error); }
                 btn.prop('disabled', false).html(originalText);
             }
         });
@@ -534,8 +853,11 @@ $(document).ready(function() {
             data: { file: fileName, type: type },
             dataType: 'json',
             success: function(response) {
-                if(response.success) { window.fetchBackups(); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false).html(originalText); }
+                if(response.success) { 
+                    window.showToast('success', 'Archive Deleted', 'Backup removed from vault.');
+                    window.fetchBackups(); 
+                } 
+                else { window.showToast('error', 'Delete Failed', response.error); btn.prop('disabled', false).html(originalText); }
             }
         });
     });
@@ -564,9 +886,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#scheduleBackupModal').modal('hide');
-                    alert("Backup schedule saved successfully! The engine will run it automatically.");
+                    window.showToast('success', 'Schedule Active', 'The backup engine will run this automatically.');
                     window.fetchSchedules();
-                } else { alert("Error: " + response.error); }
+                } else { window.showToast('error', 'Configuration Failed', response.error); }
                 btn.prop('disabled', false).text('Save Schedule');
             }
         });
@@ -585,7 +907,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) { window.fetchSchedules(); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); }
+                else { window.showToast('error', 'Delete Failed', response.error); btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); }
             }
         });
     });
@@ -605,8 +927,9 @@ $(document).ready(function() {
                 if(res.success) {
                     $('#addCronModal').modal('hide');
                     document.getElementById('addCronForm').reset();
+                    window.showToast('success', 'Cron Updated', 'The system task scheduler has been reloaded.');
                     setTimeout(window.fetchCronJobs, 3000);
-                } else { alert("Error: " + res.error); }
+                } else { window.showToast('error', 'Save Failed', res.error); }
                 btn.prop('disabled', false).text('Save Cron Job');
             }
         });
@@ -655,10 +978,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    showToast(res.message);
+                    window.showToast('success', 'Service Action Executed', res.message);
                     setTimeout(window.fetchServices, 3000);
                 } else {
-                    alert("Error: " + res.error);
+                    window.showToast('error', 'Action Failed', res.error);
                     btn.prop('disabled', false).html(originalHtml);
                 }
             }
@@ -684,14 +1007,15 @@ $(document).ready(function() {
                     if(res.success) {
                         $('#softwareCenterModal').modal('hide');
                         $('#overview-tab').tab('show');
+                        window.showToast('success', 'Compilation Started', 'This task will take a few minutes to complete in the background.');
                         if (typeof window.fetchRecentTasks === "function") window.fetchRecentTasks();
                     } else {
-                        alert("Error: " + res.error);
+                        window.showToast('error', 'Process Failed', res.error);
                         btn.prop('disabled', false).html(originalText);
                     }
                 },
                 error: function() {
-                    alert("Network error occurred.");
+                    window.showToast('error', 'Network Error', "Could not communicate with the API.");
                     btn.prop('disabled', false).html(originalText);
                 }
             });
@@ -704,16 +1028,14 @@ $(document).ready(function() {
     $('#submitAdminProfileBtn').click(function() {
         let btn = $(this);
         let form = $('#adminProfileForm');
-        let alertBox = $('#adminProfileAlert');
         
         if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
         if ($('#newAdminPass').val() !== $('#confirmAdminPass').val()) {
-            alertBox.removeClass('d-none alert-success').addClass('alert-danger').text("New passwords do not match.");
+            window.showToast('warning', 'Validation Error', 'New passwords do not match.');
             return;
         }
         
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Updating...');
-        alertBox.addClass('d-none');
 
         $.ajax({
             url: '/ajax/change_admin_password.php',
@@ -722,11 +1044,11 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.removeClass('d-none alert-danger').addClass('alert-success').text("Password updated! You will be logged out in 3 seconds.");
+                    window.showToast('success', 'Security Updated', 'Password changed! Logging out in 3 seconds.');
                     form[0].reset();
                     setTimeout(function() { window.location.href = '/logout'; }, 3000);
                 } else {
-                    alertBox.removeClass('d-none alert-success').addClass('alert-danger').text(response.error);
+                    window.showToast('error', 'Update Failed', response.error);
                 }
                 btn.prop('disabled', false).html('<i class="bi bi-save"></i> Update Password');
             }
@@ -747,10 +1069,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alert("Timezone sync queued! The server will migrate in a few seconds.");
+                    window.showToast('success', 'Timezone Synced', 'Server time shifted successfully.');
                     $('#systemSettingsModal').modal('hide');
                     $('#overview-tab').tab('show');
-                } else { alert("Error: " + response.error); }
+                } else { window.showToast('error', 'Sync Failed', response.error); }
                 btn.prop('disabled', false).text('Sync Server Time');
             }
         });
@@ -759,11 +1081,9 @@ $(document).ready(function() {
     $('#brandingForm').on('submit', function(e) {
         e.preventDefault();
         let btn = $('#saveBrandingBtn');
-        let alertBox = $('#brandingAlert');
         let formData = new FormData(this);
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Saving...');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
         $.ajax({
             url: '/ajax/save_branding.php',
@@ -774,11 +1094,93 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    alertBox.addClass('alert-success').text("Branding saved! Reloading to apply changes...").removeClass('d-none');
+                    window.showToast('success', 'Branding Saved', 'Reloading to apply UI changes...');
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    window.showToast('error', 'Save Failed', res.error);
                     btn.prop('disabled', false).html('Save Changes');
+                }
+            }
+        });
+    });
+
+    // === FETCH & POPULATE BRANDING MODAL ON OPEN ===
+    $('#brandingModal').on('show.bs.modal', function () {
+        $.ajax({
+            url: '/ajax/get_branding.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success && res.data) {
+                    $('input[name="brand_title"]').val(res.data.brand_title || '');
+                    $('input[name="brand_subtext"]').val(res.data.brand_subtext || '');
+                    $('input[name="brand_logo_url"]').val(res.data.brand_logo_url || '');
+                    $('input[name="brand_theme_color"]').val(res.data.brand_theme_color || '#0d6efd');
+                    $('input[name="brand_sidebar_color"]').val(res.data.brand_sidebar_color || '#212529');
+                    $('input[name="brand_login_bg_color"]').val(res.data.brand_login_bg_color || '#f8f9fa');
+                    $('select[name="brand_login_bg_fit"]').val(res.data.brand_login_bg_fit || 'cover');
+                    $('#hideFooterCheck').prop('checked', res.data.brand_hide_footer == '1');
+                }
+            }
+        });
+    });
+
+    // Open WAF Rules Modal
+    $(document).on('click', '.edit-waf-rules', function() {
+        let domain = $(this).data('domain');
+        let existingRules = atob($(this).data('rules')); 
+        
+        $('#wafDomainTitle').text(domain);
+        $('#wafDomainInput').val(domain);
+        $('#wafRulesTextarea').val(existingRules);
+        $('#wafRulesModal').modal('show');
+    });
+
+    // Submit Custom WAF Rules
+    $('#saveWafRulesBtn').click(function() {
+        let btn = $(this);
+        let formData = $('#wafRulesForm').serialize();
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Compiling...');
+
+        $.ajax({
+            url: '/ajax/manage_waf_rules.php',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    $('#wafRulesModal').modal('hide');
+                    window.showToast('success', 'Rules Applied', 'Custom WAF payload injected successfully.');
+                    if (typeof window.fetchDomains === "function") setTimeout(window.fetchDomains, 3000); 
+                } else {
+                    window.showToast('error', 'Compilation Failed', response.error);
+                }
+                btn.prop('disabled', false).text('Compile & Apply Rules');
+            }
+        });
+    });
+
+    // WAF Toggle Button Click Handler
+    $(document).on('click', '.toggle-waf', function() {
+        let btn = $(this);
+        let domain = btn.data('domain');
+        let action = btn.data('action'); 
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_waf.php',
+            type: 'POST',
+            data: { domain: domain, status: action },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    window.showToast('success', 'Security Engine', `WAF engine toggled to ${action.toUpperCase()}`);
+                    if (typeof window.fetchDomains === "function") setTimeout(window.fetchDomains, 3000); 
+                } else {
+                    window.showToast('error', 'Toggle Failed', response.error);
+                    btn.prop('disabled', false);
                 }
             }
         });
@@ -787,13 +1189,11 @@ $(document).ready(function() {
     $('#submitSecurePanelBtn').click(function() {
         let btn = $(this);
         let domain = $('#masterDomainSelect').val();
-        let alertBox = $('#securePanelAlert');
         
-        if (!domain) { alert("Please select a domain first."); return; }
-        if(!confirm(`Warning: This will lock oPanel to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
+        if (!domain) { window.showToast('warning', 'Validation', 'Please select a domain first.'); return; }
+        if(!confirm(`Warning: This will lock Stackrium to ${domain} and reload Nginx. Your session will redirect. Proceed?`)) return;
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Binding...');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
         $.ajax({
             url: '/ajax/secure_panel.php',
@@ -802,10 +1202,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    alertBox.addClass('alert-success').text("Success! Redirecting in 3 seconds...").removeClass('d-none');
+                    window.showToast('success', 'Panel Bound', 'Redirecting in 3 seconds...');
                     setTimeout(() => window.location.href = "https://" + res.domain + ":7443", 3000);
                 } else {
-                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    window.showToast('error', 'Binding Failed', res.error);
                     btn.prop('disabled', false).html('<i class="bi bi-link-45deg"></i> Bind to Panel');
                 }
             }
@@ -814,12 +1214,9 @@ $(document).ready(function() {
 
     $('#unbindPanelBtn').click(function() {
         let btn = $(this);
-        let alertBox = $('#securePanelAlert');
-        
         if(!confirm("Are you sure you want to unbind the panel? This reverts to the raw IP address and self-signed certificates.")) return;
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
-        alertBox.addClass('d-none').removeClass('alert-success alert-danger');
 
         $.ajax({
             url: '/ajax/secure_panel.php',
@@ -828,11 +1225,123 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(res) {
                 if(res.success) {
-                    alertBox.addClass('alert-success').text("Success! Redirecting to IP in 3 seconds...").removeClass('d-none');
+                    window.showToast('success', 'Panel Unbound', 'Redirecting to IP in 3 seconds...');
                     setTimeout(() => window.location.href = "https://" + res.ip + ":7443", 3000);
                 } else {
-                    alertBox.addClass('alert-danger').text("Error: " + res.error).removeClass('d-none');
+                    window.showToast('error', 'Unbind Failed', res.error);
                     btn.prop('disabled', false).html('<i class="bi bi-x-circle"></i> Unbind');
+                }
+            }
+        });
+    });
+
+    // =================================================================
+    // STACKRIUM UPDATE ENGINE LOGIC
+    // =================================================================
+    window.latestStableUrl = '';
+    window.latestBetaUrl = '';
+
+    $(document).on('click', '#btnCheckUpdates', function() {
+        $('#updateModal').modal('show');
+        
+        $('.btn-start-update').prop('disabled', true);
+        $('#ui-stable-version, #ui-beta-version').text('Loading...');
+        $('#ui-stable-date, #ui-beta-date').text('--');
+        $('#ui-stable-changelog, #ui-beta-changelog').html('<div class="spinner-border spinner-border-sm text-secondary"></div> Fetching data...');
+        
+        $.ajax({
+            url: '/ajax/check_updates.php',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    window.latestStableUrl = res.stable.url;
+                    window.latestBetaUrl = res.beta.url;
+
+                    $('#ui-stable-version').text(res.stable.version);
+                    $('#ui-stable-date').text(res.stable.release_date);
+                    $('#ui-stable-changelog').html(res.stable.changelog);
+                    $('button[data-channel="stable"]').prop('disabled', false);
+
+                    $('#ui-beta-version').text(res.beta.version);
+                    $('#ui-beta-date').text(res.beta.release_date);
+                    $('#ui-beta-changelog').html(res.beta.changelog);
+                    $('button[data-channel="beta"]').prop('disabled', false);
+
+                    $('#autoUpdateToggle').prop('checked', res.local_auto_update);
+                } else {
+                    $('#ui-stable-changelog').html('<span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> ' + res.error + '</span>');
+                    $('#ui-beta-changelog').html('<span class="text-danger fw-bold">Failed to fetch beta branch.</span>');
+                }
+            },
+            error: function() {
+                $('#ui-stable-changelog').html('<span class="text-danger fw-bold">Network error reaching update server.</span>');
+            }
+        });
+    });
+
+    $(document).on('change', '#autoUpdateToggle', function() {
+        let isEnabled = $(this).is(':checked');
+        $.ajax({
+            url: '/ajax/toggle_autoupdate.php',
+            type: 'POST',
+            data: { enable: isEnabled },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) window.showToast('info', 'Update Engine', isEnabled ? "Unattended Auto-Updates Enabled!" : "Auto-Updates Disabled.");
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-start-update', function() {
+        let channel = $(this).data('channel');
+        
+        if (!confirm(`Are you sure you want to install the ${channel.toUpperCase()} update? Your panel will be momentarily offline.`)) {
+            return;
+        }
+
+        $('#closeUpdateModalBtn').hide();
+        $('#updateModal').data('bs-backdrop', 'static').data('bs-keyboard', 'false');
+
+        $('#updateTabs').hide();
+        $('#updateTabContent').hide();
+        $('#updateProgressUI').removeClass('d-none').show();
+
+        let downloadUrl = channel === 'stable' ? window.latestStableUrl : window.latestBetaUrl;
+
+        $.ajax({
+            url: '/ajax/run_update.php',
+            type: 'POST',
+            data: { channel: channel, url: downloadUrl },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    let pollInterval = setInterval(function() {
+                        $.ajax({
+                            url: '/ajax/get_update_status.php?t=' + Date.now(), 
+                            dataType: 'json',
+                            cache: false,
+                            success: function(statusData) {
+                                $('#updateProgressBar').css('width', statusData.progress + '%');
+                                $('#updateStepText').text(statusData.step);
+                                
+                                if (statusData.progress === 100 || statusData.status === 'complete') {
+                                    clearInterval(pollInterval);
+                                    $('#updateProgressBar').removeClass('progress-bar-animated bg-primary').addClass('bg-success');
+                                    setTimeout(() => window.location.reload(), 2000);
+                                }
+                                
+                                if (statusData.status === 'error') {
+                                    clearInterval(pollInterval);
+                                    $('#updateProgressBar').removeClass('progress-bar-animated bg-primary').addClass('bg-danger');
+                                    window.showToast('error', 'Update Failed', statusData.step);
+                                }
+                            }
+                        });
+                    }, 1500);
+
+                } else {
+                    window.showToast('error', 'Update Trigger Failed', res.error);
                 }
             }
         });
@@ -852,4 +1361,39 @@ $(document).ready(function() {
     window.fetchCronJobs();
     window.fetchServices();
     window.fetchComponents();
+
+    // Toggle the visibility of the Domain/User selectors based on log type
+    $(document).on('change', '#logTypeSelect', function() {
+        let type = $(this).val();
+        let isSystemLog = ['daemon', 'fail2ban', 'updater', 'syslog'].includes(type);
+        
+        if (isSystemLog) {
+            // Hide the domain/user dropdowns using a smooth slide
+            $('#logDomainGroup').slideUp('fast');
+        } else {
+            // Show them for website logs
+            $('#logDomainGroup').slideDown('fast');
+        }
+    });
+
+    // Make sure the Overview tab "System Logs" button auto-selects Daemon
+    $(document).on('click', '[data-bs-target="#logModal"]:contains("System Logs")', function() {
+        $('#logTypeSelect').val('daemon').trigger('change');
+        setTimeout(() => { $('#fetchLogBtn').trigger('click'); }, 300);
+    });
+
+    // =================================================================
+    // THE UNIVERSAL LOG FETCHER
+    // =================================================================
+    $(document).on('click', '#fetchLogBtn', function() {
+        window.fetchLogs(true);
+    });
+    
+    // Force the active tab to load its data on a hard page refresh
+    setTimeout(function() {
+        let activeTab = $('.nav-link.active');
+        if (activeTab.length > 0) {
+            activeTab.trigger('click').trigger('shown.bs.tab'); 
+        }
+    }, 100); 
 });

@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 FORCE_HTTPS=$(echo "$PAYLOAD" | jq -r '.force_https')
 ENABLE_HSTS=$(echo "$PAYLOAD" | jq -r '.enable_hsts')
@@ -23,14 +24,14 @@ cp "$VHOST_CONF" "${VHOST_CONF}.bak"
 # ==========================================
 # 2. FORCE HTTPS LOGIC (Port 80 -> 443)
 # ==========================================
-# Scrub oPanel's custom redirect if it exists
-sed -i '/# oPanel Force HTTPS/d' "$VHOST_CONF"
+# Scrub Stackrium's custom redirect if it exists
+sed -i '/# Stackrium Force HTTPS/d' "$VHOST_CONF"
 # Scrub Certbot's default redirect (if it was added by ssl_manager.sh)
 sed -i '/return 301 https:\/\/\$host\$request_uri;/d' "$VHOST_CONF"
 
 if [ "$FORCE_HTTPS" == "1" ]; then
     # Safely inject the redirect immediately after the 'listen 80;' directive
-    sed -i '/listen 80;/a \    return 301 https://$host$request_uri; # oPanel Force HTTPS' "$VHOST_CONF"
+    sed -i '/listen 80;/a \    return 301 https://$host$request_uri; # Stackrium Force HTTPS' "$VHOST_CONF"
 fi
 
 # ==========================================
@@ -53,7 +54,7 @@ fi
 # 4. SRE SAFETY CHECK & ROLLBACK
 # ==========================================
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     rm -f "${VHOST_CONF}.bak"
     
     # ---> THE FIX: Source of Truth is now actively updated <---
@@ -64,7 +65,7 @@ if nginx -t > /dev/null 2>&1; then
 else
     # ROLLBACK PROTOCOL: If sed corrupted the file, restore the backup immediately to keep the server online
     mv "${VHOST_CONF}.bak" "$VHOST_CONF"
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Critical Error: Nginx syntax check failed. Changes safely rolled back."
     exit 1
 fi

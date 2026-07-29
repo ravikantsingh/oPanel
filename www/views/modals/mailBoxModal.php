@@ -2,16 +2,16 @@
 <div class="modal fade" id="mailBoxModal" tabindex="-1" aria-labelledby="mailBoxModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header bg-dark text-white">
+      <div class="modal-header">
         <h5 class="modal-title" id="mailBoxModalLabel"><i class="bi bi-envelope"></i> Mail Routing: <span id="mailDomainTitle" class="fw-bold"></span></h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         
         <!-- THE NEW ROUTING TOGGLE -->
         <ul class="nav nav-pills nav-fill bg-light rounded p-1 mb-4 border" id="mailModeTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-bold" id="local-mail-tab" data-bs-toggle="pill" data-bs-target="#localMailMode" type="button"><i class="bi bi-hdd-network"></i> Host Locally (oPanel)</button>
+                <button class="nav-link active fw-bold" id="local-mail-tab" data-bs-toggle="pill" data-bs-target="#localMailMode" type="button"><i class="bi bi-hdd-network"></i> Host Locally (Stackrium)</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="external-mail-tab" data-bs-toggle="pill" data-bs-target="#externalMailMode" type="button"><i class="bi bi-cloud-check"></i> External Provider (DNS)</button>
@@ -22,6 +22,17 @@
             
             <!-- MODE A: LOCAL HOSTING -->
             <div class="tab-pane fade show active" id="localMailMode" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center bg-white p-3 border shadow-sm rounded-3 mb-4" id="smtpRelayBanner">
+                    <div>
+                        <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-send-arrow-up text-primary me-2"></i> External SMTP Routing</h6>
+                        <p class="mb-0 text-muted small" id="smtpRelayStatusText">
+                            <span class="spinner-border spinner-border-sm text-secondary me-1"></span> Checking routing status...
+                        </p>
+                    </div>
+                    <button class="btn btn-outline-primary shadow-sm btn-sm fw-bold text-nowrap" data-bs-toggle="modal" data-bs-target="#smtpRelayModal">
+                        <i class="bi bi-sliders me-1"></i> Configure Relay
+                    </button>
+                </div>
                 
                 <!-- STATE 1: ENGINE NOT INSTALLED -->
                 <div id="mailEngineNotInstalled" class="text-center py-5 d-none">
@@ -33,6 +44,17 @@
 
                 <!-- STATE 2: ENGINE IS INSTALLED (Your existing form) -->
                 <div id="mailEngineInstalled" class="d-none">
+                    <!-- MAIL SSL SECURITY BLOCK -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-white border border-success border-2 rounded shadow-sm">
+                        <div>
+                            <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-shield-lock-fill text-success"></i> Mail Server Security</h6>
+                            <small class="text-muted">Issue a free Let's Encrypt SSL certificate to secure IMAP, POP3, and SMTP connections.</small>
+                        </div>
+                        <button class="btn btn-sm btn-success fw-bold secure-mail-btn shadow-sm">
+                            <i class="bi bi-lightning-charge"></i> Secure Mail Server
+                        </button>
+                    </div>
+                    <!-- END MAIL SSL SECURITY BLOCK -->
                     <div class="card shadow-sm mb-4 border-0 bg-light">
                         <div class="card-body">
                             <h6 class="mb-3 text-primary"><i class="bi bi-plus-circle"></i> Create New Mailbox</h6>

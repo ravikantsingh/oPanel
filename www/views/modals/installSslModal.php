@@ -2,9 +2,9 @@
 <div class="modal fade" id="installSslModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header bg-dark text-white border-bottom border-success border-3">
+      <div class="modal-header border-bottom border-success border-3">
         <h5 class="modal-title"><i class="bi bi-shield-lock-fill me-2 text-success"></i> Manage SSL & Security</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body bg-light p-0">
         
@@ -43,6 +43,7 @@
                         
                         <form id="issueLetsEncryptForm" class="mt-4 text-start bg-white p-3 rounded border">
                             <input type="hidden" name="domain" class="sync-domain">
+                            <input type="hidden" name="action_type" value="letsencrypt">
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">Admin Email (For Expiry Notices)</label>
                                 <input type="email" class="form-control" name="email" placeholder="admin@example.com" required>
@@ -109,6 +110,7 @@
                 </div>
                 <form id="customSslForm">
                     <input type="hidden" name="domain" class="sync-domain">
+                    <input type="hidden" name="action_type" value="custom">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Private Key (.key)</label>
                         <textarea class="form-control font-monospace text-success bg-dark text-sm" name="private_key" rows="4" placeholder="-----BEGIN PRIVATE KEY-----" required></textarea>

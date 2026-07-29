@@ -3,6 +3,7 @@
 # Purpose: Master Compiler for Redirects, MIME Types, and Hotlink Protection
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 VHOST="/etc/nginx/sites-available/$DOMAIN.conf"
 
@@ -18,7 +19,7 @@ DB_PASS=$(grep DB_PASS /opt/panel/www/config/database.php | cut -d"'" -f4)
 MYSQL_CMD="mysql -B -N -upanel_user -p${DB_PASS} panel_core -e"
 
 # 1. Compile Redirects
-REDIRECT_FILE="/etc/nginx/opanel/redirects/$DOMAIN.conf"
+REDIRECT_FILE="/etc/nginx/stackrium/redirects/$DOMAIN.conf"
 > "$REDIRECT_FILE" # Clear existing
 $MYSQL_CMD "SELECT source_path, target_url, redirect_type FROM domain_redirects WHERE domain_name='$DOMAIN';" | while read -r source target type; do
     typeStr="permanent"
@@ -28,7 +29,7 @@ $MYSQL_CMD "SELECT source_path, target_url, redirect_type FROM domain_redirects 
 done
 
 # 2. Compile Custom MIME Types
-MIME_FILE="/etc/nginx/opanel/mimes/$DOMAIN.conf"
+MIME_FILE="/etc/nginx/stackrium/mimes/$DOMAIN.conf"
 echo "types {" > "$MIME_FILE"
 $MYSQL_CMD "SELECT mime_type, extension FROM domain_mimes WHERE domain_name='$DOMAIN';" | while read -r mime ext; do
     echo "    $mime $ext;" >> "$MIME_FILE"
@@ -36,7 +37,7 @@ done
 echo "}" >> "$MIME_FILE"
 
 # 3. Compile Hotlink Protection
-HOTLINK_FILE="/etc/nginx/opanel/hotlink/$DOMAIN.conf"
+HOTLINK_FILE="/etc/nginx/stackrium/hotlink/$DOMAIN.conf"
 HOTLINK_STATUS=$($MYSQL_CMD "SELECT hotlink_protection FROM domains WHERE domain_name='$DOMAIN';")
 
 if [ "$HOTLINK_STATUS" == "1" ]; then
@@ -53,12 +54,12 @@ else
 fi
 
 # 4. Inject Includes into Main VHOST (If missing)
-if ! grep -q "opanel/redirects" "$VHOST"; then
+if ! grep -q "stackrium/redirects" "$VHOST"; then
     echo "Injecting Include Hooks into Nginx config..."
     # Inject directly below the server_name declaration
-    sed -i '/server_name/a \    include /etc/nginx/opanel/redirects/'$DOMAIN'.conf;\n    include /etc/nginx/opanel/mimes/'$DOMAIN'.conf;\n    include /etc/nginx/opanel/hotlink/'$DOMAIN'.conf;' "$VHOST"
+    sed -i '/server_name/a \    include /etc/nginx/stackrium/redirects/'$DOMAIN'.conf;\n    include /etc/nginx/stackrium/mimes/'$DOMAIN'.conf;\n    include /etc/nginx/stackrium/hotlink/'$DOMAIN'.conf;' "$VHOST"
 fi
 
 echo "Configuration compiled successfully. Reloading Nginx."
-systemctl reload nginx
+/opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 exit 0

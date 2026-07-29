@@ -29,7 +29,7 @@ try {
         $stmt->execute([$secret, $adminUser]);
 
         // 3. Generate the working QR URL using our centralized class
-        $qrUrl = TOTP::getQRCodeUrl($adminUser, $secret, 'oPanel');
+        $qrUrl = TOTP::getQRCodeUrl('Admin Login', $secret, 'Stackrium Control');
 
         echo json_encode([
             'success' => true, 

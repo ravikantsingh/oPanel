@@ -3,7 +3,7 @@
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title"><i class="bi bi-palette-fill me-2"></i> White-Label Branding</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <form id="brandingForm" enctype="multipart/form-data">
@@ -11,11 +11,11 @@
                     
                     <h6 class="border-bottom pb-2 text-dark fw-bold">Global Identity</h6>
                     <div class="row mb-3">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label small fw-bold">Browser Title</label>
                             <input type="text" class="form-control" name="brand_title" placeholder="e.g. Acme Hosting">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label small fw-bold">Custom Logo URL</label>
                             <input type="text" class="form-control" name="brand_logo_url" placeholder="/index.php">
                         </div>
@@ -68,7 +68,7 @@
                         <div class="col-md-6 mb-3 pt-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" name="brand_hide_footer" id="hideFooterCheck">
-                                <label class="form-check-label small fw-bold" for="hideFooterCheck">Hide oPanel Footer Text</label>
+                                <label class="form-check-label small fw-bold" for="hideFooterCheck">Hide Footer Text</label>
                             </div>
                         </div>
                     </div>

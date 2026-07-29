@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 
 if [ -z "$PAYLOAD" ]; then
     echo "Error: No JSON payload provided."
@@ -50,16 +51,17 @@ if [ "$ACTION" == "create" ]; then
     mkdir -p "$LOG_DIR"
     mkdir -p "/home/$USERNAME/web/$DOMAIN/tmp"
 
-    # Copy the oPanel default page into the new domain
+    # Copy the Stackrium default page into the new domain
     if [ -f /opt/panel/templates/index.html ]; then
         cp /opt/panel/templates/index.html "$WEB_ROOT/index.html"
     else
         # Fallback just in case the template goes missing
-        echo "<h1>Welcome to $DOMAIN</h1><p>Powered by oPanel</p>" > "$WEB_ROOT/index.html"
+        echo "<h1>Welcome to $DOMAIN</h1><p>Powered by Stackrium</p>" > "$WEB_ROOT/index.html"
     fi
 
     # Fix permissions (User owns their files, www-data can read them)
     chown -R $USERNAME:$USERNAME "/home/$USERNAME/web/$DOMAIN"
+    chown -R www-data:www-data "$LOG_DIR"
     chmod -R 755 "/home/$USERNAME/web/$DOMAIN"
 
     # 2. Generate Nginx Configuration (HEREDOC)
@@ -67,6 +69,9 @@ if [ "$ACTION" == "create" ]; then
 server {
     listen 80;
     server_name $DOMAIN www.$DOMAIN;
+
+    # Load Proxy/CDN Real-IP settings if they exist
+    include /etc/nginx/conf.d/domains/$DOMAIN-proxy*.conf;
     
     # MIME Types safety net to prevent files from downloading
     include /etc/nginx/mime.types;
@@ -74,14 +79,17 @@ server {
     root $WEB_ROOT;
     index index.php index.html index.htm;
     
-    # Custom oPanel Error Pages
-    include /etc/nginx/snippets/opanel-errors.conf;
+    # Custom Stackrium Error Pages
+    include /etc/nginx/snippets/stackrium-errors.conf;
 
-    access_log $LOG_DIR/access.log;
+    # Active Botnet Defense (Layer 7 Drop)
+    include /etc/nginx/snippets/block-bots.conf;
+
+    access_log $LOG_DIR/access.log json_access;
     error_log $LOG_DIR/error.log;
 
     location / {
-        try_files \$uri \$uri/ =404;
+        try_files \$uri \$uri/ /index.php?\$args;
     }
 
     location ~ \.php$ {
@@ -106,11 +114,11 @@ listen = /run/php/php$PHP_VERSION-fpm-$USERNAME.sock
 listen.owner = www-data
 listen.group = www-data
 listen.mode = 0660
-pm = dynamic
+; Stackrium Ondemand Architecture
+pm = ondemand
 pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
+pm.process_idle_timeout = 10s
+pm.max_requests = 200
 EOF
         # Test PHP syntax before restarting
         if php-fpm$PHP_VERSION -t > /dev/null 2>&1; then
@@ -209,7 +217,7 @@ EOF
     ln -s "$VHOST_CONF" "$NGINX_ENABLED/"
     
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # ---> SOURCE OF TRUTH TRACKING <---
         mysql -e "INSERT IGNORE INTO panel_core.domains (domain_name, username, php_version) VALUES ('$DOMAIN', '$USERNAME', '$PHP_VERSION');"
 
@@ -238,7 +246,7 @@ elif [ "$ACTION" == "update_php" ]; then
 
     # 2. Test and reload Nginx FIRST
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         
         # 3. ---> MOVED: SOURCE OF TRUTH TRACKING <---
         # Only update the UI database if the server successfully applied the change
@@ -282,7 +290,7 @@ elif [ "$ACTION" == "update_waf" ]; then
     fi
 
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         mysql -e "UPDATE panel_core.domains SET waf_enabled = $DB_VAL WHERE domain_name = '$DOMAIN';"
         echo "Success: ModSecurity WAF for $DOMAIN is now $STATUS."
         exit 0
@@ -290,7 +298,57 @@ elif [ "$ACTION" == "update_waf" ]; then
         echo "Error: Nginx failed to reload after WAF toggle."
         exit 1
     fi
+# ==========================================
+# ACTION: ADVANCED HTTPS & HSTS ROUTING
+# ==========================================
+elif [ "$ACTION" == "update_routing" ]; then
+    
+    FORCE_HTTPS=$(echo "$PAYLOAD" | jq -r '.force_https')
+    HSTS_ENABLED=$(echo "$PAYLOAD" | jq -r '.hsts_enabled')
+    HSTS_MAX_AGE=$(echo "$PAYLOAD" | jq -r '.hsts_max_age')
+    HSTS_SUBDOMAINS=$(echo "$PAYLOAD" | jq -r '.hsts_subdomains')
+    HSTS_PRELOAD=$(echo "$PAYLOAD" | jq -r '.hsts_preload')
 
+    if [ ! -f "$VHOST_CONF" ]; then
+        echo "Error: Nginx vhost for $DOMAIN not found."
+        exit 1
+    fi
+
+    echo "Applying routing rules for $DOMAIN..."
+    cp "$VHOST_CONF" "$VHOST_CONF.bak"
+
+    # 1. Strip out any old routing rules so we start clean
+    sed -i '/#force_https/d' "$VHOST_CONF"
+    sed -i '/#hsts/d' "$VHOST_CONF"
+
+    # 2. Inject Force HTTPS (Only inside the Port 80 Block)
+    if [ "$FORCE_HTTPS" == "true" ]; then
+        # We use awk to find the 'listen 80' block, and inject the redirect immediately after the 'server_name'
+        awk '/listen 80/ {in_80=1} /listen 443/ {in_80=0} in_80 && /server_name/ && !done_80 { print $0; print "    return 301 https://$host$request_uri; #force_https"; done_80=1; next } 1' "$VHOST_CONF" > "${VHOST_CONF}.tmp" && mv "${VHOST_CONF}.tmp" "$VHOST_CONF"
+    fi
+
+    # 3. Inject HSTS Header (Only inside the Port 443 SSL Block)
+    if [ "$HSTS_ENABLED" == "true" ]; then
+        HSTS_STRING="max-age=$HSTS_MAX_AGE"
+        if [ "$HSTS_SUBDOMAINS" == "true" ]; then HSTS_STRING="$HSTS_STRING; includeSubDomains"; fi
+        if [ "$HSTS_PRELOAD" == "true" ]; then HSTS_STRING="$HSTS_STRING; preload"; fi
+
+        # We use awk to find the 'listen 443' block, and inject the header immediately after the SSL certificate definitions
+        awk -v hsts="$HSTS_STRING" '/listen 443/ {in_443=1} /listen 80/ {in_443=0} in_443 && /ssl_certificate_key/ && !done_443 { print $0; print "    add_header Strict-Transport-Security \"" hsts "\" always; #hsts"; done_443=1; next } 1' "$VHOST_CONF" > "${VHOST_CONF}.tmp" && mv "${VHOST_CONF}.tmp" "$VHOST_CONF"
+    fi
+
+    # 4. Safely test and reload
+    if nginx -t > /dev/null 2>&1; then
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
+        rm "$VHOST_CONF.bak"
+        echo "Success: Advanced routing and HSTS applied."
+        exit 0
+    else
+        echo "Error: Syntax error generated. Rolling back changes."
+        mv "$VHOST_CONF.bak" "$VHOST_CONF"
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
+        exit 1
+    fi
 # ==========================================
 # ACTION: UPDATE CUSTOM WAF RULES
 # ==========================================
@@ -310,7 +368,7 @@ elif [ "$ACTION" == "update_waf_rules" ]; then
 
     # Source of Truth: Validate syntax before saving to database
     if nginx -t; then
-        systemctl reload nginx
+        /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # Escape single quotes so it doesn't break our MySQL INSERT query
         SAFE_RULES=$(echo "$CUSTOM_RULES" | sed "s/'/''/g")
         mysql -e "UPDATE panel_core.domains SET waf_custom_rules = '$SAFE_RULES' WHERE domain_name = '$DOMAIN';"

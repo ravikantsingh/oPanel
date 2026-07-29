@@ -3,15 +3,21 @@
 # Swaps the Master Panel SSL certificates based on the UI flag
 
 PAYLOAD=$1
+TASK_ID=$2
 ACTION=$(echo "$PAYLOAD" | jq -r '.sub_action')
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain // empty')
 
 if [ "$ACTION" == "bind" ]; then
-    echo "Binding oPanel to ${DOMAIN}..."
+    echo "Binding Stackrium to ${DOMAIN}..."
     CERT="/etc/letsencrypt/live/${DOMAIN}/fullchain.pem"
     KEY="/etc/letsencrypt/live/${DOMAIN}/privkey.pem"
+    # Automate Pure-FTPd SSL Integration
+    echo "Merging certificates for Pure-FTPd TLS..."
+    cat "$KEY" "$CERT" > /etc/ssl/private/pure-ftpd.pem
+    chmod 600 /etc/ssl/private/pure-ftpd.pem
+    systemctl restart pure-ftpd
 elif [ "$ACTION" == "unbind" ]; then
-    echo "Unbinding oPanel. Reverting to Server IP..."
+    echo "Unbinding Stackrium. Reverting to Server IP..."
     CERT="/etc/ssl/certs/mypanel-selfsigned.crt"
     KEY="/etc/ssl/private/mypanel-selfsigned.key"
     DOMAIN="_" # Nginx catch-all for IP
@@ -21,7 +27,7 @@ else
 fi
 
 cat <<EOF > /etc/nginx/sites-available/default
-# Master oPanel Configuration (Port 7443 ONLY)
+# Master Stackrium Configuration (Port 7443 ONLY)
 server {
     listen 7443 ssl http2;
     listen [::]:7443 ssl http2;
@@ -38,12 +44,12 @@ server {
     # Master Panel WAF
     modsecurity on;
     modsecurity_rules_file /etc/modsecurity/modsecurity.conf;
-    modsecurity_rules_file /etc/nginx/waf/opanel-master.conf;
+    modsecurity_rules_file /etc/nginx/waf/stackrium-master.conf;
 
     root /opt/panel/www;
     index index.php index.html;
 
-    include /etc/nginx/snippets/opanel-errors.conf;
+    include /etc/nginx/snippets/stackrium-errors.conf;
 
     location ~ /\. { deny all; }
     location ^~ /classes/ { deny all; }
@@ -70,10 +76,10 @@ EOF
 
 # ---> NEW: Ensure Master WAF file exists before testing <---
 mkdir -p /etc/nginx/waf/
-touch /etc/nginx/waf/opanel-master.conf
+touch /etc/nginx/waf/stackrium-master.conf
 
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success: Panel Nginx block updated."
     exit 0
 else

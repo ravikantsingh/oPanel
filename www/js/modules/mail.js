@@ -18,11 +18,11 @@ window.fetchMailboxes = function(domain) {
                 }
                 response.emails.forEach(function(m) {
                     let row = `<tr>
-                        <td class="fw-bold text-dark"><i class="bi bi-person-badge text-muted me-1"></i> ${m.email}</td>
-                        <td><span class="badge bg-light text-dark border">${m.quota} MB</span></td>
+                        <td class="fw-bold text-dark"><i class="bi bi-person-badge text-muted me-2"></i> ${m.email}</td>
+                        <td><span class="badge bg-light text-dark border-0 shadow-sm rounded-pill px-3 py-1">${m.quota} MB</span></td>
                         <td class="text-end">
-                            <a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-outline-secondary me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>
-                            <button class="btn btn-sm btn-danger delete-mail" data-email="${m.email}" data-domain="${domain}" title="Delete Mailbox"><i class="bi bi-trash"></i></button>
+                            <!--<a href="https://webmail.${domain}" target="_blank" class="btn btn-sm btn-light border-0 text-primary shadow-sm me-1" title="Login to Webmail"><i class="bi bi-box-arrow-up-right"></i></a>-->
+                            <button class="btn btn-sm btn-light border-0 text-danger shadow-sm delete-mail" data-email="${m.email}" data-domain="${domain}" title="Delete Mailbox"><i class="bi bi-trash"></i></button>
                         </td>
                     </tr>`;
                     tbody.append(row);
@@ -48,11 +48,33 @@ $(document).ready(function() {
         $.ajax({
             url: '/ajax/get_mail_engine_status.php',
             type: 'POST',
+            data: { domain: domain }, 
             dataType: 'json',
             success: function(response) {
                 if(response.installed) {
                     $('#mailEngineInstalled').removeClass('d-none');
                     window.fetchMailboxes(domain); 
+                    
+                    // --- EXISTING UI LOGIC: Change the button if SSL is active ---
+                    if (response.ssl_active) {
+                        $('.secure-mail-btn')
+                            .removeClass('btn-success')
+                            .addClass('btn-outline-secondary disabled')
+                            .html('<i class="bi bi-patch-check-fill text-success"></i> SSL Active');
+                    } else {
+                        $('.secure-mail-btn')
+                            .removeClass('btn-outline-secondary disabled')
+                            .addClass('btn-success')
+                            .html('<i class="bi bi-lightning-charge"></i> Secure Mail Server');
+                    }
+
+                    // --- NEW UI LOGIC: Update SMTP Relay Status Banner ---
+                    if (response.relay_active) {
+                        $('#smtpRelayStatusText').html(`<span class="badge bg-success bg-opacity-10 text-success border-0 px-2 me-1"><i class="bi bi-check-circle-fill"></i> Active</span> Routing outbound mail through <strong>${response.relay_host}</strong>.`);
+                    } else {
+                        $('#smtpRelayStatusText').html(`<span class="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2 me-1">Inactive</span> Using default local Postfix delivery (Subject to Cloud Port 25 Blocks).`);
+                    }
+                    
                 } else {
                     $('#mailEngineNotInstalled').removeClass('d-none');
                 }
@@ -73,10 +95,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check the Live Tasks log to watch the installation.");
+                    window.showToast('success', 'Installation Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
-                btn.prop('disabled', false).html('<i class="bi bi-download"></i> Install Mail Engine');
+                } else { window.showToast('error', 'Install Failed', response.error); }
             }
         });
     });
@@ -94,10 +115,9 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check Live Tasks for completion, then reopen this modal to see the Offline state.");
+                    window.showToast('success', 'Purge Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
-                btn.prop('disabled', false).text('Uninstall Engine');
+                } else { window.showToast('error', 'Purge Failed', response.error); }
             }
         });
     });
@@ -130,10 +150,10 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if(response.success) {
-                    alertBox.addClass('alert-success').text(response.message).removeClass('d-none');
+                    window.showToast('success', 'Mailbox Created', response.message);
                     $('#createMailForm')[0].reset();
                     setTimeout(() => window.fetchMailboxes(domain), 2500);
-                } else { alertBox.addClass('alert-danger').text(response.error).removeClass('d-none'); }
+                } else { window.showToast('error', 'Provisioning Failed', response.error); }
             },
             complete: function() { btn.prop('disabled', false).html('<i class="bi bi-save"></i> Provision Mailbox'); }
         });
@@ -153,8 +173,13 @@ $(document).ready(function() {
             data: { action: 'delete', email: email, domain: domain },
             dataType: 'json',
             success: function(response) {
-                if(response.success) { setTimeout(() => window.fetchMailboxes(domain), 2000); } 
-                else { alert("Error: " + response.error); btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); }
+                if(response.success) { 
+                    window.showToast('success', 'Mailbox Deleted', 'Account has been removed.');
+                    setTimeout(() => window.fetchMailboxes(domain), 2000); 
+                } else { 
+                    window.showToast('error', 'Deletion Failed', response.error); 
+                    btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); 
+                }
             }
         });
     });
@@ -177,10 +202,98 @@ $(document).ready(function() {
             success: function(response) {
                 if(response.success) {
                     $('#mailBoxModal').modal('hide');
-                    alert(response.message + " Check the Live Tasks log to verify propagation.");
+                    window.showToast('success', 'DNS Queued', response.message + " Check Live Tasks.");
                     $('#overview-tab').tab('show'); 
-                } else { alert("Error: " + response.error); }
+                } else { window.showToast('error', 'Routing Failed', response.error); }
+            }
+        });
+    });
+    $(document).on('click', '.secure-mail-btn', function() {
+        let domain = $('#mailDomain').val(); // Gets the currently selected domain
+        let mailDomain = 'mail.' + domain;
+        let btn = $(this);
+        let originalText = btn.html();
+        
+        let warning = `Issue Let's Encrypt SSL for ${mailDomain}?\n\nCRITICAL: Ensure the DNS A-record for ${mailDomain} is pointing to this server and is NOT proxied (Grey Clouded).`;
+        if(!confirm(warning)) return;
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing...');
+        
+        $.ajax({
+            url: '/ajax/install_mail_ssl.php',
+            type: 'POST',
+            data: { domain: domain, mail_domain: mailDomain },
+            dataType: 'json',
+            success: function(response) {
+                if(response.success) {
+                    window.showToast('success', 'Task Queued', response.message + ' Check Live Tasks.');
+                    $('#overview-tab').tab('show'); // Jump to tasks overview
+                } else {
+                    window.showToast('error', 'SSL Failed', response.error);
+                }
                 btn.prop('disabled', false).html(originalText);
+            },
+            error: function() {
+                window.showToast('error', 'Network Error', 'Failed to contact server.');
+                btn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+    // === SMTP RELAY CONTROLLERS ===
+    // Enable Relay Trigger
+    $('#btnEnableRelay').click(function() {
+        let btn = $(this);
+        let form = $('#formSmtpRelay');
+        
+        // Basic validation 
+        if (!$('#relayPass').val() && $('#relayProvider').val() !== 'aws_ses') {
+            window.showToast('warning', 'Validation Error', 'Please enter your SMTP Password or API Key.');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Queueing...');
+
+        $.ajax({
+            url: '/ajax/manage_smtp_relay.php',
+            type: 'POST',
+            data: form.serialize() + '&sub_action=enable',
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#smtpRelayModal').modal('hide');
+                    window.showToast('success', 'Task Queued', res.message);
+                    $('#overview-tab').tab('show'); // Jump to Live Tasks
+                    if (typeof window.fetchRecentTasks === "function") window.fetchRecentTasks();
+                } else {
+                    window.showToast('error', 'Configuration Error', res.error);
+                }
+                btn.prop('disabled', false).text('Apply Routing Rules');
+            }
+        });
+    });
+
+    // Disable Relay Trigger (Rollback)
+    $('#btnDisableRelay').click(function() {
+        if(!confirm("Are you sure you want to disable the external relay and revert to local delivery?")) return;
+        
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/manage_smtp_relay.php',
+            type: 'POST',
+            data: { sub_action: 'disable' },
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#smtpRelayModal').modal('hide');
+                    window.showToast('success', 'Task Queued', res.message);
+                    $('#overview-tab').tab('show');
+                    if (typeof window.fetchRecentTasks === "function") window.fetchRecentTasks();
+                } else {
+                    window.showToast('error', 'Error', res.error);
+                }
+                btn.prop('disabled', false).text('Disable Relay');
             }
         });
     });

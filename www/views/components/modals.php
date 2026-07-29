@@ -10,12 +10,15 @@ include 'views/modals/installSslModal.php';
 include 'views/modals/installWpModal.php';
 include 'views/modals/nodeJsModal.php';
 include 'views/modals/advancedWebModal.php';
+include 'views/modals/wafSettingsModal.php';
+include 'views/modals/proxyModal.php';
 
 // 2. Users, Databases & FTP
 include 'views/modals/addUserModal.php';
 include 'views/modals/addDbModal.php';
 include 'views/modals/changeDbPassModal.php';
 include 'views/modals/ftpModal.php';
+include 'views/modals/linuxPassModal.php';
 
 // 3. File Management & Git
 include 'views/modals/fileManagerModal.php';
@@ -49,5 +52,11 @@ include 'views/modals/devRedisModal.php';
 
 //7. Mail
 include 'views/modals/mailBoxModal.php';
+include 'views/modals/smtpRelayModal.php';
 
+//8. First Login Modal
+include 'views/modals/firstLoginModal.php';
+
+//9. Updates Modal
+include 'views/modals/updateModal.php';
 ?>

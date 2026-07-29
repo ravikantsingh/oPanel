@@ -1,9 +1,9 @@
 <div class="modal fade" id="adminProfileModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-bottom">
+            <div class="modal-header border-bottom">
                 <h5 class="modal-title"><i class="bi bi-person-gear"></i> Administrator Security</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light">
                 <form id="adminProfileForm">

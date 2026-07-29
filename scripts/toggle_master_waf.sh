@@ -2,6 +2,7 @@
 # /opt/panel/scripts/toggle_master_waf.sh
 
 STATUS=$1
+TASK_ID=$2
 
 if [ "$STATUS" == "off" ]; then
     # 1. Comment out in the live Nginx config
@@ -27,7 +28,7 @@ fi
 
 # Verify Nginx syntax and reload
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success"
     exit 0
 else

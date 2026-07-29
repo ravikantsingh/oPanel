@@ -1,5 +1,5 @@
 [Unit]
-Description=oPanel Task Daemon
+Description=Stackrium Task Daemon
 After=network.target mysql.service
 
 [Service]

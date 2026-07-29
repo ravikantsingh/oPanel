@@ -3,6 +3,7 @@
 # Executed by Python Daemon as root
 
 PAYLOAD=$1
+TASK_ID=$2
 DOMAIN=$(echo "$PAYLOAD" | jq -r '.domain')
 USERNAME=$(echo "$PAYLOAD" | jq -r '.username')
 
@@ -50,7 +51,7 @@ mysql -e "DELETE FROM panel_core.domains WHERE domain_name='$DOMAIN';"
 
 # 7. Safely Reload Nginx
 if nginx -t > /dev/null 2>&1; then
-    systemctl reload nginx
+    /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
     echo "Success: Domain $DOMAIN and all associated files/accounts have been permanently deleted."
     exit 0
 else

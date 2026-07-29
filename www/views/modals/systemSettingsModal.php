@@ -1,9 +1,9 @@
 <div class="modal fade" id="systemSettingsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white border-bottom border-primary border-3">
-                <h5 class="modal-title"><i class="bi bi-sliders me-2 text-primary"></i> oPanel System Settings</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header border-bottom border-primary border-3">
+                <h5 class="modal-title"><i class="bi bi-sliders me-2 text-primary"></i> Stackrium System Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             
             <div class="modal-body bg-light p-0">
@@ -26,7 +26,7 @@
                     <!-- TAB 1: SECURITY & ACCESS -->
                     <div class="tab-pane fade show active" id="sys-tab-security" role="tabpanel">
                         <div class="alert alert-secondary small mb-4">
-                            <i class="bi bi-info-circle"></i> Configure high-level security protocols for oPanel administration.
+                            <i class="bi bi-info-circle"></i> Configure high-level security protocols for Stackrium administration.
                         </div>
 
                         <!-- 2FA Toggle -->
@@ -54,7 +54,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <label class="form-check-label fw-bold text-dark" for="masterWafToggle">Enable Master Panel WAF</label>
-                                    <div class="form-text mt-0 text-danger" style="font-size: 0.75rem;">If oPanel blocks legitimate saves (403 Error), disable this temporarily.</div>
+                                    <div class="form-text mt-0 text-danger" style="font-size: 0.75rem;">If Stackrium blocks legitimate saves (403 Error), disable this temporarily.</div>
                                 </div>
                                 <input class="form-check-input border-danger" type="checkbox" role="switch" id="masterWafToggle">
                             </div>
@@ -64,7 +64,7 @@
                     <!-- TAB 2: PANEL ROUTING -->
                     <div class="tab-pane fade" id="sys-tab-routing" role="tabpanel">
                         <div class="alert alert-info small mb-4">
-                            <i class="bi bi-info-circle"></i> Bind oPanel to an existing domain on this server to utilize its Let's Encrypt SSL certificate. <strong>The domain must already be created and secured in the Web tab.</strong>
+                            <i class="bi bi-info-circle"></i> Bind Stackrium to an existing domain on this server to utilize its Let's Encrypt SSL certificate. <strong>The domain must already be created and secured in the Web tab.</strong>
                         </div>
 
                         <div class="bg-white p-3 border rounded shadow-sm">

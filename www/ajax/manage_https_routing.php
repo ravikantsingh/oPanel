@@ -9,11 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $domain = strtolower(trim(strip_tags($_POST['domain'] ?? '')));
-$force_https = isset($_POST['force_https']) ? 1 : 0;
-$enable_hsts = isset($_POST['enable_hsts']) ? 1 : 0;
+
+// Cast the checkbox values to the exact strings expected by our Bash parser
+$force_https = isset($_POST['force_https']) ? 'true' : 'false';
+$enable_hsts = isset($_POST['enable_hsts']) ? 'true' : 'false';
 $hsts_max_age = (int)($_POST['hsts_max_age'] ?? 15552000);
-$hsts_subdomains = isset($_POST['hsts_subdomains']) ? 1 : 0;
-$hsts_preload = isset($_POST['hsts_preload']) ? 1 : 0;
+$hsts_subdomains = isset($_POST['hsts_subdomains']) ? 'true' : 'false';
+$hsts_preload = isset($_POST['hsts_preload']) ? 'true' : 'false';
 
 if (!$domain) {
     echo json_encode(['success' => false, 'error' => 'Domain is required.']);
@@ -23,19 +25,24 @@ if (!$domain) {
 try {
     $queue = new TaskQueue();
     
-    // Dispatch to the backend Bash Engine
-    $taskId = $queue->dispatch('https_routing_manager', [
+    // ---> THE FIX: Dispatch to 'create_vhost' so it routes to vhost_manager.sh <---
+    $taskId = $queue->dispatch('create_vhost', [
+        'sub_action'      => 'update_routing',
         'domain'          => $domain,
         'force_https'     => $force_https,
-        'enable_hsts'     => $enable_hsts,
+        'hsts_enabled'    => $enable_hsts,
         'hsts_max_age'    => $hsts_max_age,
         'hsts_subdomains' => $hsts_subdomains,
         'hsts_preload'    => $hsts_preload
     ]);
 
-    echo json_encode(['success' => true, 'message' => "Routing rules queued for application!"]);
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Routing rules queued for Nginx compilation.',
+        'task_id' => $taskId
+    ]);
 
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
 ?>

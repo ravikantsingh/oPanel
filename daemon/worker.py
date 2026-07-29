@@ -70,6 +70,9 @@ ALLOWED_ACTIONS = {
     'deploy_python': '/opt/panel/scripts/deploy_python.sh',
     'revert_to_php': '/opt/panel/scripts/revert_to_php.sh',
     'restart_app': '/opt/panel/scripts/restart_app.sh',
+    'update_waf': '/opt/panel/scripts/waf_updater.sh',
+    'manage_proxy': '/opt/panel/scripts/proxy_manager.sh',
+    'setup_smtp_relay': '/opt/panel/scripts/setup_smtp_relay.sh',
 }
 
 def get_db_connection():
@@ -109,10 +112,10 @@ def process_tasks():
         script_path = ALLOWED_ACTIONS[action]
 
         try:
-            # ---> THE MASTER SRE FIX: Write to a physical disk file instead of using Pipes <---
+            # THE MASTER SRE FIX: Write to a physical disk file instead of using Pipes
             with tempfile.TemporaryFile(mode='w+', encoding='utf-8') as temp_log:
                 process = subprocess.Popen(
-                    [script_path, payload_json],
+                    [script_path, payload_json, str(task_id)], 
                     stdout=temp_log,
                     stderr=subprocess.STDOUT, # Merge stderr into stdout
                     start_new_session=True
@@ -158,7 +161,7 @@ def process_tasks():
     db.close()
 
 if __name__ == '__main__':
-    logging.info("oPanel Daemon Started.")
+    logging.info("Stackrium Daemon Started.")
     
     try:
         db_clean = get_db_connection()

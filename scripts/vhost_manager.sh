@@ -59,10 +59,12 @@ if [ "$ACTION" == "create" ]; then
         echo "<h1>Welcome to $DOMAIN</h1><p>Powered by Stackrium</p>" > "$WEB_ROOT/index.html"
     fi
 
-    # Fix permissions (User owns their files, www-data can read them)
-    chown -R $USERNAME:$USERNAME "/home/$USERNAME/web/$DOMAIN"
+    # Fix permissions (User owns their files, www-data group can read/write for the proxy)
+    chown -R $USERNAME:www-data "/home/$USERNAME/web/$DOMAIN"
     chown -R www-data:www-data "$LOG_DIR"
     chmod -R 755 "/home/$USERNAME/web/$DOMAIN"
+    find "/home/$USERNAME/web/$DOMAIN/public_html" -type d -exec chmod 775 {} \;
+    find "/home/$USERNAME/web/$DOMAIN/public_html" -type f -exec chmod 664 {} \;
 
     # 2. Generate Nginx Configuration (HEREDOC)
     cat > "$VHOST_CONF" <<EOF

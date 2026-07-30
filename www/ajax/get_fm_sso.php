@@ -16,33 +16,28 @@ if (empty($domain)) {
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Fetch the domain's owner and their secret webhook token
     $stmt = $db->prepare("SELECT d.username, d.has_ssl, u.webhook_token FROM panel_core.domains d JOIN panel_core.users u ON d.username = u.username WHERE d.domain_name = ?");
     $stmt->execute([$domain]);
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$data) throw new Exception("Domain not found.");
 
-    // Generate a secure payload using the current time
     $timestamp = time();
     $secret = $data['webhook_token'];
-    
-    // Cryptographically sign the payload so hackers cannot forge it
     $hash = hash_hmac('sha256', $domain . '|' . $timestamp, $secret);
 
-    // ====================================================
-    // STACKRIUM SMART IP DETECTION
-    // ====================================================
-    $panel_host = $_SERVER['HTTP_HOST'];
-    $ip_only = preg_replace('/:[0-9]+$/', '', $panel_host); // Strip port 7443
+    // STACKRIUM SMART ROUTING: Check if domain is pointing to this server
+    $server_ip = $_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname());
+    $domain_ip = gethostbyname($domain);
 
-    if (filter_var($ip_only, FILTER_VALIDATE_IP)) {
-        // Admin logged into Panel via IP -> Construct Fallback HTTPS URL
-        $url = 'https://' . $ip_only . '/~' . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
-    } else {
-        // Admin logged in via Domain -> Construct Standard URL
+    if ($domain_ip === $server_ip) {
+        // LIVE DOMAIN -> Use Native Route (No permission conflicts)
         $protocol = $data['has_ssl'] ? 'https://' : 'http://';
         $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    } else {
+        // FAKE/UNPOINTED DOMAIN -> Use IP Fallback Route
+        $panel_host = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']); 
+        $url = 'http://' . $panel_host . '/~' . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
     }
 
     echo json_encode(['success' => true, 'url' => $url]);

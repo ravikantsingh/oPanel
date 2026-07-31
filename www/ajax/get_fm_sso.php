@@ -27,7 +27,7 @@ try {
     $hash = hash_hmac('sha256', $domain . '|' . $timestamp, $secret);
 
     // STACKRIUM SMART ROUTING: Check if domain is pointing to this server
-    $server_ip = $_SERVER['SERVER_ADDR'] ?? gethostbyname(gethostname());
+    $server_ip = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']);
     $domain_ip = gethostbyname($domain);
 
     if ($domain_ip === $server_ip) {

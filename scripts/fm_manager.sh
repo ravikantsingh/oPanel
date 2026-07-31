@@ -37,15 +37,15 @@ cat << 'EOF' > "$FM_DIR/index.php"
 require 'config.php';
 
 // Force local sessions to completely bypass global server permission blocks
-session_save_path(__DIR__ . '/sessions');
-session_name('stackrium_fm');
+session_set_cookie_params(['path' => '/', 'domain' => '', 'samesite' => 'Lax']);
+session_name('filemanager');
 session_start();
 
 // --- SSO SECURITY VERIFICATION ---
 if (isset($_GET['sso_t']) && isset($_GET['sso_h'])) {
     $expected = hash_hmac('sha256', $domain . '|' . $_GET['sso_t'], $secret);
     if (hash_equals($expected, $_GET['sso_h']) && (time() - $_GET['sso_t'] < 60)) {
-        $_SESSION['logged_in'] = true;
+        $_SESSION['filemanager']['logged'] = 'admin';
         session_write_close();
         $clean_url = strtok($_SERVER["REQUEST_URI"], '?');
         header("Location: " . $clean_url);
@@ -55,7 +55,7 @@ if (isset($_GET['sso_t']) && isset($_GET['sso_h'])) {
     }
 }
 
-if (empty($_SESSION['logged_in'])) {
+if (empty($_SESSION['filemanager']['logged'])) {
     http_response_code(403);
     die("<div style='background:#111827;color:red;padding:20px;font-family:sans-serif;'>Stackrium Security: Access Denied. Session expired or missing. Please launch from panel.</div>");
 }

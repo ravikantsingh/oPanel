@@ -26,24 +26,56 @@ $i = 0;
 $i++;
 /* Authentication type */
 /* === Stackrium SSO BYPASS === */
-$original_session = session_name('PANEL_SESSION');
-session_start();
-$is_admin = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true);
+$is_admin = false;
+
+// 1. Safely Pause phpMyAdmin's native session if it is already running
+$pma_session_id = session_id();
+if ($pma_session_id) {
+    session_write_close(); 
+}
+
+// 2. Read the Stackrium Panel Session to verify admin status
+$pma_session_name = session_name('PANEL_SESSION');
+@session_start();
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+    $is_admin = true;
+}
 session_write_close();
-session_name($original_session); 
+
+// 3. Seamlessly Resume phpMyAdmin's original session
+session_name($pma_session_name);
+if ($pma_session_id) {
+    session_id($pma_session_id);
+    @session_start();
+}
 
 if ($is_admin) {
-    // 1. Log in via the Master Background User
+    // Log in via the Master Background User
     $cfg['Servers'][$i]['auth_type'] = 'config';
     $cfg['Servers'][$i]['user'] = 'pma_sso';
     $cfg['Servers'][$i]['password'] = 'PmaMasterKey998877'; 
 
-    // 2. ---> DYNAMIC DATABASE ISOLATION <---
-    if (!empty($_GET['db'])) {
-        $target_db = preg_replace('/[^a-zA-Z0-9_]/', '', $_GET['db']);
-        $cfg['Servers'][$i]['only_db'] = $target_db; // FIXED VARIABLE NAME
+    // ---> DYNAMIC DATABASE ISOLATION (REFERER FIX) <---
+    $target_db = null;
+
+    if (!empty($_REQUEST['db'])) {
+        $target_db = $_REQUEST['db'];
+    } elseif (!empty($_SERVER['HTTP_REFERER'])) {
+        // Extract DB from the referring URL during background AJAX tree loads
+        $query_string = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY);
+        if ($query_string) {
+            parse_str($query_string, $query);
+            if (!empty($query['db'])) {
+                $target_db = $query['db'];
+            }
+        }
+    }
+
+    if ($target_db) {
+        $target_db = preg_replace('/[^a-zA-Z0-9_\-]/', '', $target_db);
+        $cfg['Servers'][$i]['only_db'] = array($target_db); 
     } else {
-        $cfg['Servers'][$i]['hide_db'] = '^(panel_core|information_schema|performance_schema|mysql|sys)$'; // FIXED VARIABLE NAME
+        $cfg['Servers'][$i]['hide_db'] = '^(panel_core|information_schema|performance_schema|mysql|sys)$';
     }
     
 } else {

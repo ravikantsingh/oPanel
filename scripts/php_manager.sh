@@ -25,11 +25,10 @@ listen = /run/php/php$PHP_VER-fpm-$USERNAME.sock
 listen.owner = www-data
 listen.group = www-data
 listen.mode = 0660
-pm = dynamic
+pm = ondemand
 pm.max_children = 5
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
+pm.process_idle_timeout = 10s
+pm.max_requests = 200
 EOF
     
     # Optional: Remove the default www.conf if it exists so it doesn't waste RAM

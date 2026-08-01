@@ -31,6 +31,32 @@ window.showToast = function(type, title, message) {
         $('#' + toastId).remove();
     });
 }
+// =================================================================
+// DOCS: DEEP CONTENT SMART SEARCH FILTER
+// =================================================================
+window.filterDocs = function() {
+    let filter = $('#docSearch').val().toLowerCase();
+    
+    $('#docs-list .list-group-item').each(function() {
+        // 1. Get the text of the menu item itself
+        let linkText = $(this).text().toLowerCase();
+        
+        // 2. Find the target tab pane (e.g., "#doc-cdn") and get its inner content safely
+        let targetPaneId = $(this).attr('href');
+        let paneText = "";
+        
+        if (targetPaneId && $(targetPaneId).length) {
+            paneText = $(targetPaneId).text().toLowerCase();
+        }
+
+        // 3. Show the link if the search term matches the title OR the deep content
+        if (linkText.includes(filter) || paneText.includes(filter)) {
+            $(this).removeClass('d-none');
+        } else {
+            $(this).addClass('d-none');
+        }
+    });
+};
 
 $(document).ready(function() {
     // =================================================================

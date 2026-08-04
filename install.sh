@@ -35,7 +35,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
 # Only create swap if it doesn't already exist
 if [ ! -f /swapfile ]; then
-    fallocate -l 2G /swapfile
+    fallocate -l 1G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile

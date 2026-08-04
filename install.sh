@@ -476,6 +476,9 @@ EOF
 sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
 echo "client_max_body_size 512M;" > /etc/nginx/conf.d/stackrium_limits.conf
 
+# NEW FIX: Disable default Ubuntu GZIP before applying Stackrium's GZIP
+sed -i 's/gzip on;/# gzip on;/g' /etc/nginx/nginx.conf
+
 cat << 'EOF' > /etc/nginx/conf.d/gzip.conf
 gzip on;
 gzip_comp_level 5;

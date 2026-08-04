@@ -20,56 +20,75 @@ if [ "$ACTION" == "letsencrypt" ] || [ "$ACTION" == "custom" ]; then
         echo "Error: Nginx configuration for $DOMAIN not found."
         exit 1
     fi
+    
+    # Fetch the username to know where the public_html directory is located
+    USERNAME=$(mysql -N -s -e "SELECT username FROM panel_core.domains WHERE domain_name='$DOMAIN' LIMIT 1;")
+    if [ -z "$USERNAME" ]; then
+        echo "Error: Could not find owner for $DOMAIN in the database."
+        exit 1
+    fi
+    WEBROOT="/home/$USERNAME/web/$DOMAIN/public_html"
 fi
-
 # ==========================================
-# 1. LET'S ENCRYPT PROVISIONING
+# 1. LET'S ENCRYPT PROVISIONING (BULLETPROOF METHOD)
 # ==========================================
 if [ "$ACTION" == "letsencrypt" ]; then
     EMAIL=$(echo "$PAYLOAD" | jq -r '.email // "admin@'$DOMAIN'"')
     echo "Starting Let's Encrypt provisioning for $DOMAIN..."
 
-    certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirect
+    # 1. Use the bulletproof webroot method instead of the buggy Nginx plugin
+    certbot certonly --webroot -w "$WEBROOT" -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --deploy-hook "nginx -s reload"
+    CERT_EXIT_CODE=$?
 
-    if [ $? -eq 0 ]; then
-        mysql -e "UPDATE panel_core.domains SET has_ssl = 1 WHERE domain_name = '$DOMAIN';"
-        echo "Success: Let's Encrypt SSL installed."
-        exit 0
+    if [ $CERT_EXIT_CODE -eq 0 ]; then
+        # 2. Safely backup the config
+        cp "$VHOST" "${VHOST}.bak"
+        
+        # 3. Inject the SSL directives into Nginx (if they aren't already there)
+        if ! grep -q "listen 443 ssl" "$VHOST"; then
+            sed -i "s/listen 80;/listen 80;\n    listen 443 ssl http2;\n    ssl_certificate \/etc\/letsencrypt\/live\/$DOMAIN\/fullchain.pem;\n    ssl_certificate_key \/etc\/letsencrypt\/live\/$DOMAIN\/privkey.pem;/g" "$VHOST"
+        fi
+
+        # 4. Test and reload
+        if nginx -t > /dev/null 2>&1; then
+            /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
+            mysql -e "UPDATE panel_core.domains SET has_ssl = 1 WHERE domain_name = '$DOMAIN';"
+            rm -f "${VHOST}.bak"
+            echo "Success: Let's Encrypt SSL installed and configured."
+            exit 0
+        else
+            mv "${VHOST}.bak" "$VHOST"
+            echo "Error: Nginx syntax failed after SSL injection. Rolled back."
+            exit 1
+        fi
     else
-        echo "Error: Certbot failed. Ensure DNS points to this server."
+        echo "Error: Certbot failed to authenticate. Ensure DNS points to this server."
         exit 1
     fi
 
-# ==========================================
+    # ==========================================
 # 2. CUSTOM CERTIFICATE INJECTION
 # ==========================================
 elif [ "$ACTION" == "custom" ]; then
     echo "Processing custom SSL certificate for $DOMAIN..."
     
-    # 1. Create a secure, isolated directory for this domain's custom certs
     CERT_DIR="/etc/nginx/ssl/custom/$DOMAIN"
     mkdir -p "$CERT_DIR"
     chmod 750 "$CERT_DIR"
 
-    # 2. Extract the cert and key from JSON payload and write to disk
     echo "$PAYLOAD" | jq -r '.custom_cert' > "$CERT_DIR/fullchain.pem"
     echo "$PAYLOAD" | jq -r '.custom_key' > "$CERT_DIR/privkey.pem"
-    
     chmod 640 "$CERT_DIR/fullchain.pem" "$CERT_DIR/privkey.pem"
     
-    # 3. Swap the Nginx config paths dynamically using sed
-    # We look for the ssl_certificate directive and replace the entire line
-    cp "$VHOST" "${VHOST}.bak" # Safety backup
+    cp "$VHOST" "${VHOST}.bak"
     
-    sed -i "s|ssl_certificate .*|ssl_certificate $CERT_DIR/fullchain.pem;|g" "$VHOST"
-    sed -i "s|ssl_certificate_key .*|ssl_certificate_key $CERT_DIR/privkey.pem;|g" "$VHOST"
-    
-    # Optional: If the vhost currently listens on 80 only, we'd need to uncomment the 443 blocks.
-    # (Assuming your vhost_manager already sets up the 443 blocks commented out, we uncomment them):
-    sed -i 's/#listen 443 ssl/listen 443 ssl/g' "$VHOST"
-    sed -i 's/#listen \[::\]:443 ssl/listen \[::\]:443 ssl/g' "$VHOST"
+    if grep -q "listen 443 ssl" "$VHOST"; then
+        sed -i "s|ssl_certificate .*|ssl_certificate $CERT_DIR/fullchain.pem;|g" "$VHOST"
+        sed -i "s|ssl_certificate_key .*|ssl_certificate_key $CERT_DIR/privkey.pem;|g" "$VHOST"
+    else
+        sed -i "s/listen 80;/listen 80;\n    listen 443 ssl http2;\n    ssl_certificate $CERT_DIR\/fullchain.pem;\n    ssl_certificate_key $CERT_DIR\/privkey.pem;/g" "$VHOST"
+    fi
 
-    # 4. Safely test and reload Nginx
     if nginx -t > /dev/null 2>&1; then
         /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         mysql -e "UPDATE panel_core.domains SET has_ssl = 1 WHERE domain_name = '$DOMAIN';"
@@ -82,6 +101,7 @@ elif [ "$ACTION" == "custom" ]; then
         /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         exit 1
     fi
+
 # ==========================================
 # 3. TOGGLE AUTO RENEWAL
 # ==========================================
@@ -107,7 +127,8 @@ elif [ "$ACTION" == "toggle_renewal" ]; then
         fi
         exit 0
     fi
-# ==========================================
+
+    # ==========================================
 # 4. MAIL SERVER SSL (POSTFIX & DOVECOT)
 # ==========================================
 elif [ "$ACTION" == "mail_letsencrypt" ]; then
@@ -115,29 +136,18 @@ elif [ "$ACTION" == "mail_letsencrypt" ]; then
     EMAIL=$(echo "$PAYLOAD" | jq -r '.email')
     echo "Starting Let's Encrypt provisioning for Mail Server: $MAIL_DOMAIN..."
 
-    # 1. Temporarily stop Nginx to free up ports 80/443 for Certbot's standalone server
     systemctl stop nginx
-
-    # 2. Run Certbot in standalone mode (completely circumvents Nginx/ModSecurity/HSTS blocks)
     certbot certonly --standalone -d "$MAIL_DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
     CERT_EXIT_CODE=$?
-
-    # 3. Restart Nginx immediately to restore web traffic
     systemctl start nginx
 
     if [ $CERT_EXIT_CODE -eq 0 ]; then
         echo "Certificate issued. Securing Postfix and Dovecot..."
-        
-        # Inject paths into Postfix
         postconf -e "smtpd_tls_cert_file=/etc/letsencrypt/live/$MAIL_DOMAIN/fullchain.pem"
         postconf -e "smtpd_tls_key_file=/etc/letsencrypt/live/$MAIL_DOMAIN/privkey.pem"
-        
-        # Inject paths into Dovecot
         sed -i "s|^ssl_cert =.*|ssl_cert = </etc/letsencrypt/live/$MAIL_DOMAIN/fullchain.pem|" /etc/dovecot/conf.d/10-ssl.conf
         sed -i "s|^ssl_key =.*|ssl_key = </etc/letsencrypt/live/$MAIL_DOMAIN/privkey.pem|" /etc/dovecot/conf.d/10-ssl.conf
-        
         systemctl restart postfix dovecot
-        
         echo "Success: Mail SSL applied and services restarted."
         exit 0
     else

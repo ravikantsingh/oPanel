@@ -64,7 +64,7 @@ window.fetchDatabases = function() {
                             <td><code>${db.db_user}</code></td>
                             <td><i class="bi bi-person text-muted me-1"></i> ${db.owner_username}</td>
                             <td class="text-end">
-                                <a href="/pma/index.php?db=${db.db_name}" target="_blank" class="btn btn-sm btn-success shadow-sm" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></a>
+                                <button class="btn btn-sm btn-success shadow-sm open-pma-sso" data-db="${db.db_name}" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></button>
                                 <button class="btn btn-sm btn-light shadow-sm text-dark change-db-pass ms-1" data-db="${db.db_name}" data-user="${db.db_user}" title="Change Password"><i class="bi bi-key"></i></button>
                                 <button class="btn btn-sm btn-light shadow-sm text-danger delete-db ms-1" data-db="${db.db_name}" title="Delete Database"><i class="bi bi-trash"></i></button>
                             </td>
@@ -305,6 +305,33 @@ $(document).ready(function() {
                     window.showToast('error', 'Delete Failed', response.error); 
                     btn.prop('disabled', false).html('<i class="bi bi-trash"></i>'); 
                 }
+            }
+        });
+    });
+
+    // === PHPMYADMIN SSO TRIGGER ===
+    $(document).on('click', '.open-pma-sso', function() {
+        let dbName = $(this).data('db');
+        let btn = $(this);
+        let originalIcon = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/ajax/get_pma_sso.php',
+            type: 'POST',
+            data: { db: dbName },
+            dataType: 'json',
+            success: function(response) {
+                btn.prop('disabled', false).html(originalIcon);
+                if(response.success) {
+                    window.open(response.url, '_blank');
+                } else {
+                    window.showToast('error', 'SSO Failed', response.error);
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).html(originalIcon);
+                window.showToast('error', 'Network Error', 'Failed to connect to SSO Gateway.');
             }
         });
     });

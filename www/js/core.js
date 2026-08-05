@@ -149,14 +149,14 @@ $(document).ready(function() {
     });
 
     // =================================================================
-    // 6. FIRST-LOGIN GATEKEEPER (Forces Admin to setup profile & change 'admin123')
+    // 6. LICENSING GATEKEEPER (Forces Profile Registration)
     // =================================================================
     $.ajax({
         url: '/ajax/check_first_login.php',
         type: 'POST',
         dataType: 'json',
         success: function(res) {
-            if (res.success && res.is_first_login) {
+            if (res.is_first_login) {
                 let gatekeeperModal = new bootstrap.Modal(document.getElementById('firstLoginModal'), {
                     backdrop: 'static', 
                     keyboard: false     
@@ -170,34 +170,19 @@ $(document).ready(function() {
         e.preventDefault();
         let btn = $('#btnSubmitRegistration');
         let originalText = btn.html();
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing Server...');
-
-        let pass1 = $('#firstPass1').val();
-        let pass2 = $('#firstPass2').val();
-
-        if (pass1 !== pass2) {
-            window.showToast('error', 'Password Mismatch', 'Your new passwords do not match.');
-            btn.prop('disabled', false).html(originalText);
-            return;
-        }
-
-        if (pass1.length < 8) {
-            window.showToast('error', 'Weak Password', 'Password must be at least 8 characters long.');
-            btn.prop('disabled', false).html(originalText);
-            return;
-        }
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Activating License...');
 
         $.ajax({
-            url: '/ajax/setup_first_admin.php',
+            url: '/ajax/complete_registration.php',
             type: 'POST',
-            data: $(this).serialize(), // This grabs ALL inputs (name, email, country, password)
+            data: $(this).serialize(),
             dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#firstLoginModal').modal('hide');
-                    window.showToast('success', 'Server Secured', 'Your profile and administrator password have been updated.');
+                    window.showToast('success', 'License Activated', 'Your server profile has been registered and the panel is unlocked.');
                 } else {
-                    window.showToast('error', 'Setup Failed', res.error);
+                    window.showToast('error', 'Activation Failed', res.error);
                     btn.prop('disabled', false).html(originalText);
                 }
             },
@@ -207,7 +192,6 @@ $(document).ready(function() {
             }
         });
     });
-
 
     // =================================================================
     // 7. GLOBAL AJAX ERROR INTERCEPTOR (Silent Lockouts)

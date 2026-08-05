@@ -7,7 +7,7 @@
             <div class="modal-body bg-light p-4">
                 <div class="text-center mb-4">
                     <h4 class="fw-bold text-dark">Let's setup your server profile</h4>
-                    <p class="text-muted small">Please complete your registration and secure your administrator password to unlock the dashboard.</p>
+                    <p class="text-muted small">Please complete your registration to activate your commercial license and unlock the dashboard.</p>
                 </div>
 
                 <form id="firstLoginForm">
@@ -36,21 +36,13 @@
                                 <option value="OTHER">Other</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">New Admin Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" name="new_password" id="firstPass1" required placeholder="Min 8 characters">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Confirm Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="firstPass2" required placeholder="Type password again">
-                        </div>
                     </div>
                     
                     <div id="registrationAlert" class="alert d-none mt-4 mb-0"></div>
 
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary btn-lg fw-bold" id="btnSubmitRegistration">
-                            Secure Server & Unlock Panel <i class="bi bi-shield-lock ms-2"></i>
+                            Activate License & Unlock Panel <i class="bi bi-arrow-right ms-2"></i>
                         </button>
                     </div>
                 </form>

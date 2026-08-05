@@ -149,14 +149,14 @@ $(document).ready(function() {
     });
 
     // =================================================================
-    // 6. FIRST-LOGIN GATEKEEPER (Forces Admin to change 'admin123')
+    // 6. FIRST-LOGIN GATEKEEPER (Forces Admin to setup profile & change 'admin123')
     // =================================================================
     $.ajax({
         url: '/ajax/check_first_login.php',
         type: 'POST',
         dataType: 'json',
         success: function(res) {
-            if (res.is_first_login) {
+            if (res.success && res.is_first_login) {
                 let gatekeeperModal = new bootstrap.Modal(document.getElementById('firstLoginModal'), {
                     backdrop: 'static', 
                     keyboard: false     
@@ -168,7 +168,8 @@ $(document).ready(function() {
 
     $(document).on('submit', '#firstLoginForm', function(e) {
         e.preventDefault();
-        let btn = $('#btnSaveFirstLogin');
+        let btn = $('#btnSubmitRegistration');
+        let originalText = btn.html();
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing Server...');
 
         let pass1 = $('#firstPass1').val();
@@ -176,26 +177,37 @@ $(document).ready(function() {
 
         if (pass1 !== pass2) {
             window.showToast('error', 'Password Mismatch', 'Your new passwords do not match.');
-            btn.prop('disabled', false).html('Secure & Unlock Panel');
+            btn.prop('disabled', false).html(originalText);
+            return;
+        }
+
+        if (pass1.length < 8) {
+            window.showToast('error', 'Weak Password', 'Password must be at least 8 characters long.');
+            btn.prop('disabled', false).html(originalText);
             return;
         }
 
         $.ajax({
             url: '/ajax/setup_first_admin.php',
             type: 'POST',
-            data: { new_password: pass1 },
+            data: $(this).serialize(), // This grabs ALL inputs (name, email, country, password)
             dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#firstLoginModal').modal('hide');
-                    window.showToast('success', 'Server Secured', 'Your administrator password has been updated.');
+                    window.showToast('success', 'Server Secured', 'Your profile and administrator password have been updated.');
                 } else {
-                    window.showToast('error', 'Update Failed', res.error);
-                    btn.prop('disabled', false).html('Secure & Unlock Panel');
+                    window.showToast('error', 'Setup Failed', res.error);
+                    btn.prop('disabled', false).html(originalText);
                 }
+            },
+            error: function() {
+                window.showToast('error', 'Network Error', 'Could not communicate with the server.');
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });
+
 
     // =================================================================
     // 7. GLOBAL AJAX ERROR INTERCEPTOR (Silent Lockouts)

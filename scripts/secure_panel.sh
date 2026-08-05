@@ -26,8 +26,11 @@ else
     exit 1
 fi
 
+# Write BOTH the Panel config and the Catch-All config
 cat <<EOF > /etc/nginx/sites-available/default
-# Master Stackrium Configuration (Port 7443 ONLY)
+# ==========================================
+# Stackrium Master Configuration (Port 7443)
+# ==========================================
 server {
     listen 7443 ssl http2;
     listen [::]:7443 ssl http2;
@@ -46,10 +49,13 @@ server {
     modsecurity_rules_file /etc/modsecurity/modsecurity.conf;
     modsecurity_rules_file /etc/nginx/waf/stackrium-master.conf;
 
+    include /etc/nginx/conf.d/panel-proxy*.conf;
+
     root /opt/panel/www;
     index index.php index.html;
 
     include /etc/nginx/snippets/stackrium-errors.conf;
+    include /etc/nginx/snippets/block-bots.conf;
 
     location ~ /\. { deny all; }
     location ^~ /classes/ { deny all; }
@@ -59,12 +65,47 @@ server {
         try_files \$uri \$uri/ =404;
     }
 
-    if (\$request_uri ~ ^/(?!(ajax|classes|config))(.*)\.php(\?|\$)) {
+    if (\$request_uri ~ ^/(?!(ajax|classes|config|pma))(.*)\.php(\?|\$)) {
         return 301 /\$1\$2\$is_args\$args;
     }
 
     location / {
         try_files \$uri \$uri/ \$uri.php\$is_args\$args;
+    }
+
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock; 
+    }
+
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2|ttf)\$ {
+        expires 365d;
+        add_header Cache-Control "public, no-transform";
+        access_log off; 
+    }
+}
+
+# ==========================================
+# Stackrium Temporary IP Routing (Catch-All)
+# ==========================================
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    # ADD HTTPS SUPPORT FOR THE FALLBACK ROUTE
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+ 
+    ssl_certificate /etc/ssl/certs/mypanel-selfsigned.crt;
+    ssl_certificate_key /etc/ssl/private/mypanel-selfsigned.key;
+
+    server_name _;
+    root /opt/panel/www;
+
+    location = / { return 444; }
+
+    location ~ ^/~([^/]+)/(.*)\$ {
+        rewrite ^/~([^/]+)/(.*)\$ /ajax/fm_proxy.php?domain=\$1&path=\$2 last;
     }
 
     location ~ \.php\$ {

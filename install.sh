@@ -118,6 +118,8 @@ innodb_ft_cache_size = 1600000
 innodb_ft_total_cache_size = 32000000
 query_cache_type = 0
 query_cache_size = 0
+wait_timeout = 60
+interactive_timeout = 60
 EOF
 systemctl restart mariadb
 

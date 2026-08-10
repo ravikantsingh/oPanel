@@ -4,7 +4,7 @@
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
-GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
+GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git"
 BRANCH="main"
 
 # Ensure script is run as root
@@ -118,6 +118,8 @@ innodb_ft_cache_size = 1600000
 innodb_ft_total_cache_size = 32000000
 query_cache_type = 0
 query_cache_size = 0
+wait_timeout = 60
+interactive_timeout = 60
 EOF
 systemctl restart mariadb
 

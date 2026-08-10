@@ -214,10 +214,15 @@
                                 <li class="list-group-item bg-transparent border-0 py-2"><b>Permissions:</b> Modify file and folder read/write/execute permissions (chmod) via an intuitive popup modal.</li>
                             </ol>
 
-                            <div class="alert alert-primary bg-primary bg-opacity-10 shadow-sm border-primary border-start border-4 mt-4">
+                            <div class="alert alert-primary bg-primary bg-opacity-10 shadow-sm border-primary border-start border-4 mt-4 mb-4">
                                 <h5 class="alert-heading fw-bold text-primary"><i class="bi bi-ui-checks-grid me-2"></i> Floating Bulk Actions Toolbar</h5>
                                 <p class="small text-dark mb-0">Selecting multiple items via checkboxes triggers a floating toolbar at the bottom of your screen. From here, you can execute bulk operations to simultaneously Delete, Copy, Move, or Zip your selected files. <br><br><b>Bonus:</b> Selecting multiple files and clicking <strong>Download</strong> will instantly compile them into a temporary <code>.zip</code> archive on the server, stream the download to you, and automatically clean up the temporary file afterward!</p>
                             </div>
+
+                            <!-- NEW: IP FALLBACK DOCS -->
+                            <h5 class="fw-bold text-info mt-4"><i class="bi bi-router me-2"></i> 4. Temporary IP Fallback Routing</h5>
+                            <p class="text-muted mb-4">If your domain's DNS hasn't propagated globally yet, Stackrium dynamically generates a secure IP Fallback Route for you (e.g., <code>http://YOUR_SERVER_IP/~domain.com/filemanager</code>). The backend SSO engine intelligently detects your access method and automatically routes your File Manager session through a dedicated PHP proxy gateway, ensuring you can manage your files before your domain is even live.</p>
+
                         </div>
 
                         <div class="tab-pane fade" id="doc-db-backups" role="tabpanel">
@@ -532,14 +537,42 @@
                             <h2 class="fw-bold mb-4">Frequently Asked Questions</h2>
                             
                             <div class="accordion accordion-flush" id="faqAccordion">
-                                
+
+                                <!-- NEW: First Login Gatekeeper FAQ -->
                                 <div class="accordion-item bg-transparent">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                        <button class="accordion-button bg-light fw-bold rounded text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq_first_login_gate">
+                                            Why am I forced to change my password on the first login?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_first_login_gate" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            This is Stackrium's <strong>First-Login Gatekeeper</strong>. To prevent automated botnets from hijacking your server using the default credentials, the login page intercepts your session if it detects the default <code>admin123</code> password. You cannot access the 2FA screen or the dashboard until you secure the master account with a new, strong password.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- NEW: Temporary URL FAQ -->
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faq_temp_url">
+                                            Can I view my website or manage files before DNS propagates?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_temp_url" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            Yes! Stackrium automatically builds a Temporary URL proxy route for every domain. You can access your unpropagated website via <code>http://YOUR_SERVER_IP/~yourdomain.com/</code>. Furthermore, if you click the "File Manager" button in the panel, the Single Sign-On (SSO) engine will automatically detect that you are using the IP route and seamlessly adapt the File Manager to work over the temporary proxy!
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
                                             Where are my website files located?
                                         </button>
                                     </h2>
-                                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body px-0 text-muted">
                                             All websites are stored securely within the user's home directory. The exact document root is <code>/home/{username}/web/{domain.com}/public_html</code>.
                                         </div>
@@ -660,6 +693,20 @@
                                     <div id="faq_php_err" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                         <div class="accordion-body px-0 text-muted">
                                             Whenever you change advanced PHP settings (like <code>memory_limit</code>), Stackrium automatically tests syntax and restarts the PHP-FPM worker for that domain. If it didn't reflect, check the <strong>Live Task Log</strong>. If you entered invalid syntax, the server blocked the reload to keep your site online!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- NEW: Needrestart Supression FAQ -->
+                                <div class="accordion-item bg-transparent border-top mt-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed bg-light fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#faq_needrestart">
+                                            Why does the server never prompt me to restart services during updates?
+                                        </button>
+                                    </h2>
+                                    <div id="faq_needrestart" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body px-0 text-muted">
+                                            By design, Stackrium suppresses the interactive Ubuntu <code>needrestart</code> prompts by enforcing an automatic restart mode. This ensures that background task queues (like installing new PHP versions via <code>apt</code>) never freeze the panel waiting for human input to confirm a service restart.
                                         </div>
                                     </div>
                                 </div>
@@ -798,6 +845,12 @@
                                 <p class="text-muted mb-0">
                                     Your "license" is automatically valid for the next 10 years (or until the heat death of the universe, whichever comes first). Keep your wallet in your pocket, close this tab, and go enjoy building something awesome!
                                 </p>
+                            </div>
+
+                            <!-- NEW: Dashboard Registration Note -->
+                            <div class="alert alert-info bg-info bg-opacity-10 border shadow-sm border-info border-start border-4 p-4 mt-4">
+                                <h5 class="fw-bold"><i class="bi bi-person-vcard-fill text-info me-2"></i> The Initial Registration Gate</h5>
+                                <p class="text-dark mb-0">Upon your first successful login to a new Stackrium server, the dashboard will lock itself with a "Server Profile" modal. This is a one-time onboarding requirement. Submitting your Name and Email registers your server's cryptographic key with Stackrium Central, generates your local <code>profile.json</code> file, and permanently unlocks the UI. Once again, no payment is required during this step.</p>
                             </div>
                         </div>
 

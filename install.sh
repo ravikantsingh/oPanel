@@ -5,7 +5,7 @@
 # ==============================================================================
 
 GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
-BRANCH="lara-py"
+BRANCH="main"
 
 # Ensure script is run as root
 if [ "$EUID" -ne 0 ]; then

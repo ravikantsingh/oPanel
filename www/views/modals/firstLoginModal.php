@@ -10,7 +10,7 @@
                     <p class="text-muted small">Please complete your registration to activate your commercial license and unlock the dashboard.</p>
                 </div>
 
-                <form id="firstLoginForm" onsubmit="event.preventDefault();">
+                <form id="firstLoginForm">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>

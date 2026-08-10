@@ -7,6 +7,13 @@
     </div>
 
     <div class="row g-4">
+        <div class="mb-3 position-sticky" style="top: 20px; z-index: 10;">
+            <div class="input-group shadow-sm rounded">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <!-- Updated onkeyup event below -->
+                <input type="text" id="docSearch" onkeyup="window.filterDocs()" class="form-control border-start-0 ps-0" placeholder="Search topics...">
+            </div>
+        </div>
         <div class="col-md-3">
             <div class="card shadow-sm border-0 position-sticky" style="top: 20px;">
                 <div class="card-body p-0">
@@ -20,41 +27,44 @@
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-ftp" role="tab">
                             <i class="bi bi-folder2-open me-2 text-warning"></i> 3. FTP & File Access
                         </a>
+                        <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-filemanager" role="tab">
+                            <i class="bi bi-folder-symlink me-2 text-info"></i> 4. Native File Manager
+                        </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-db-backups" role="tab">
-                            <i class="bi bi-database me-2 text-success"></i> 4. Databases & Backups
+                            <i class="bi bi-database me-2 text-success"></i> 5. Databases & Backups
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-dns" role="tab">
-                            <i class="bi bi-diagram-2 me-2 text-info"></i> 5. DNS Configuration
+                            <i class="bi bi-diagram-2 me-2 text-info"></i> 6. DNS Configuration
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-git" role="tab">
-                            <i class="bi bi-git me-2 text-danger"></i> 6. Git Deployment
+                            <i class="bi bi-git me-2 text-danger"></i> 7. Git Deployment
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-pm2" role="tab">
-                            <i class="bi bi-cpu me-2 text-success"></i> 7. Node.js & PM2
+                            <i class="bi bi-cpu me-2 text-success"></i> 8. Node.js & PM2
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-security" role="tab">
-                            <i class="bi bi-shield-lock me-2 text-dark"></i> 8. Security & WAF
+                            <i class="bi bi-shield-lock me-2 text-dark"></i> 9. Security & WAF
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cdn" role="tab">
-                            <i class="bi bi-diagram-3 me-2 text-danger"></i> 9. CDN & Proxy Routing
+                            <i class="bi bi-diagram-3 me-2 text-danger"></i> 10. CDN & Proxy Routing
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-mail" role="tab">
-                            <i class="bi bi-envelope me-2 text-primary"></i> 10. Mail Server
+                            <i class="bi bi-envelope me-2 text-primary"></i> 11. Mail Server
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-cron" role="tab">
-                            <i class="bi bi-clock-history me-2 text-secondary"></i> 11. Cron Jobs
+                            <i class="bi bi-clock-history me-2 text-secondary"></i> 12. Cron Jobs
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-updates" role="tab">
-                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 12. System Updates
+                            <i class="bi bi-cloud-arrow-down me-2 text-info"></i> 13. System Updates
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-logs" role="tab">
-                            <i class="bi bi-terminal me-2 text-dark"></i> 13. Logs & Tasks
+                            <i class="bi bi-terminal me-2 text-dark"></i> 14. Logs & Tasks
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-faq" role="tab">
-                            <i class="bi bi-question-circle me-2 text-secondary"></i> 14. Common FAQ
+                            <i class="bi bi-question-circle me-2 text-secondary"></i> 15. Common FAQ
                         </a>
                         <a class="list-group-item list-group-item-action fw-bold py-3" data-bs-toggle="list" href="#doc-license" role="tab">
-                            <i class="bi bi-award me-2 text-primary"></i> 15. Commercial License
+                            <i class="bi bi-award me-2 text-primary"></i> 16. Commercial License
                         </a>
                     </div>
                 </div>
@@ -176,6 +186,38 @@
                                 <li class="list-group-item bg-transparent border-0 py-2">Type a new secure password and click "Update FTP Password".</li>
                                 <li class="list-group-item bg-transparent border-0 py-2">The username is displayed on that screen (format: <code>user_domain_com</code>).</li>
                             </ol>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="doc-filemanager" role="tabpanel">
+                            <h2 class="fw-bold mb-4">Native File Manager</h2>
+                            <p class="fs-6 mb-4">Stackrium includes a secure, built-in Native File Manager that allows you to manage your website files directly from the browser, bypassing the need for third-party FTP clients entirely.</p>
+
+                            <h5 class="fw-bold text-info"><i class="bi bi-rocket-takeoff me-2"></i> 1. Deployment & Secure Access</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-shield-lock text-success me-2"></i> <b>Isolated Environment:</b> When launched, Stackrium provisions a dedicated Nginx configuration block specifically for the file manager. It safely bypasses ModSecurity to ensure that legitimate code saves and bulk uploads are not falsely flagged as attacks.</li>
+                                <li class="mb-2"><i class="bi bi-key text-success me-2"></i> <b>Single Sign-On (SSO):</b> You access the file manager seamlessly via an HMAC SHA256 signature verification system. This generates a time-limited token that expires in under 60 seconds, meaning you never have to type a password while staying protected from replay attacks.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-info mt-4"><i class="bi bi-window-sidebar me-2"></i> 2. User Interface & Navigation</h5>
+                            <ul class="list-unstyled mb-4 text-muted">
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Smart UI:</b> Enjoy a fully responsive, mobile-friendly design built with Tailwind CSS, complete with built-in Dark/Light mode toggling that saves directly to your browser's local storage.</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Live Sorting & Search:</b> Instantly filter your visible files and folders via the client-side search bar. Click any table header to sort items by Name, Size, or Modified Date (folders will intelligently always float to the top of the list).</li>
+                                <li class="mb-2"><i class="bi bi-check2 text-info me-2"></i> <b>Directory Stats:</b> Keep track of your storage with a top bar that actively displays the total number of folders, files, and combined data size of your current directory.</li>
+                            </ul>
+
+                            <h5 class="fw-bold text-info mt-4"><i class="bi bi-tools me-2"></i> 3. Core File Operations</h5>
+                            <ol class="list-group list-group-numbered list-group-flush mb-4">
+                                <li class="list-group-item bg-transparent border-0 py-2"><b>Create & Upload:</b> Quickly spin up new folders and files, or upload assets directly into your active directory.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><b>In-Browser Code Editing:</b> Click on any code or text file to open the built-in text editor. Make your modifications and click Save without ever needing to download the file.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><b>Advanced Move & Copy:</b> Utilize the robust "Destination Modal" to type a destination path, or use the "Quick Navigate" AJAX buttons to browse the server tree for seamless file transfers.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><b>Archives:</b> Natively compress selected items into <code>.zip</code> files, or extract existing archives directly on the server.</li>
+                                <li class="list-group-item bg-transparent border-0 py-2"><b>Permissions:</b> Modify file and folder read/write/execute permissions (chmod) via an intuitive popup modal.</li>
+                            </ol>
+
+                            <div class="alert alert-primary bg-primary bg-opacity-10 shadow-sm border-primary border-start border-4 mt-4">
+                                <h5 class="alert-heading fw-bold text-primary"><i class="bi bi-ui-checks-grid me-2"></i> Floating Bulk Actions Toolbar</h5>
+                                <p class="small text-dark mb-0">Selecting multiple items via checkboxes triggers a floating toolbar at the bottom of your screen. From here, you can execute bulk operations to simultaneously Delete, Copy, Move, or Zip your selected files. <br><br><b>Bonus:</b> Selecting multiple files and clicking <strong>Download</strong> will instantly compile them into a temporary <code>.zip</code> archive on the server, stream the download to you, and automatically clean up the temporary file afterward!</p>
+                            </div>
                         </div>
 
                         <div class="tab-pane fade" id="doc-db-backups" role="tabpanel">

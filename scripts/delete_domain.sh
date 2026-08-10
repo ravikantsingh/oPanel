@@ -12,6 +12,7 @@ echo "Initiating Scorched Earth protocol for $DOMAIN..."
 # 1. Remove Nginx Configurations
 rm -f /etc/nginx/sites-available/$DOMAIN.conf
 rm -f /etc/nginx/sites-enabled/$DOMAIN.conf
+sed -i "/^$DOMAIN /d" /etc/nginx/stackrium_tenant_map.conf
 
 # 2. Clean up Let's Encrypt SSL
 certbot delete --cert-name "$DOMAIN" --non-interactive 2>/dev/null

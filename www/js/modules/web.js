@@ -169,8 +169,8 @@ window.fetchDomains = function() {
                                     <div class="col border-start border-opacity-10">
                                         <h6 class="text-muted small fw-bold text-uppercase border-bottom border-opacity-10 pb-2 mb-2"><i class="bi bi-folder2-open me-1"></i> Files & Cache</h6>
                                         <div class="d-grid gap-2">
-                                            <button class="btn btn-sm btn-outline-primary shadow-sm border-0 text-start open-fm-sso" data-domain="${d.domain_name}"><i class="bi bi-folder2-open me-2"></i> Open File Manager</button>
                                             <button class="btn btn-sm btn-outline-warning shadow-sm border-0 text-dark text-start deploy-fm" data-domain="${d.domain_name}" data-user="${d.username}" data-ver="${d.php_version}"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Deploy File Manager</button>
+                                            <button class="btn btn-sm btn-outline-primary shadow-sm border-0 text-start open-fm-sso" data-domain="${d.domain_name}"><i class="bi bi-folder2-open me-2"></i> Open File Manager</button>
                                             <button class="btn btn-sm btn-outline-secondary shadow-sm border-0 text-start rotate-fm-pass" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-key me-2"></i> Rotate FM Key</button>
                                             <button class="btn btn-sm btn-outline-danger shadow-sm border-0 text-start enable-redis-btn" data-domain="${d.domain_name}" data-user="${d.username}"><i class="bi bi-memory me-2"></i> Inject Redis Cache</button>
                                             <button class="btn btn-sm btn-outline-dark shadow-sm border-0 text-start edit-php-settings" data-json='${JSON.stringify(d).replace(/'/g, "&apos;")}'> <i class="bi bi-sliders me-2"></i> PHP Config</button>

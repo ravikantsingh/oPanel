@@ -19,7 +19,7 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
 }
 
 $error = '';
-$step = 1; // 1: Login, 2: 2FA Setup, 3: 2FA Verify
+$step = 1; // 1: Login, 2: 2FA Setup, 3: 2FA Verify, 4: Force Password Reset
 $db = Database::getInstance()->getConnection();
 
 // Phase 1: Password Authentication
@@ -34,12 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if ($admin && password_verify($password, $admin['password_hash'])) {
         $_SESSION['pre_auth_admin_id'] = $admin['id'];
         
-        if ($admin['is_2fa_enabled'] == 1) {
-            $step = 3; // Go straight to verification
+        // --- THE SECURITY GATEKEEPER INTERCEPT ---
+        if ($password === 'admin123') {
+            $step = 4; // Divert to Password Reset
         } else {
-            // Generate a fresh secret for setup
-            $_SESSION['temp_2fa_secret'] = TOTP::generateSecret();
-            $step = 2; // Go to setup
+            if ($admin['is_2fa_enabled'] == 1) {
+                $step = 3; // Go straight to verification
+            } else {
+                // Generate a fresh secret for setup
+                $_SESSION['temp_2fa_secret'] = TOTP::generateSecret();
+                $step = 2; // Go to setup
+            }
         }
     } else {
         $error = "Invalid username or password.";
@@ -47,6 +52,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
         $logMessage = "[" . date('Y-m-d H:i:s') . "] Stackrium Auth Failed: Invalid credentials for user '{$username}'. IP: {$ip}\n";
         file_put_contents('/opt/panel/logs/auth.log', $logMessage, FILE_APPEND);
+    }
+}
+
+// Phase 1.5: Force Password Reset Processing
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
+    if (!isset($_SESSION['pre_auth_admin_id'])) {
+        header("Location: login"); exit;
+    }
+
+    $new_pass = $_POST['new_password'];
+    $confirm_pass = $_POST['confirm_password'];
+
+    if ($new_pass !== $confirm_pass) {
+        $error = "Passwords do not match.";
+        $step = 4;
+    } elseif (strlen($new_pass) < 8) {
+        $error = "Password must be at least 8 characters long.";
+        $step = 4;
+    } elseif ($new_pass === 'admin123') {
+        $error = "You cannot use the default password. Please choose a secure one.";
+        $step = 4;
+    } else {
+        // Securely hash and update the password in the database
+        $hash = password_hash($new_pass, PASSWORD_BCRYPT);
+        $update = $db->prepare("UPDATE panel_admins SET password_hash = ? WHERE id = ?");
+        $update->execute([$hash, $_SESSION['pre_auth_admin_id']]);
+
+        // Hand-off to the 2FA Phase seamlessly
+        $stmt = $db->prepare("SELECT * FROM panel_admins WHERE id = ?");
+        $stmt->execute([$_SESSION['pre_auth_admin_id']]);
+        $admin = $stmt->fetch();
+
+        if ($admin['is_2fa_enabled'] == 1) {
+            $step = 3;
+        } else {
+            $_SESSION['temp_2fa_secret'] = TOTP::generateSecret();
+            $step = 2;
+        }
     }
 }
 
@@ -184,6 +227,31 @@ if (!empty($brand['login_bg_image'])) {
                 </div>
             </div>
             <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-3 shadow-sm">Secure Access <i class="bi bi-shield-lock ms-1"></i></button>
+        </form>
+
+    <?php elseif ($step === 4): ?>
+        <div class="text-center mb-4">
+            <div class="badge bg-danger bg-opacity-25 text-danger border border-danger mb-3 px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-exclamation-triangle-fill"></i> Security Alert</div>
+            <h5 class="fw-bold mt-2">Default Password Detected</h5>
+            <p class="small text-secondary mb-4">To ensure your server's security, you must replace the default password before accessing the control panel.</p>
+        </div>
+        <form method="POST">
+            <input type="hidden" name="action" value="change_password">
+            <div class="mb-3">
+                <label class="form-label small text-secondary fw-semibold">New Master Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-secondary"><i class="bi bi-key"></i></span>
+                    <input type="password" name="new_password" class="form-control form-control-dark form-control-lg" placeholder="Min 8 characters" required autofocus>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small text-secondary fw-semibold">Confirm Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-secondary"><i class="bi bi-check2-circle"></i></span>
+                    <input type="password" name="confirm_password" class="form-control form-control-dark form-control-lg" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold rounded-3 shadow-sm">Secure Account <i class="bi bi-shield-check ms-1"></i></button>
         </form>
 
     <?php elseif ($step === 2): ?>

@@ -31,6 +31,32 @@ window.showToast = function(type, title, message) {
         $('#' + toastId).remove();
     });
 }
+// =================================================================
+// DOCS: DEEP CONTENT SMART SEARCH FILTER
+// =================================================================
+window.filterDocs = function() {
+    let filter = $('#docSearch').val().toLowerCase();
+    
+    $('#docs-list .list-group-item').each(function() {
+        // 1. Get the text of the menu item itself
+        let linkText = $(this).text().toLowerCase();
+        
+        // 2. Find the target tab pane (e.g., "#doc-cdn") and get its inner content safely
+        let targetPaneId = $(this).attr('href');
+        let paneText = "";
+        
+        if (targetPaneId && $(targetPaneId).length) {
+            paneText = $(targetPaneId).text().toLowerCase();
+        }
+
+        // 3. Show the link if the search term matches the title OR the deep content
+        if (linkText.includes(filter) || paneText.includes(filter)) {
+            $(this).removeClass('d-none');
+        } else {
+            $(this).addClass('d-none');
+        }
+    });
+};
 
 $(document).ready(function() {
     // =================================================================
@@ -123,7 +149,7 @@ $(document).ready(function() {
     });
 
     // =================================================================
-    // 6. FIRST-LOGIN GATEKEEPER (Forces Admin to change 'admin123')
+    // 6. LICENSING GATEKEEPER (Forces Profile Registration)
     // =================================================================
     $.ajax({
         url: '/ajax/check_first_login.php',
@@ -142,31 +168,27 @@ $(document).ready(function() {
 
     $(document).on('submit', '#firstLoginForm', function(e) {
         e.preventDefault();
-        let btn = $('#btnSaveFirstLogin');
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Securing Server...');
-
-        let pass1 = $('#firstPass1').val();
-        let pass2 = $('#firstPass2').val();
-
-        if (pass1 !== pass2) {
-            window.showToast('error', 'Password Mismatch', 'Your new passwords do not match.');
-            btn.prop('disabled', false).html('Secure & Unlock Panel');
-            return;
-        }
+        let btn = $('#btnSubmitRegistration');
+        let originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Activating License...');
 
         $.ajax({
-            url: '/ajax/setup_first_admin.php',
+            url: '/ajax/complete_registration.php',
             type: 'POST',
-            data: { new_password: pass1 },
+            data: $(this).serialize(),
             dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#firstLoginModal').modal('hide');
-                    window.showToast('success', 'Server Secured', 'Your administrator password has been updated.');
+                    window.showToast('success', 'License Activated', 'Your server profile has been registered and the panel is unlocked.');
                 } else {
-                    window.showToast('error', 'Update Failed', res.error);
-                    btn.prop('disabled', false).html('Secure & Unlock Panel');
+                    window.showToast('error', 'Activation Failed', res.error);
+                    btn.prop('disabled', false).html(originalText);
                 }
+            },
+            error: function() {
+                window.showToast('error', 'Network Error', 'Could not communicate with the server.');
+                btn.prop('disabled', false).html(originalText);
             }
         });
     });

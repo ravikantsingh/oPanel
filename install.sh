@@ -5,7 +5,7 @@
 # ==============================================================================
 
 GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
-BRANCH="lara-py"
+BRANCH="main"
 
 # Ensure script is run as root
 if [ "$EUID" -ne 0 ]; then
@@ -35,7 +35,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo -e "\e[34m[+] Provisioning 2GB Swap Memory to prevent RAM exhaustion...\e[0m"
 # Only create swap if it doesn't already exist
 if [ ! -f /swapfile ]; then
-    fallocate -l 2G /swapfile
+    fallocate -l 1G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
@@ -50,6 +50,11 @@ if [ ! -f /swapfile ]; then
 else
     echo -e "\e[33mSwap file already exists. Skipping...\e[0m"
 fi
+
+echo -e "\e[34m[+] Enabling TCP BBR for Network Optimization...\e[0m"
+echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf
+echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf
+sysctl -p
 
 # ==========================================
 # 1.5 INSTALL CORE DEPENDENCIES & NODE.JS
@@ -67,7 +72,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get update
 
 # Install Nginx, MariaDB, Python, Multi-PHP, and Node.js
-apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector \
+apt-get install -y nginx mariadb-server python3-pip python3-mysql.connector zip unzip \
     certbot python3-certbot-nginx \
     bind9 bind9utils bind9-doc \
     pure-ftpd pure-ftpd-common \
@@ -92,6 +97,11 @@ cat <<EOF > /etc/nginx/waf/stackrium-master.conf
 # Stackrium Master WAF Rules & Exceptions
 EOF
 systemctl restart nginx
+
+echo -e "\e[34m[+] Tuning PHP 8.3 Opcache...\e[0m"
+sed -i 's/;opcache.memory_consumption=128/opcache.memory_consumption=256/' /etc/php/8.3/fpm/php.ini
+sed -i 's/;opcache.interned_strings_buffer=8/opcache.interned_strings_buffer=16/' /etc/php/8.3/fpm/php.ini
+sed -i 's/;opcache.max_accelerated_files=10000/opcache.max_accelerated_files=20000/' /etc/php/8.3/fpm/php.ini
 
 # ==========================================
 # 1.6 MARIADB MEMORY TUNING
@@ -264,10 +274,23 @@ echo -e "\e[34m[7/14] Configuring WAF, FTP, and DNS...\e[0m"
 mkdir -p /etc/modsecurity
 wget -qO /etc/modsecurity/modsecurity.conf https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/modsecurity.conf-recommended
 wget -qO /etc/modsecurity/unicode.mapping https://raw.githubusercontent.com/owasp-modsecurity/ModSecurity/v3/master/unicode.mapping
+# 1. Enforce active blocking and expand body limits
 sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf
+sed -i 's/SecRequestBodyLimit 13107200/SecRequestBodyLimit 536870912/g' /etc/modsecurity/modsecurity.conf
+
+# 2. Provision the custom WAF Whitelist for maximum performance
+cat << 'EOF' > /etc/nginx/waf/whitelist.conf
+SecRule REQUEST_URI "@rx \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|txt)$" "id:1001,phase:1,pass,nolog,ctl:ruleEngine=Off"
+SecRule REQUEST_URI "@beginsWith /filemanager/" "id:1002,phase:1,pass,nolog,ctl:ruleEngine=DetectionOnly"
+EOF
+
+# 3. Inject the Includes in the correct order (Whitelist FIRST, then Core Rules)
+echo 'Include /etc/nginx/waf/whitelist.conf' >> /etc/modsecurity/modsecurity.conf
 echo 'Include /usr/share/modsecurity-crs/owasp-crs.load' >> /etc/modsecurity/modsecurity.conf
+
+# 4. Patch OWASP CRS includes
 find /usr/share/modsecurity-crs/ -type f -exec sed -i 's/IncludeOptional/Include/g' {} +
-apt-mark hold modsecurity-crs 
+apt-mark hold modsecurity-crs
 
 ln -sf /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
 echo 'yes' > /etc/pure-ftpd/conf/ChrootEveryone
@@ -430,6 +453,44 @@ fi
 EOF
 
 chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-mail-ssl.sh
+
+echo -e "\e[34m[+] Provisioning Temporary IP Routing Map...\e[0m"
+touch /etc/nginx/stackrium_tenant_map.conf
+chown root:root /etc/nginx/stackrium_tenant_map.conf
+chmod 644 /etc/nginx/stackrium_tenant_map.conf
+
+cat << 'EOF' > /etc/nginx/conf.d/tenant_mapping.conf
+# 1. Extract the domain from the Temporary IP URL
+map $request_uri $extracted_domain {
+    ~^/~([^/]+)/  $1;
+    default       "";
+}
+
+# 2. Find the Linux Username that owns the domain
+map $extracted_domain $tenant_user {
+    default "nobody";
+    include /etc/nginx/stackrium_tenant_map.conf;
+}
+EOF
+
+sed -i 's/# server_tokens off;/server_tokens off;/g' /etc/nginx/nginx.conf
+echo "client_max_body_size 512M;" > /etc/nginx/conf.d/stackrium_limits.conf
+
+# NEW FIX: Disable default Ubuntu GZIP before applying Stackrium's GZIP
+sed -i 's/gzip on;/# gzip on;/g' /etc/nginx/nginx.conf
+
+cat << 'EOF' > /etc/nginx/conf.d/gzip.conf
+gzip on;
+gzip_comp_level 5;
+gzip_min_length 256;
+gzip_proxied any;
+gzip_vary on;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+open_file_cache max=5000 inactive=20s;
+open_file_cache_valid 30s;
+open_file_cache_min_uses 2;
+open_file_cache_errors on;
+EOF
 
 systemctl restart nginx
 

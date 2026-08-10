@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// 2. Capture POST data securely (PHP 8.3 Safe)
+// 2. Capture POST data securely
 $name = isset($_POST['owner_name']) ? trim(strip_tags($_POST['owner_name'])) : '';
 $email = isset($_POST['owner_email']) ? filter_var(trim($_POST['owner_email']), FILTER_SANITIZE_EMAIL) : '';
 $company = isset($_POST['company']) ? trim(strip_tags($_POST['company'])) : '';
@@ -53,7 +53,7 @@ $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curl_error = curl_error($ch);
 curl_close($ch);
 
-// 4. Aggressive Error Handling (Helps with debugging central server)
+// 4. Aggressive Error Handling
 if ($response === false) {
     echo json_encode(['success' => false, 'error' => 'VPS cURL Error: ' . $curl_error]);
     exit;

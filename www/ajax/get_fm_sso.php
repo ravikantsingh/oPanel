@@ -16,23 +16,29 @@ if (empty($domain)) {
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Fetch the domain's owner and their secret webhook token
     $stmt = $db->prepare("SELECT d.username, d.has_ssl, u.webhook_token FROM panel_core.domains d JOIN panel_core.users u ON d.username = u.username WHERE d.domain_name = ?");
     $stmt->execute([$domain]);
     $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$data) throw new Exception("Domain not found.");
 
-    // Generate a secure payload using the current time
     $timestamp = time();
     $secret = $data['webhook_token'];
-    
-    // Cryptographically sign the payload so hackers cannot forge it
     $hash = hash_hmac('sha256', $domain . '|' . $timestamp, $secret);
 
-    // Build the dynamic SSO URL
-    $protocol = $data['has_ssl'] ? 'https://' : 'http://';
-    $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    // STACKRIUM SMART ROUTING: Check if domain is pointing to this server
+    $server_ip = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']);
+    $domain_ip = gethostbyname($domain);
+
+    if ($domain_ip === $server_ip) {
+        // LIVE DOMAIN -> Use Native Route (No permission conflicts)
+        $protocol = $data['has_ssl'] ? 'https://' : 'http://';
+        $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    } else {
+        // FAKE/UNPOINTED DOMAIN -> Use IP Fallback Route
+        $panel_host = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']); 
+        $url = 'http://' . $panel_host . '/~' . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
+    }
 
     echo json_encode(['success' => true, 'url' => $url]);
     

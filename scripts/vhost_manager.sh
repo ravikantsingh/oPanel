@@ -59,10 +59,12 @@ if [ "$ACTION" == "create" ]; then
         echo "<h1>Welcome to $DOMAIN</h1><p>Powered by Stackrium</p>" > "$WEB_ROOT/index.html"
     fi
 
-    # Fix permissions (User owns their files, www-data can read them)
-    chown -R $USERNAME:$USERNAME "/home/$USERNAME/web/$DOMAIN"
+    # Fix permissions (User owns their files, www-data group can read/write for the proxy)
+    chown -R $USERNAME:www-data "/home/$USERNAME/web/$DOMAIN"
     chown -R www-data:www-data "$LOG_DIR"
     chmod -R 755 "/home/$USERNAME/web/$DOMAIN"
+    find "/home/$USERNAME/web/$DOMAIN/public_html" -type d -exec chmod 775 {} \;
+    find "/home/$USERNAME/web/$DOMAIN/public_html" -type f -exec chmod 664 {} \;
 
     # 2. Generate Nginx Configuration (HEREDOC)
     cat > "$VHOST_CONF" <<EOF
@@ -216,6 +218,11 @@ EOF
     # 3. Enable the site and test Nginx
     ln -s "$VHOST_CONF" "$NGINX_ENABLED/"
     
+   # Write to Map File for IP Routing
+    if ! grep -q "^$DOMAIN " /etc/nginx/stackrium_tenant_map.conf 2>/dev/null; then
+        echo "$DOMAIN $USERNAME;" >> /etc/nginx/stackrium_tenant_map.conf
+    fi  
+
     if nginx -t; then
         /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
         # ---> SOURCE OF TRUTH TRACKING <---
@@ -227,6 +234,7 @@ EOF
         # Rollback if Nginx config is invalid
         rm -f "$VHOST_CONF"
         rm -f "$NGINX_ENABLED/$DOMAIN.conf"
+        sed -i "/^$DOMAIN /d" /etc/nginx/stackrium_tenant_map.conf
         echo "Error: Invalid Nginx configuration generated. Rolled back."
         exit 1
     fi

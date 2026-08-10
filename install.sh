@@ -4,7 +4,7 @@
 # Supports: Ubuntu 22.04 LTS & 24.04 LTS (Clean OS Required)
 # ==============================================================================
 
-GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git" # (Keep as your source repo)
+GITHUB_REPO="https://github.com/ravikantsingh/oPanel.git"
 BRANCH="main"
 
 # Ensure script is run as root

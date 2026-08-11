@@ -226,8 +226,8 @@ mysql -e "CREATE DATABASE IF NOT EXISTS panel_core;"
 mysql -e "CREATE USER IF NOT EXISTS 'panel_user'@'localhost' IDENTIFIED BY '$DB_PASS';"
 mysql -e "GRANT ALL PRIVILEGES ON panel_core.* TO 'panel_user'@'localhost';"
 
-mysql -e "CREATE USER IF NOT EXISTS 'pma_sso'@'localhost' IDENTIFIED BY 'PmaMasterKey998877';"
-mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'pma_sso'@'localhost';"
+mysql -e "CREATE USER IF NOT EXISTS 'pma_sso'@'localhost' IDENTIFIED BY 'Pma@Master@Key#998877';"
+mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'pma_sso'@'localhost' WITH GRANT OPTION;"
 mysql -e "FLUSH PRIVILEGES;"
 
 mysql panel_core < /tmp/panel_temp/schema.sql

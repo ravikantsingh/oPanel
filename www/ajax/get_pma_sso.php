@@ -21,7 +21,7 @@ try {
     $tmp_pass = bin2hex(random_bytes(16));
 
     // Connect to MySQL using the Master Admin Credentials to spawn the temp user
-    $pdo = new PDO('mysql:host=localhost', 'pma_sso', 'PmaMasterKey998877');
+    $pdo = new PDO('mysql:host=localhost', 'pma_sso', 'Pma@Master@Key#998877');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Create user with strict privileges exclusively to the requested database

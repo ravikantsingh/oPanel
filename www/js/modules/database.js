@@ -60,15 +60,26 @@ window.fetchDatabases = function() {
                 }
                 response.databases.forEach(function(db) {
                     let row = `<tr>
-                            <td class="fw-bold text-primary">${db.db_name}</td>
-                            <td><code>${db.db_user}</code></td>
-                            <td><i class="bi bi-person text-muted me-1"></i> ${db.owner_username}</td>
-                            <td class="text-end">
-                                <button class="btn btn-sm btn-success shadow-sm open-pma-sso" data-db="${db.db_name}" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></button>
-                                <button class="btn btn-sm btn-light shadow-sm text-dark change-db-pass ms-1" data-db="${db.db_name}" data-user="${db.db_user}" title="Change Password"><i class="bi bi-key"></i></button>
-                                <button class="btn btn-sm btn-light shadow-sm text-danger delete-db ms-1" data-db="${db.db_name}" title="Delete Database"><i class="bi bi-trash"></i></button>
-                            </td>
-                        </tr>`;
+                                <td class="fw-bold text-primary">${db.db_name}</td>
+                                <td><code>${db.db_user}</code></td>
+                                <td><i class="bi bi-person text-muted me-1"></i> ${db.owner_username}</td>
+                                
+                                <td class="text-end text-nowrap">
+                                    <!-- Original Core Action -->
+                                    <button class="btn btn-sm btn-success shadow-sm open-pma-sso" data-db="${db.db_name}" title="Open in phpMyAdmin"><i class="bi bi-database-fill-gear"></i></button>
+                                    
+                                    <!-- New Enterprise Suite Actions -->
+                                    <button class="btn btn-sm btn-light shadow-sm text-primary export-db-btn ms-1" data-db="${db.db_name}" title="Export SQL Dump"><i class="bi bi-cloud-arrow-down"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-primary open-import-db-modal ms-1" data-db="${db.db_name}" title="Import SQL Dump"><i class="bi bi-file-earmark-arrow-up"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-info open-copy-db-modal ms-1" data-db="${db.db_name}" data-owner="${db.owner_username}" title="Clone Database"><i class="bi bi-files"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-dark open-repair-db-modal ms-1" data-db="${db.db_name}" title="Diagnostics & Repair"><i class="bi bi-tools"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-warning open-transfer-db-modal ms-1" data-db="${db.db_name}" data-owner="${db.owner_username}" title="Transfer Owner"><i class="bi bi-person-gear"></i></button>
+                                    
+                                    <!-- Original Management Actions -->
+                                    <button class="btn btn-sm btn-light shadow-sm text-dark change-db-pass ms-1" data-db="${db.db_name}" data-user="${db.db_user}" title="Change Password"><i class="bi bi-key"></i></button>
+                                    <button class="btn btn-sm btn-light shadow-sm text-danger delete-db ms-1" data-db="${db.db_name}" title="Delete Database"><i class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>`;
                     tbody.append(row);
                 });
                 
@@ -478,6 +489,183 @@ $(document).ready(function() {
                     window.showToast('error', 'Update Failed', res.error);
                 }
                 btn.prop('disabled', false).html('Update Password');
+            }
+        });
+    });
+    // =================================================================
+    // ENTERPRISE DATABASE SUITE CONTROLLERS
+    // =================================================================
+
+    // 1. Direct Export Dump Trigger (Routed to Backup Vault)
+    $(document).on('click', '.export-db-btn', function(e) {
+        e.preventDefault();
+        let dbName = $(this).data('db');
+        window.showToast('info', 'Export Queued', `Generating archive for ${dbName}...`);
+        
+        $.ajax({
+            url: '/ajax/create_backup.php', // Routed to existing backup controller
+            type: 'POST',
+            data: { action: 'backup_db', target: dbName }, // Matched to backup parameters
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    window.showToast('success', 'Backup Running', 'File will appear in the Backups tab shortly.');
+                } else {
+                    window.showToast('error', 'Export Failed', res.error);
+                }
+            }
+        });
+    });
+
+    // 2. Open Import Modal
+    $(document).on('click', '.open-import-db-modal', function(e) {
+        e.preventDefault();
+        let dbName = $(this).data('db');
+        $('#importTargetDb').val(dbName);
+        $('#importDbDisplay').val(dbName);
+        $('#importFileInput').val('');
+        $('#importDbModal').modal('show');
+    });
+
+    // 3. Open Clone / Copy Modal
+    $(document).on('click', '.open-copy-db-modal', function(e) {
+        e.preventDefault();
+        let dbName = $(this).data('db');
+        $('#copySrcDb').val(dbName);
+        $('#copySrcDbDisplay').val(dbName);
+        $('#copyDbPassInput').val('');
+        $('#copyDbModal').modal('show');
+    });
+
+    // 4. Open Check & Repair Modal
+    $(document).on('click', '.open-repair-db-modal', function(e) {
+        e.preventDefault();
+        let dbName = $(this).data('db');
+        $('#repairTargetDb').val(dbName);
+        $('#repairDbDisplay').val(dbName);
+        $('#repairDbModal').modal('show');
+    });
+
+    // 5. Open Transfer Owner Modal
+    $(document).on('click', '.open-transfer-db-modal', function(e) {
+        e.preventDefault();
+        let dbName = $(this).data('db');
+        let currentOwner = $(this).data('owner');
+        
+        $('#transferTargetDb').val(dbName);
+        $('#transferDbDisplay').val(dbName);
+        $('#transferCurrentOwner').val(currentOwner);
+        $('#transferNewOwner').val('');
+        $('#transferDbModal').modal('show');
+    });
+
+    // =================================================================
+    // ENTERPRISE DATABASE SUITE AJAX SUBMISSIONS
+    // =================================================================
+
+    // Import Submission
+    $('#submitImportDbBtn').click(function() {
+        let btn = $(this);
+        let form = $('#importDbForm')[0];
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        
+        let formData = new FormData(form);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Uploading...');
+
+        $.ajax({
+            url: '/ajax/manage_db.php',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(res) {
+                if(res.success) {
+                    $('#importDbModal').modal('hide');
+                    window.showToast('success', 'Task Queued', 'Import process dispatched to Python queue.');
+                } else {
+                    window.showToast('error', 'Import Error', res.error);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up"></i> Start Import');
+            }
+        });
+    });
+
+    // Clone Submission
+    $('#submitCopyDbBtn').click(function() {
+        let btn = $(this);
+        let form = $('#copyDbForm');
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Cloning...');
+        $.ajax({
+            url: '/ajax/manage_db.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#copyDbModal').modal('hide');
+                    window.showToast('success', 'Task Queued', 'Database cloning dispatched in background.');
+                    setTimeout(window.fetchDatabases, 2000); // Refresh list
+                } else { window.showToast('error', 'Clone Error', res.error); }
+                btn.prop('disabled', false).html('<i class="bi bi-files"></i> Clone Database');
+            }
+        });
+    });
+
+    // Generate Pass helper for Clone Modal
+    $('#generateCopyDbPass').click(function(e) {
+        e.preventDefault();
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        let pass = "";
+        for (let i = 0; i < 20; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        $('#copyDbPassInput').val(pass);
+        navigator.clipboard.writeText(pass);
+        let btn = $(this);
+        let originalText = btn.html();
+        btn.html('<span class="text-success"><i class="bi bi-check2"></i> Copied!</span>');
+        setTimeout(() => { btn.html(originalText); }, 2000);
+    });
+
+    // Repair Submission
+    $('#submitRepairDbBtn').click(function() {
+        let btn = $(this);
+        let form = $('#repairDbForm');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Executing...');
+        $.ajax({
+            url: '/ajax/manage_db.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#repairDbModal').modal('hide');
+                    window.showToast('success', 'Task Queued', 'Check Live Tasks to view the diagnostic output log.');
+                } else { window.showToast('error', 'Repair Error', res.error); }
+                btn.prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run Diagnostics');
+            }
+        });
+    });
+
+    // Soft Transfer Submission
+    $('#submitTransferDbBtn').click(function() {
+        let btn = $(this);
+        let form = $('#transferDbForm');
+        if (!form[0].checkValidity()) { form[0].reportValidity(); return; }
+        
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Transferring...');
+        $.ajax({
+            url: '/ajax/manage_db.php',
+            type: 'POST',
+            data: form.serialize(),
+            dataType: 'json',
+            success: function(res) {
+                if(res.success) {
+                    $('#transferDbModal').modal('hide');
+                    window.showToast('success', 'Task Queued', 'Ownership update processed.');
+                    setTimeout(window.fetchDatabases, 2000); // Refresh UI 
+                } else { window.showToast('error', 'Transfer Error', res.error); }
+                btn.prop('disabled', false).html('<i class="bi bi-arrow-right-circle"></i> Transfer Owner');
             }
         });
     });

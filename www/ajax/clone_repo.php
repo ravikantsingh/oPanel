@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $domain = strtolower(trim(filter_input(INPUT_POST, 'domain', FILTER_SANITIZE_URL)));
 $repo_url = trim(filter_input(INPUT_POST, 'repo_url', FILTER_SANITIZE_URL));
 $username = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['username'] ?? '');
+$branch = trim(filter_input(INPUT_POST, 'branch', FILTER_SANITIZE_STRING) ?? 'main');
 
 if (empty($domain) || empty($repo_url) || empty($username)) {
     echo json_encode(['success' => false, 'error' => 'Domain, Username, and Repository URL are required.']);
@@ -32,7 +33,8 @@ try {
     $taskId = $queue->dispatch('git_clone', [
         'username' => $username,
         'domain'   => $domain,
-        'repo_url' => $repo_url
+        'repo_url' => $repo_url,
+        'branch'   => $branch
     ]);
 
     echo json_encode(['success' => true, 'message' => "Git clone task queued for $domain!"]);

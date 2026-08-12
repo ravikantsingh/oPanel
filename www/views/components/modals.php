@@ -20,6 +20,12 @@ include 'views/modals/changeDbPassModal.php';
 include 'views/modals/ftpModal.php';
 include 'views/modals/linuxPassModal.php';
 
+// Enterprise Database Suite Additions
+include 'views/modals/importDbModal.php';
+include 'views/modals/copyDbModal.php';
+include 'views/modals/transferDbModal.php';
+include 'views/modals/repairDbModal.php';
+
 // 3. File Management & Git
 include 'views/modals/fileManagerModal.php';
 include 'views/modals/rotateFmPassModal.php';

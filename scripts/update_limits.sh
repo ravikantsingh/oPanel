@@ -6,13 +6,17 @@ TASK_ID=$2
 UPLOAD_SIZE=$(echo "$PAYLOAD" | jq -r '.upload_size')
 MAX_TIME=$(echo "$PAYLOAD" | jq -r '.max_time')
 
-# 1. Update Nginx Globally (Fixes 413 Request Entity Too Large)
-cat <<EOF > /etc/nginx/conf.d/panel_upload_limits.conf
+# 1. Clean up the old conflicting file if it exists
+rm -f /etc/nginx/conf.d/panel_upload_limits.conf
+
+# 2. Update Nginx Globally (Fixes 413 Request Entity Too Large)
+# THE FIX: Write to the correct source of truth file generated during install
+cat <<EOF > /etc/nginx/conf.d/stackrium_limits.conf
 # Managed by Stackrium
 client_max_body_size ${UPLOAD_SIZE}M;
 EOF
 
-# 2. Update PHP Globally (Fixes PHP post/upload limits)
+# 3. Update PHP Globally (Fixes PHP post/upload limits)
 # Note: We apply this to all PHP versions you might have installed
 for v in 8.1 8.2 8.3; do
     if [ -d "/etc/php/$v/fpm/conf.d" ]; then
@@ -27,7 +31,7 @@ EOF
     fi
 done
 
-# 3. Reload Nginx to apply changes
+# 4. Reload Nginx to apply changes
 /opt/panel/scripts/nginx_reload_callback.sh "$TASK_ID" > /dev/null 2>&1 &
 
 echo "Success: Server limits updated to ${UPLOAD_SIZE}MB."

@@ -27,7 +27,9 @@ try {
     $hash = hash_hmac('sha256', $domain . '|' . $timestamp, $secret);
 
     // STACKRIUM SMART ROUTING: Check if domain is pointing to this server
-    $server_ip = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']);
+    // FIX: Safely handle NAT by resolving the panel's active host to its Public IP
+    $panel_host = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']);
+    $server_ip = gethostbyname($panel_host);
     $domain_ip = gethostbyname($domain);
 
     if ($domain_ip === $server_ip) {
@@ -36,7 +38,6 @@ try {
         $url = $protocol . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
     } else {
         // FAKE/UNPOINTED DOMAIN -> Use IP Fallback Route
-        $panel_host = preg_replace('/:[0-9]+$/', '', $_SERVER['HTTP_HOST']); 
         $url = 'http://' . $panel_host . '/~' . $domain . '/filemanager/index.php?sso_t=' . $timestamp . '&sso_h=' . $hash;
     }
 

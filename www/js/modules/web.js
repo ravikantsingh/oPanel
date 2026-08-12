@@ -115,7 +115,7 @@ window.fetchDomains = function() {
                                 </div>
                                 <div>
                                     <button class="btn btn-sm btn-dark manual-git-pull shadow-sm border-0" data-domain="${d.domain_name}" data-user="${d.username}" data-branch="${currentBranch}">
-                                        <i class="bi bi-arrow-down-circle me-1"></i> Pull Latest Code
+                                        <i class="bi bi-arrow-down-circle me-1"></i> Pull Latest (${currentBranch})
                                     </button>
                                 </div>
                             </div>
